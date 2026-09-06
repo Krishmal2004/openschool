@@ -30,6 +30,7 @@ type TimetableService struct {
 	sectionHeadRepo  *rootrepositories.SectionHeadRepository
 	requirementRepo  *repositories.SubjectPeriodRequirementRepository
 	availabilityRepo *repositories.TeacherAvailabilityRepository
+	classroomRepo    *repositories.ClassroomRepository
 	teacherRepo      *rootrepositories.TeacherRepository
 	studentRepo      *rootrepositories.StudentRepository
 	guardianRepo     *rootrepositories.GuardianRepository
@@ -43,6 +44,7 @@ func NewTimetableService(
 	sectionHeadRepo *rootrepositories.SectionHeadRepository,
 	requirementRepo *repositories.SubjectPeriodRequirementRepository,
 	availabilityRepo *repositories.TeacherAvailabilityRepository,
+	classroomRepo *repositories.ClassroomRepository,
 	teacherRepo *rootrepositories.TeacherRepository,
 	studentRepo *rootrepositories.StudentRepository,
 	guardianRepo *rootrepositories.GuardianRepository,
@@ -50,8 +52,8 @@ func NewTimetableService(
 ) *TimetableService {
 	return &TimetableService{
 		repo: repo, classRepo: classRepo, gradeSectionRepo: gradeSectionRepo, sectionHeadRepo: sectionHeadRepo,
-		requirementRepo: requirementRepo, availabilityRepo: availabilityRepo, teacherRepo: teacherRepo,
-		studentRepo: studentRepo, guardianRepo: guardianRepo, notifications: notifications,
+		requirementRepo: requirementRepo, availabilityRepo: availabilityRepo, classroomRepo: classroomRepo,
+		teacherRepo: teacherRepo, studentRepo: studentRepo, guardianRepo: guardianRepo, notifications: notifications,
 	}
 }
 
@@ -228,13 +230,16 @@ func (s *TimetableService) Validate(ctx context.Context, timetableID uuid.UUID) 
 
 			if e.SubjectID.Valid {
 				subjectID := uuid.UUID(e.SubjectID.Bytes)
-				assignedTeacherID, err := s.classRepo.GetSubjectTeacher(ctx, tt.ClassID, subjectID)
-				if err == nil && assignedTeacherID != teacherID {
-					addError(e.DayOfWeek, e.PeriodNumber, "%s is not the class's assigned teacher for this subject", teacherNameOrID(e.TeacherName, teacherID))
-				} else if errors.Is(err, pgx.ErrNoRows) {
-					assigned, err := s.repo.IsTeacherAssignedToSubject(ctx, teacherID, subjectID)
-					if err == nil && !assigned {
-						addError(e.DayOfWeek, e.PeriodNumber, "%s is not assigned to teach this subject", teacherNameOrID(e.TeacherName, teacherID))
+				isClassTeacher := class.FormTeacherID.Valid && uuid.UUID(class.FormTeacherID.Bytes) == teacherID
+				if !isClassTeacher {
+					assignedTeacherID, err := s.classRepo.GetSubjectTeacher(ctx, tt.ClassID, subjectID)
+					if err == nil && assignedTeacherID != teacherID {
+						addError(e.DayOfWeek, e.PeriodNumber, "%s is not the class's assigned teacher for this subject", teacherNameOrID(e.TeacherName, teacherID))
+					} else if errors.Is(err, pgx.ErrNoRows) {
+						assigned, err := s.repo.IsTeacherAssignedToSubject(ctx, teacherID, subjectID)
+						if err == nil && !assigned {
+							addError(e.DayOfWeek, e.PeriodNumber, "%s is not assigned to teach this subject", teacherNameOrID(e.TeacherName, teacherID))
+						}
 					}
 				}
 			}

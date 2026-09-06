@@ -1,3 +1,5 @@
+// This file defines the frontend API service endpoints for interacting with classroom and enrollment resources.
+
 import api from "../lib/api";
 
 export interface ClassWithDetails {
@@ -10,11 +12,13 @@ export interface ClassWithDetails {
   girl_monitor_id: string | null;
   boy_monitor_id: string | null;
   medium_id: string | null;
+  home_classroom_id: string | null;
   name: string;
   created_at: string | null;
   grade_name: string;
   academic_year_label: string;
   medium_name: string | null;
+  home_classroom_name: string | null;
 }
 
 export interface ClassRow {
@@ -27,6 +31,7 @@ export interface ClassRow {
   girl_monitor_id: string | null;
   boy_monitor_id: string | null;
   medium_id: string | null;
+  home_classroom_id: string | null;
   name: string;
   created_at: string | null;
 }
@@ -35,6 +40,7 @@ export interface UpdateClassRequest {
   name: string;
   form_teacher_id?: string | null;
   medium_id?: string | null;
+  home_classroom_id?: string | null;
 }
 
 export interface CreateClassRequest {
@@ -45,6 +51,7 @@ export interface CreateClassRequest {
   stream_id?: string | null;
   stream_group_id?: string | null;
   medium_id?: string | null;
+  home_classroom_id?: string | null;
 }
 
 export interface SubjectTeacher {
@@ -84,6 +91,9 @@ export const classApi = {
 
   listSubjectTeachers: (id: string) =>
     api.get<SubjectTeacher[]>(`/classes/${id}/subject-teachers`).then((r) => r.data),
+
+  assignSubjectTeacher: (id: string, data: { subject_id: string; teacher_id: string }) =>
+    api.post(`/classes/${id}/subject-teachers`, data).then((r) => r.data),
 
   enrollStudent: (id: string, studentId: string) =>
     api.post(`/classes/${id}/students/${studentId}/enroll`).then((r) => r.data),

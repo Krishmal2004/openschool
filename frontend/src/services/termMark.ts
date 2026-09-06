@@ -9,6 +9,7 @@ export interface ClassMarkRow {
   term_mark_id: string | null;
   marks: number | null;
   max_marks: number | null;
+  is_absent: boolean | null;
 }
 
 // Matches db.ListStudentMarksByTermRow
@@ -16,6 +17,7 @@ export interface StudentMarkRow {
   id: string;
   marks: number;
   max_marks: number;
+  is_absent: boolean;
   subject_id: string;
   subject_name: string;
   subject_code: string;
@@ -25,6 +27,7 @@ export interface MarkEntry {
   student_id: string;
   marks: number;
   max_marks: number;
+  is_absent: boolean;
 }
 
 export interface BulkUpsertMarksRequest {

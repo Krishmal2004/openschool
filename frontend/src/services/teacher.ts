@@ -3,11 +3,14 @@ import api from "../lib/api";
 export type TeacherTitle = "Mr" | "Miss" | "Mrs" | "Ms" | "Dr" | "Von" | "Prof";
 export type TeacherEmploymentStatus = "active" | "resigned" | "transferred";
 
-// Matches db.TeacherProfile JSON shape returned by the backend
+// Matches db.TeacherProfile JSON shape returned by the backend. `email` is
+// only populated by GET /teachers/:id (db.GetTeacherByIDRow joins users) —
+// list/create/update responses don't join users, so it's optional here.
 export interface Teacher {
   id: string;
   user_id: string;
   full_name: string;
+  email?: string;
   employee_number: string;
   nic_number: string;
   joined_date: string | null;
@@ -106,4 +109,10 @@ export const teacherApi = {
 
   removeSubject: (id: string, subjectId: string) =>
     api.delete(`/teachers/${id}/subjects/${subjectId}`).then((r) => r.data),
+
+  // Every teacher qualified (holds a teacher_subjects row) for a subject —
+  // scopes the class-subject-teacher assignment picker to qualified
+  // teachers only.
+  listBySubject: (subjectId: string) =>
+    api.get<Teacher[]>(`/subjects/${subjectId}/teachers`).then((r) => r.data),
 };

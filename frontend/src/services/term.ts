@@ -34,6 +34,8 @@ export const termApi = {
       .get<Term[]>("/terms", { params: { academic_year_id: academicYearId } })
       .then((r) => r.data),
 
+  getCurrent: () => api.get<Term>("/terms/current").then((r) => r.data),
+
   create: (data: CreateTermRequest) =>
     api.post<Term>("/terms", data).then((r) => r.data),
 

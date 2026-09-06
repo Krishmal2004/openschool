@@ -1,9 +1,11 @@
+// This file defines query and mutation hooks for retrieving and updating teacher profiles, workloads, assigned subjects, and form classes.
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { teacherApi } from "../services/teacher";
+import { useCurrentClasses } from "./useClasses";
 import type {
   CreateTeacherRequest,
   UpdateTeacherRequest,
-  TeacherWorkloadRow,
   TeacherEmploymentStatus,
 } from "../services/teacher";
 
@@ -33,13 +35,21 @@ export const useTeacherSubjects = (id: string) =>
     enabled: !!id,
   });
 
-// The signed-in teacher's own profile — resolves their teacher_profile ID
-// from the JWT server-side. Everything else (classes, sessions, marks) is
-// then fetched with that ID via the normal admin/teacher-shared endpoints.
 export const useMyTeacherProfile = () =>
   useQuery({
     queryKey: MY_TEACHER_PROFILE_KEY,
     queryFn: teacherApi.me,
+  });
+
+export const teachersBySubjectKey = (subjectId: string) => ["teachers", "by-subject", subjectId];
+
+// Teachers qualified (teacher_subjects) for a given subject — used to scope
+// the class-subject-teacher assignment picker.
+export const useTeachersBySubject = (subjectId: string) =>
+  useQuery({
+    queryKey: teachersBySubjectKey(subjectId),
+    queryFn: () => teacherApi.listBySubject(subjectId),
+    enabled: !!subjectId,
   });
 
 export const useTeacherWorkload = (id: string) =>
@@ -54,39 +64,55 @@ export interface MyClass {
   class_name: string;
   grade_name: string;
   subjects: string[];
+  isFormTeacher: boolean;
 }
 
-function buildMyClasses(workload: TeacherWorkloadRow[] | undefined): MyClass[] {
-  if (!workload) return [];
-  const byClass = new Map<string, MyClass>();
-  for (const row of workload) {
-    if (!row.academic_year_is_current) continue;
-    const existing = byClass.get(row.class_id);
-    if (existing) {
-      if (!existing.subjects.includes(row.subject_name)) existing.subjects.push(row.subject_name);
-    } else {
-      byClass.set(row.class_id, {
-        class_id: row.class_id,
-        class_name: row.class_name,
-        grade_name: row.grade_name,
-        subjects: [row.subject_name],
+// Every class a teacher is actually involved with this year: classes they
+// are the form teacher of, UNION classes where they teach a subject
+// (class_subject_teachers, via workload) — previously this only looked at
+// form-teacher classes and always reported an empty subjects list, so a
+// subject-only teacher never saw their classes anywhere in the portal.
+export const useMyClasses = () => {
+  const teacher = useMyTeacherProfile();
+  const teacherId = teacher.data?.id ?? "";
+  const { data: allClasses, isLoading: classesLoading, isError: classesError } = useCurrentClasses();
+  const { data: workload, isLoading: workloadLoading, isError: workloadError } = useTeacherWorkload(teacherId);
+
+  const classMap = new Map<string, MyClass>();
+
+  for (const c of allClasses ?? []) {
+    if (c.form_teacher_id === teacherId) {
+      classMap.set(c.id, {
+        class_id: c.id,
+        class_name: c.name,
+        grade_name: c.grade_name,
+        subjects: [],
+        isFormTeacher: true,
       });
     }
   }
-  return [...byClass.values()].sort((a, b) => a.grade_name.localeCompare(b.grade_name, undefined, { numeric: true }));
-}
 
-// The signed-in teacher's current-year classes, deduped from their subject
-// workload rows and sorted by grade. Shared by every teacher-portal page
-// that needs "my classes" (dashboard, roster, attendance, profile stats).
-export const useMyClasses = () => {
-  const teacher = useMyTeacherProfile();
-  const workload = useTeacherWorkload(teacher.data?.id ?? "");
+  for (const w of workload ?? []) {
+    if (!w.academic_year_is_current) continue;
+    const existing = classMap.get(w.class_id);
+    if (existing) {
+      if (!existing.subjects.includes(w.subject_name)) existing.subjects.push(w.subject_name);
+    } else {
+      classMap.set(w.class_id, {
+        class_id: w.class_id,
+        class_name: w.class_name,
+        grade_name: w.grade_name,
+        subjects: [w.subject_name],
+        isFormTeacher: false,
+      });
+    }
+  }
+
   return {
     teacher: teacher.data,
-    classes: buildMyClasses(workload.data),
-    isLoading: teacher.isLoading || workload.isLoading,
-    isError: teacher.isError || workload.isError,
+    classes: [...classMap.values()],
+    isLoading: teacher.isLoading || classesLoading || workloadLoading,
+    isError: teacher.isError || classesError || workloadError,
     refetch: teacher.refetch,
   };
 };
@@ -146,3 +172,24 @@ export const useDeleteTeacher = () => {
     },
   });
 };
+
+export const useAssignTeacherSubject = (teacherId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (subjectId: string) => teacherApi.assignSubject(teacherId, subjectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teacherSubjectsKey(teacherId) });
+    },
+  });
+};
+
+export const useRemoveTeacherSubject = (teacherId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (subjectId: string) => teacherApi.removeSubject(teacherId, subjectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teacherSubjectsKey(teacherId) });
+    },
+  });
+};
+

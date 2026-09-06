@@ -358,3 +358,29 @@ func (h *TeacherHandler) ListSubjects(c *gin.Context) {
 
 	c.JSON(http.StatusOK, subjects)
 }
+
+// ListBySubject godoc
+// @Summary      List teachers qualified for a subject
+// @Description  Every teacher holding the given subject as a teacher_subjects qualification
+// @Tags         teachers
+// @Produce      json
+// @Param        id path string true "Subject ID"
+// @Success      200 {array} models.TeacherResponse
+// @Failure      400 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /subjects/{id}/teachers [get]
+func (h *TeacherHandler) ListBySubject(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	teachers, err := h.service.ListBySubject(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, teachers)
+}

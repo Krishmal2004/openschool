@@ -71,7 +71,7 @@ func (q *Queries) CountClassesInYearByIDs(ctx context.Context, arg CountClassesI
 }
 
 const findClassByGradeAndMedium = `-- name: FindClassByGradeAndMedium :one
-SELECT id, grade_id, academic_year_id, form_teacher_id, stream_id, stream_group_id, name, created_at, girl_monitor_id, boy_monitor_id, medium_id FROM classes
+SELECT id, grade_id, academic_year_id, form_teacher_id, stream_id, stream_group_id, name, created_at, girl_monitor_id, boy_monitor_id, medium_id, home_classroom_id FROM classes
 WHERE grade_id = $1 AND academic_year_id = $2 AND medium_id = $3
 ORDER BY name ASC
 LIMIT 1
@@ -102,12 +102,13 @@ func (q *Queries) FindClassByGradeAndMedium(ctx context.Context, arg FindClassBy
 		&i.GirlMonitorID,
 		&i.BoyMonitorID,
 		&i.MediumID,
+		&i.HomeClassroomID,
 	)
 	return i, err
 }
 
 const findClassByGradeAndName = `-- name: FindClassByGradeAndName :one
-SELECT id, grade_id, academic_year_id, form_teacher_id, stream_id, stream_group_id, name, created_at, girl_monitor_id, boy_monitor_id, medium_id FROM classes
+SELECT id, grade_id, academic_year_id, form_teacher_id, stream_id, stream_group_id, name, created_at, girl_monitor_id, boy_monitor_id, medium_id, home_classroom_id FROM classes
 WHERE grade_id = $1 AND academic_year_id = $2 AND name = $3
 `
 
@@ -134,6 +135,7 @@ func (q *Queries) FindClassByGradeAndName(ctx context.Context, arg FindClassByGr
 		&i.GirlMonitorID,
 		&i.BoyMonitorID,
 		&i.MediumID,
+		&i.HomeClassroomID,
 	)
 	return i, err
 }
@@ -236,7 +238,7 @@ SELECT
     SUM(marks)::float8     AS total_marks,
     SUM(max_marks)::float8 AS total_max_marks
 FROM term_marks
-WHERE term_id = $1 AND student_id = ANY($2::uuid[])
+WHERE term_id = $1 AND student_id = ANY($2::uuid[]) AND NOT is_absent
 GROUP BY student_id
 `
 
@@ -253,6 +255,8 @@ type ListStudentTotalMarksForTermRow struct {
 
 // per-student total marks for one term, across every subject they have a
 // mark for — a manual-distribution sort aid, not an auto-ranking algorithm.
+// Absent subjects are excluded from both sides so an "AB" doesn't drag a
+// student's total down the way a genuine zero would.
 // cast to float8 rather than leaving as numeric — sqlc's static analyzer
 // (no live DB connection) mis-infers a bare SUM(numeric) as int64, which
 // would silently truncate marks with a fractional part.

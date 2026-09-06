@@ -12,6 +12,7 @@ import type { DisciplinarySeverity } from "../../../services/studentPortfolio";
 import { getErrorMessage } from "../../../lib/errorMessage";
 import { todayISODate, toYmd } from "../../../lib/date";
 import EmptyState from "../../../components/common/EmptyState";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 const SEVERITY_TAG: Record<DisciplinarySeverity, "gray" | "warm-gray" | "red"> = {
   minor: "gray",
@@ -29,6 +30,7 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
   const [description, setDescription] = useState("");
   const [actionTaken, setActionTaken] = useState("");
   const [severity, setSeverity] = useState<DisciplinarySeverity | "">("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!description.trim() || !severity || !currentYear) return;
@@ -85,11 +87,22 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
                 <p style={{ margin: 0, fontSize: "0.875rem" }}>{r.description}</p>
                 {r.action_taken && <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>Action: {r.action_taken}</p>}
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => deleteRecord.mutate(r.id)} />
+              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteId(r.id)} />
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        open={pendingDeleteId !== null}
+        title="Delete disciplinary record"
+        description="This will permanently remove this record. This action cannot be undone."
+        isPending={deleteRecord.isPending}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) deleteRecord.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+        }}
+      />
     </div>
   );
 }

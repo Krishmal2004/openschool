@@ -71,4 +71,11 @@ export const staffAttendanceApi = {
         params: { year, month },
       })
       .then((r) => r.data),
+
+  // The signed-in teacher's own attendance history — distinct from
+  // teacherHistory above, which requires an admin-only :id lookup.
+  myHistory: (year: number, month: number) =>
+    api
+      .get<StaffAttendanceRecord[]>("/me/teacher/attendance", { params: { year, month } })
+      .then((r) => r.data),
 };

@@ -13,6 +13,7 @@ import {
 import { getErrorMessage } from "../../../lib/errorMessage";
 import { todayISODate, toYmd } from "../../../lib/date";
 import EmptyState from "../../../components/common/EmptyState";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 export default function StudentLeadershipAwards({ studentId }: { studentId: string }) {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -22,12 +23,14 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
   const deleteRole = useDeleteLeadershipRole(studentId);
   const [title, setTitle] = useState("");
   const [scope, setScope] = useState("");
+  const [pendingDeleteRoleId, setPendingDeleteRoleId] = useState<string | null>(null);
 
   const { data: awards, isLoading: awardsLoading } = useStudentAwards(studentId);
   const createAward = useCreateStudentAward(studentId);
   const deleteAward = useDeleteStudentAward(studentId);
   const [awardTitle, setAwardTitle] = useState("");
   const [awardDate, setAwardDate] = useState(todayISODate());
+  const [pendingDeleteAwardId, setPendingDeleteAwardId] = useState<string | null>(null);
 
   const addRole = () => {
     if (!title.trim() || !currentYear) return;
@@ -67,11 +70,22 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{r.title}</span>
                 {r.scope && <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{r.scope}</span>}
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => deleteRole.mutate(r.id)} />
+              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteRoleId(r.id)} />
             </div>
           ))}
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        open={pendingDeleteRoleId !== null}
+        title="Delete leadership role"
+        description="This will permanently remove this leadership role. This action cannot be undone."
+        isPending={deleteRole.isPending}
+        onClose={() => setPendingDeleteRoleId(null)}
+        onConfirm={() => {
+          if (pendingDeleteRoleId) deleteRole.mutate(pendingDeleteRoleId, { onSuccess: () => setPendingDeleteRoleId(null) });
+        }}
+      />
 
       <div className="os-section">
         <div className="os-section__header">
@@ -98,11 +112,22 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.title}</span>
                 <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.awarded_date}</span>
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => deleteAward.mutate(a.id)} />
+              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteAwardId(a.id)} />
             </div>
           ))}
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        open={pendingDeleteAwardId !== null}
+        title="Delete award"
+        description="This will permanently remove this award. This action cannot be undone."
+        isPending={deleteAward.isPending}
+        onClose={() => setPendingDeleteAwardId(null)}
+        onConfirm={() => {
+          if (pendingDeleteAwardId) deleteAward.mutate(pendingDeleteAwardId, { onSuccess: () => setPendingDeleteAwardId(null) });
+        }}
+      />
     </>
   );
 }

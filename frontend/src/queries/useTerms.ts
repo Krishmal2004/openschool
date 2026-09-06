@@ -3,12 +3,23 @@ import { termApi } from "../services/term";
 import type { CreateTermRequest, UpdateTermRequest } from "../services/term";
 
 export const termsKey = (academicYearId: string) => ["terms", academicYearId];
+export const CURRENT_TERM_KEY = ["terms", "current"];
 
 export const useTerms = (academicYearId: string | undefined) =>
   useQuery({
     queryKey: termsKey(academicYearId ?? ""),
     queryFn: () => termApi.listByAcademicYear(academicYearId!),
     enabled: !!academicYearId,
+  });
+
+// The term marked is_current — mirrors useCurrentAcademicYear. 404s (no
+// current term set yet) surface as isError; callers should fall back to
+// manual term selection in that case rather than blocking the page.
+export const useCurrentTerm = () =>
+  useQuery({
+    queryKey: CURRENT_TERM_KEY,
+    queryFn: termApi.getCurrent,
+    retry: false,
   });
 
 export const useCreateTerm = (academicYearId: string) => {
@@ -38,6 +49,7 @@ export const useSetCurrentTerm = (academicYearId: string) => {
     mutationFn: (id: string) => termApi.setCurrent(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: termsKey(academicYearId) });
+      queryClient.invalidateQueries({ queryKey: CURRENT_TERM_KEY });
     },
   });
 };

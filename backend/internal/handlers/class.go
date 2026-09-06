@@ -250,7 +250,7 @@ func (h *ClassHandler) AssignMonitors(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Class ID"
-// @Param        request body models.AssignSubjectTeacherRequest true "Subject teacher details"
+// @Param        request body models.AssignClassSubjectTeacherRequest true "Subject teacher details"
 // @Success      200 {object} map[string]string
 // @Failure      400 {object} map[string]string
 // @Security     BearerAuth
@@ -262,7 +262,7 @@ func (h *ClassHandler) AssignSubjectTeacher(c *gin.Context) {
 		return
 	}
 
-	var req models.AssignSubjectTeacherRequest
+	var req models.AssignClassSubjectTeacherRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

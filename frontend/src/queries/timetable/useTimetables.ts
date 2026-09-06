@@ -28,6 +28,32 @@ export const useTimetablesByYear = (academicYearId: string) =>
     enabled: !!academicYearId,
   });
 
+export const publishedForClassKey = (classId: string, academicYearId: string) => [
+  "timetables",
+  "published",
+  classId,
+  academicYearId,
+];
+
+// The class's currently published timetable + entries, if any — 404s (no
+// published timetable yet) surface as isError; callers should treat that
+// as "not yet scheduled" rather than a real failure.
+export const usePublishedTimetableForClass = (classId: string, academicYearId: string) =>
+  useQuery({
+    queryKey: publishedForClassKey(classId, academicYearId),
+    queryFn: () => timetableApi.publishedForClass(classId, academicYearId),
+    enabled: !!classId && !!academicYearId,
+    retry: false,
+  });
+
+// Every class's timetable for the current year, for the signed-in
+// Principal/Vice Principal.
+export const useTimetablesForLeadership = () =>
+  useQuery({
+    queryKey: ["me", "teacher", "timetables"],
+    queryFn: () => timetableApi.listForLeadership(),
+  });
+
 export const useTimetable = (id: string) =>
   useQuery({
     queryKey: timetableKey(id),
@@ -137,11 +163,11 @@ export const useRejectTimetable = (id: string) => {
   });
 };
 
-export const useReviewQueue = (academicYearId: string) =>
+export const useReviewQueue = (academicYearId: string, enabled = true) =>
   useQuery({
     queryKey: reviewQueueKey(academicYearId),
     queryFn: () => timetableApi.reviewQueue(academicYearId),
-    enabled: !!academicYearId,
+    enabled: !!academicYearId && enabled,
   });
 
 export const useMyTeacherSchedule = (academicYearId: string) =>

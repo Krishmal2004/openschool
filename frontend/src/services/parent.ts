@@ -26,6 +26,7 @@ export interface ChildMark {
   id: string;
   marks: number;
   max_marks: number;
+  is_absent: boolean;
   subject_id: string;
   subject_name: string;
   subject_code: string;

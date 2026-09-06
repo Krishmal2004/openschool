@@ -18,6 +18,15 @@ export const useStaffAttendanceMonthlySummary = (year: number, month: number) =>
     queryFn: () => staffAttendanceApi.monthlySummary(year, month),
   });
 
+const myHistoryKey = (year: number, month: number) => ["me", "teacher", "attendance", year, month];
+
+// The signed-in teacher's own staff-attendance history for a month.
+export const useMyStaffAttendanceHistory = (year: number, month: number) =>
+  useQuery({
+    queryKey: myHistoryKey(year, month),
+    queryFn: () => staffAttendanceApi.myHistory(year, month),
+  });
+
 export const useMarkStaffAttendance = (date: string) => {
   const queryClient = useQueryClient();
   return useMutation({

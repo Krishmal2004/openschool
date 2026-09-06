@@ -68,7 +68,3 @@ func (r *JobSchedulerRepository) FinishRun(ctx context.Context, runID uuid.UUID,
 func (r *JobSchedulerRepository) ListLatestRuns(ctx context.Context) ([]db.JobRun, error) {
 	return r.queries.ListLatestJobRuns(ctx)
 }
-
-func (r *JobSchedulerRepository) ListRunHistory(ctx context.Context, jobName string, limit int32) ([]db.JobRun, error) {
-	return r.queries.ListJobRunHistory(ctx, db.ListJobRunHistoryParams{JobName: jobName, Limit: limit})
-}

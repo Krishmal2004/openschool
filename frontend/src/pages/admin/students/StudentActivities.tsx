@@ -13,6 +13,7 @@ import type { ActivityCategory } from "../../../services/studentPortfolio";
 import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 const SOCIETY_ROLE_LABELS: Record<string, string> = {
   leader: "Leader",
@@ -62,6 +63,7 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
   const [category, setCategory] = useState<ActivityCategory | "">("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!category || !name.trim() || !currentYear) return;
@@ -121,10 +123,21 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
               <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.name}</span>
               {a.role && <span style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.role}</span>}
             </div>
-            <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => deleteActivity.mutate(a.id)} />
+            <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteId(a.id)} />
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        open={pendingDeleteId !== null}
+        title="Delete activity"
+        description="This will permanently remove this activity record. This action cannot be undone."
+        isPending={deleteActivity.isPending}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) deleteActivity.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+        }}
+      />
     </div>
   );
 }

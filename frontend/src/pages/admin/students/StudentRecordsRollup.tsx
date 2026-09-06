@@ -87,7 +87,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
                 {marks.map((m) => (
                   <tr key={m.id}>
                     <td>{m.subject_name} <span style={{ color: "#8d8d8d", fontSize: "0.75rem" }}>({m.subject_code})</span></td>
-                    <td>{m.marks} / {m.max_marks}</td>
+                    <td>{m.is_absent ? "AB" : `${m.marks} / ${m.max_marks}`}</td>
                   </tr>
                 ))}
               </tbody>

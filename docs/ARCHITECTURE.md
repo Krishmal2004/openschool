@@ -139,7 +139,7 @@ Schema is defined across 32 versioned migrations
 | --- | --- |
 | Identity & accounts | `users`, `password_reset_tokens` |
 | School & academic structure | `school`, `academic_years`, `houses`, `grades`, `classes`, `streams`, `stream_groups`, `mediums` |
-| Curriculum | `subjects`, `levels`, `selection_groups`, `subject_buckets`, `subject_bucket_options`, `group_subjects`, `grade_subjects` |
+| Curriculum | `subjects`, `mediums`, `levels`, `selection_groups`, `group_subjects` |
 | People | `student_profiles`, `student_siblings`, `student_guardians`, `guardians`, `teacher_profiles`, `teacher_subjects`, `non_academic_staff`, `prefects`, `section_heads`, `teacher_positions`, `vice_principal_grade_scopes` |
 | Enrollment | `class_students`, `class_subject_teachers`, `student_subject_enrollments`, `student_subject_selections`, `student_enrollment_locks` |
 | Attendance | `attendance_sessions`, `attendance_records`, `staff_attendance_records` |
@@ -160,7 +160,10 @@ Schema is defined across 32 versioned migrations
   `stream`/`stream_group` (Advanced Level) and a `medium`; `class_students`
   is the per-year many-to-many enrollment junction;
   `class_subject_teachers` is the per-class, per-subject teacher
-  assignment.
+  assignment — the authoritative source timetable auto-generation and
+  marks-entry authorization both read; assigning a row requires the
+  teacher already hold that subject in `teacher_subjects` (the global
+  qualification list, managed from the Teacher Subjects admin page).
 - **`student_guardians`** is the many-to-many junction supporting shared
   guardians across siblings.
 - **`teacher_positions`** + `vice_principal_grade_scopes` implement the

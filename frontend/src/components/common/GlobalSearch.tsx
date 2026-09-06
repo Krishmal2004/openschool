@@ -1,3 +1,5 @@
+// This file defines the GlobalSearch component, which provides a searchable input overlay to query students, teachers, guardians, and staff across the application.
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
@@ -13,9 +15,6 @@ interface FlatResult extends SearchResultItem {
   route: string;
 }
 
-// Guardians and Non-academic Staff don't have per-record detail routes yet
-// (their pages select a record via in-page state, not a URL param) — land
-// on the directory itself rather than a dead link until that changes.
 const GROUPS: { key: GroupKey; label: string; route: (id: string) => string }[] = [
   { key: "students", label: "Students", route: (id) => `/students/${id}` },
   { key: "teachers", label: "Teachers", route: (id) => `/teachers/${id}` },
@@ -23,17 +22,19 @@ const GROUPS: { key: GroupKey; label: string; route: (id: string) => string }[] 
   { key: "non_academic_staff", label: "Non-Academic Staff", route: () => "/non-academic-staff" },
 ];
 
-export default function GlobalSearch() {
+interface Props {
+  autoFocus?: boolean;
+  onClose?: () => void;
+}
+
+export default function GlobalSearch({ autoFocus, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  // Keyed by result id rather than index, so it naturally "resets" to the
-  // first row whenever the search term changes the result set — no effect
-  // needed to reset it back to 0 on every keystroke.
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const debounced = useDebounced(query, 300);
-  const { data, isFetching } = useGlobalSearch(debounced);
+  const { data, isFetching, isError } = useGlobalSearch(debounced);
 
   const flat: FlatResult[] = useMemo(
     () =>
@@ -50,16 +51,18 @@ export default function GlobalSearch() {
     const onClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        onClose?.();
       }
     };
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
-  }, []);
+  }, [onClose]);
 
   const goTo = (item: FlatResult) => {
     navigate(item.route);
     setQuery("");
     setOpen(false);
+    onClose?.();
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -75,6 +78,7 @@ export default function GlobalSearch() {
       goTo(flat[activeIndex]);
     } else if (e.key === "Escape") {
       setOpen(false);
+      onClose?.();
     }
   };
 
@@ -88,6 +92,7 @@ export default function GlobalSearch() {
           className="os-search__input"
           placeholder="Search students, teachers, guardians, staff…"
           value={query}
+          autoFocus={autoFocus}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
@@ -116,7 +121,12 @@ export default function GlobalSearch() {
           {isFetching && flat.length === 0 && (
             <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>Searching…</div>
           )}
-          {!isFetching && flat.length === 0 && (
+          {!isFetching && isError && (
+            <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#da1e28" }}>
+              Search failed — please try again.
+            </div>
+          )}
+          {!isFetching && !isError && flat.length === 0 && (
             <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>
               No matches for &quot;{debounced}&quot;
             </div>

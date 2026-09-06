@@ -1,3 +1,6 @@
+// This file defines the TypeScript types and API call for the school-wide
+// dashboard/analytics aggregate endpoint (student, staff, academic, school).
+
 import api from "../lib/api";
 
 export interface CountRow {
@@ -55,6 +58,7 @@ export interface DashboardAnalytics {
     examination_entries: number;
     students_with_marks: number;
     grade_wise_performance: PerformanceRow[];
+    class_wise_performance: PerformanceRow[];
     attendance_percentage: number;
   };
   school: {
@@ -69,4 +73,9 @@ export interface DashboardAnalytics {
 
 export const dashboardAnalyticsApi = {
   get: () => api.get<DashboardAnalytics>("/dashboard/analytics").then((r) => r.data),
+
+  // Same shape, scoped to the signed-in Principal/Vice Principal — see
+  // TeacherSelfHandler.Analytics on the backend.
+  getForLeadership: () =>
+    api.get<DashboardAnalytics>("/me/teacher/analytics").then((r) => r.data),
 };

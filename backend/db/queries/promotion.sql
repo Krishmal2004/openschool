@@ -51,6 +51,8 @@ LIMIT 1;
 -- name: ListStudentTotalMarksForTerm :many
 -- per-student total marks for one term, across every subject they have a
 -- mark for — a manual-distribution sort aid, not an auto-ranking algorithm.
+-- Absent subjects are excluded from both sides so an "AB" doesn't drag a
+-- student's total down the way a genuine zero would.
 -- cast to float8 rather than leaving as numeric — sqlc's static analyzer
 -- (no live DB connection) mis-infers a bare SUM(numeric) as int64, which
 -- would silently truncate marks with a fractional part.
@@ -59,7 +61,7 @@ SELECT
     SUM(marks)::float8     AS total_marks,
     SUM(max_marks)::float8 AS total_max_marks
 FROM term_marks
-WHERE term_id = $1 AND student_id = ANY(sqlc.arg(student_ids)::uuid[])
+WHERE term_id = $1 AND student_id = ANY(sqlc.arg(student_ids)::uuid[]) AND NOT is_absent
 GROUP BY student_id;
 
 -- name: CountClassesInYearByIDs :one
