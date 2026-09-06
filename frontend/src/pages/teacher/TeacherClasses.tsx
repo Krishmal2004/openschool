@@ -133,7 +133,8 @@ export default function TeacherClasses() {
               {[
                 ["Grade", activeClass.grade_name],
                 ["Class", activeClass.class_name],
-                ["Subjects you teach", activeClass.subjects.join(", ")],
+                ["Your role", activeClass.isFormTeacher ? "Form Teacher" : "Subject Teacher"],
+                ["Subjects you teach", activeClass.subjects.length > 0 ? activeClass.subjects.join(", ") : "—"],
                 ["Students", roster?.length ?? 0],
               ].map(([label, value]) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.45rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem", gap: "1rem" }}>

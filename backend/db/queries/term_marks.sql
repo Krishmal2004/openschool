@@ -5,14 +5,16 @@ INSERT INTO term_marks (
     term_id,
     marks,
     max_marks,
+    is_absent,
     entered_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 ON CONFLICT (student_id, subject_id, term_id)
 DO UPDATE SET
     marks      = EXCLUDED.marks,
     max_marks  = EXCLUDED.max_marks,
+    is_absent  = EXCLUDED.is_absent,
     entered_by = EXCLUDED.entered_by,
     updated_at = NOW()
 RETURNING *;
@@ -27,7 +29,8 @@ SELECT
     sp.index_number,
     tm.id          AS term_mark_id,
     tm.marks,
-    tm.max_marks
+    tm.max_marks,
+    tm.is_absent
 FROM student_profiles sp
 INNER JOIN class_students cs ON cs.student_id = sp.id
 LEFT JOIN term_marks tm
@@ -44,6 +47,7 @@ SELECT
     tm.id,
     tm.marks,
     tm.max_marks,
+    tm.is_absent,
     s.id         AS subject_id,
     s.name       AS subject_name,
     s.code       AS subject_code,

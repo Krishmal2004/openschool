@@ -22,22 +22,23 @@ export function AppHeaderBrand() {
   );
 }
 
-export function AppHeaderActions() {
+export function AppHeaderActions({ showSearch = false }: { showSearch?: boolean }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   return (
     <HeaderGlobalBar style={{ display: "flex", alignItems: "center" }}>
-      {searchExpanded ? (
-        <GlobalSearch autoFocus onClose={() => setSearchExpanded(false)} />
-      ) : (
-        <HeaderGlobalAction
-          aria-label="Search"
-          onClick={() => setSearchExpanded(true)}
-        >
-          <Search size={20} className="os-header-icon" />
-        </HeaderGlobalAction>
-      )}
+      {showSearch &&
+        (searchExpanded ? (
+          <GlobalSearch autoFocus onClose={() => setSearchExpanded(false)} />
+        ) : (
+          <HeaderGlobalAction
+            aria-label="Search"
+            onClick={() => setSearchExpanded(true)}
+          >
+            <Search size={20} className="os-header-icon" />
+          </HeaderGlobalAction>
+        ))}
       <HeaderGlobalAction aria-label="Change password" onClick={() => setChangingPassword(true)}>
         <Password size={20} className="os-header-icon" />
       </HeaderGlobalAction>

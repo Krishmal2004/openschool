@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/openschool-org/openschool/db/sqlc"
@@ -18,12 +19,13 @@ import (
 // teacherOrAdmin routes (e.g. GET /teachers/:id/workload) using that ID,
 // exactly like the admin UI would for any other teacher.
 type TeacherSelfHandler struct {
-	teachers   *repositories.TeacherRepository
-	school     *repositories.SchoolRepository
-	positions  *services.PositionService
-	societies  *services.SocietyService
-	dashboard  *services.DashboardService
-	timetables *timetableservices.TimetableService
+	teachers        *repositories.TeacherRepository
+	school          *repositories.SchoolRepository
+	positions       *services.PositionService
+	societies       *services.SocietyService
+	dashboard       *services.DashboardService
+	timetables      *timetableservices.TimetableService
+	staffAttendance *services.StaffAttendanceService
 }
 
 func NewTeacherSelfHandler(
@@ -33,14 +35,16 @@ func NewTeacherSelfHandler(
 	societies *services.SocietyService,
 	dashboard *services.DashboardService,
 	timetables *timetableservices.TimetableService,
+	staffAttendance *services.StaffAttendanceService,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{
-		teachers:   teachers,
-		school:     school,
-		positions:  positions,
-		societies:  societies,
-		dashboard:  dashboard,
-		timetables: timetables,
+		teachers:        teachers,
+		school:          school,
+		positions:       positions,
+		societies:       societies,
+		dashboard:       dashboard,
+		timetables:      timetables,
+		staffAttendance: staffAttendance,
 	}
 }
 
@@ -276,4 +280,46 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, list)
+}
+
+// Attendance godoc
+// @Summary      The signed-in teacher's own staff-attendance history for a month
+// @Description  Distinct from student attendance marking (/classes/:id/attendance) — this is the teacher's own presence record. Always scoped to the caller's own teacher profile, never an arbitrary :id, so it can't be used to look up another teacher's attendance.
+// @Tags         teacher
+// @Produce      json
+// @Param        year query int true "Year"
+// @Param        month query int true "Month (1-12)"
+// @Success      200  {array}   db.StaffAttendanceRecord
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /me/teacher/attendance [get]
+func (h *TeacherSelfHandler) Attendance(c *gin.Context) {
+	callerID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid caller identity"})
+		return
+	}
+
+	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
+		return
+	}
+
+	year, month, err := parseYearMonth(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	from := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	to := from.AddDate(0, 1, -1)
+
+	records, err := h.staffAttendance.TeacherHistory(c.Request.Context(), teacher.ID, from, to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, records)
 }

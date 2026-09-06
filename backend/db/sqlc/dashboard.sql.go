@@ -44,6 +44,7 @@ INNER JOIN class_students cs ON cs.student_id = sp.id
 INNER JOIN classes c ON c.id = cs.class_id
     AND c.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1)
 INNER JOIN grades g ON g.id = c.grade_id
+WHERE NOT tm.is_absent
 GROUP BY c.id, c.name, g.name, g.sort_order
 ORDER BY g.sort_order ASC, c.name ASC
 `
@@ -81,6 +82,7 @@ SELECT
     COUNT(DISTINCT tm.student_id) AS students_with_marks
 FROM term_marks tm
 INNER JOIN terms t ON t.id = tm.term_id AND t.is_current = TRUE
+WHERE NOT tm.is_absent
 `
 
 type DashboardExaminationSummaryRow struct {
@@ -107,6 +109,7 @@ INNER JOIN class_students cs ON cs.student_id = sp.id
 INNER JOIN classes c ON c.id = cs.class_id
     AND c.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1)
 INNER JOIN grades g ON g.id = c.grade_id
+WHERE NOT tm.is_absent
 GROUP BY g.id, g.name, g.sort_order
 ORDER BY g.sort_order ASC
 `
@@ -458,6 +461,7 @@ SELECT
 FROM term_marks tm
 INNER JOIN subjects s ON s.id = tm.subject_id
 INNER JOIN terms t ON t.id = tm.term_id AND t.is_current = TRUE
+WHERE NOT tm.is_absent
 GROUP BY s.id, s.name
 ORDER BY s.name ASC
 `
@@ -468,7 +472,8 @@ type DashboardSubjectPerformanceRow struct {
 	Entries           int64          `json:"entries"`
 }
 
-// average mark % per subject for the current term.
+// average mark % per subject for the current term. Absences are excluded —
+// an "AB" isn't a zero-score performance data point.
 func (q *Queries) DashboardSubjectPerformance(ctx context.Context) ([]DashboardSubjectPerformanceRow, error) {
 	rows, err := q.db.Query(ctx, dashboardSubjectPerformance)
 	if err != nil {

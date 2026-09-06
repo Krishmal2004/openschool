@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -11,12 +12,15 @@ import (
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
+var ErrTeacherNotQualifiedForSubject = errors.New("teacher does not hold this subject as a qualification — assign it on the Teacher Subjects page first")
+
 type ClassService struct {
-	repo *repositories.ClassRepository
+	repo        *repositories.ClassRepository
+	teacherRepo *repositories.TeacherRepository
 }
 
-func NewClassService(repo *repositories.ClassRepository) *ClassService {
-	return &ClassService{repo: repo}
+func NewClassService(repo *repositories.ClassRepository, teacherRepo *repositories.TeacherRepository) *ClassService {
+	return &ClassService{repo: repo, teacherRepo: teacherRepo}
 }
 
 func (s *ClassService) CreateClass(ctx context.Context, req models.CreateClassRequest) (db.Class, error) {
@@ -95,7 +99,20 @@ func (s *ClassService) AssignMonitors(ctx context.Context, classID uuid.UUID, re
 	return s.repo.AssignMonitors(ctx, classID, req.GirlMonitorID, req.BoyMonitorID)
 }
 
-func (s *ClassService) AssignSubjectTeacher(ctx context.Context, classID uuid.UUID, req models.AssignSubjectTeacherRequest) error {
+// AssignSubjectTeacher links a teacher to teach a subject for a class.
+// The teacher must already hold that subject as a teacher_subjects
+// qualification (assigned from the Teacher Subjects admin page) — this
+// keeps the per-class assignment and the teacher's declared qualifications
+// from silently diverging.
+func (s *ClassService) AssignSubjectTeacher(ctx context.Context, classID uuid.UUID, req models.AssignClassSubjectTeacherRequest) error {
+	qualified, err := s.teacherRepo.HasSubject(ctx, req.TeacherID, req.SubjectID)
+	if err != nil {
+		return err
+	}
+	if !qualified {
+		return ErrTeacherNotQualifiedForSubject
+	}
+
 	return s.repo.AssignSubjectTeacher(ctx, db.AssignSubjectTeacherToClassParams{
 		ClassID:   classID,
 		SubjectID: req.SubjectID,

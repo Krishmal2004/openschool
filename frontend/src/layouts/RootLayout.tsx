@@ -127,7 +127,7 @@ export default function RootLayout() {
     <>
       <Header aria-label="OpenSchool">
         <AppHeaderBrand />
-        <AppHeaderActions />
+        <AppHeaderActions showSearch />
       </Header>
 
       <div className="os-layout">

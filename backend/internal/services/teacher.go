@@ -235,7 +235,10 @@ func (s *TeacherService) AssignSubject(ctx context.Context, teacherID uuid.UUID,
 }
 
 // RemoveSubject revokes a subject qualification. A teacher with no subjects
-// left cannot be an active teaching staff member, per business rule.
+// left cannot be an active teaching staff member, per business rule — but
+// only once they're also not actually teaching any class subject
+// (class_subject_teachers), so removing a now-redundant global
+// qualification never deactivates a teacher still scheduled to teach.
 func (s *TeacherService) RemoveSubject(ctx context.Context, teacherID uuid.UUID, subjectID uuid.UUID) error {
 	if err := s.repo.RemoveSubject(ctx, teacherID, subjectID); err != nil {
 		return err
@@ -245,10 +248,19 @@ func (s *TeacherService) RemoveSubject(ctx context.Context, teacherID uuid.UUID,
 	if err != nil {
 		return err
 	}
-	if remaining == 0 {
-		return s.repo.SetActiveStatus(ctx, teacherID, false)
+	if remaining > 0 {
+		return nil
 	}
-	return nil
+
+	workload, err := s.repo.ListWorkload(ctx, teacherID)
+	if err != nil {
+		return err
+	}
+	if len(workload) > 0 {
+		return nil
+	}
+
+	return s.repo.SetActiveStatus(ctx, teacherID, false)
 }
 
 // GetWorkload lists every class+subject a teacher is assigned to teach.
@@ -258,4 +270,10 @@ func (s *TeacherService) GetWorkload(ctx context.Context, teacherID uuid.UUID) (
 
 func (s *TeacherService) ListSubjects(ctx context.Context, teacherID uuid.UUID) ([]db.Subject, error) {
 	return s.repo.ListSubjects(ctx, teacherID)
+}
+
+// ListBySubject returns every teacher qualified to teach the given subject —
+// powers the class-subject assignment teacher picker.
+func (s *TeacherService) ListBySubject(ctx context.Context, subjectID uuid.UUID) ([]db.TeacherProfile, error) {
+	return s.repo.ListBySubject(ctx, subjectID)
 }

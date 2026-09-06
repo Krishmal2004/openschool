@@ -328,6 +328,14 @@ func (s *GradeSectionService) generatePeriodsFromSettings(ctx context.Context, s
 	totalPeriods := int64(settings.NumberOfPeriods)
 	periodTemplateDuration := int64(settings.PeriodDurationMinutes) * 60 * 1_000_000
 
+	// Splitting the day into a before-interval and after-interval block only
+	// makes sense with at least 2 periods total; with fewer, fall back to
+	// the sequential generator instead of risking periodsBefore/periodsAfter
+	// clamping to 0 and dividing by zero below.
+	if totalPeriods < 2 {
+		return s.generatePeriodsSequential(ctx, section, settings)
+	}
+
 	beforeDuration := intervalStart - schoolStart
 	periodsBefore := int64(math.Round(float64(beforeDuration) / float64(periodTemplateDuration)))
 	if periodsBefore < 1 {

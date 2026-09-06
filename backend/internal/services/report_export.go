@@ -147,20 +147,26 @@ func (s *ReportExportService) ExportMarks(ctx context.Context, req models.MarksR
 		if !m.TermMarkID.Valid {
 			continue // not yet marked — excluded from the export
 		}
-		pct := 0.0
-		if m.MaxMarks.Valid && m.Marks.Valid {
+		marksDisplay := formatNumeric(m.Marks)
+		pctDisplay := "0.0"
+		if m.IsAbsent.Valid && m.IsAbsent.Bool {
+			marksDisplay = "AB"
+			pctDisplay = "AB"
+		} else if m.MaxMarks.Valid && m.Marks.Valid {
 			maxF := numericToFloat64(m.MaxMarks)
 			marksF := numericToFloat64(m.Marks)
+			pct := 0.0
 			if maxF > 0 {
 				pct = marksF / maxF * 100
 			}
+			pctDisplay = fmt.Sprintf("%.1f", pct)
 		}
 		values := map[string]string{
 			"student":      m.StudentName,
 			"index_number": m.IndexNumber,
-			"marks":        formatNumeric(m.Marks),
+			"marks":        marksDisplay,
 			"max_marks":    formatNumeric(m.MaxMarks),
-			"percentage":   fmt.Sprintf("%.1f", pct),
+			"percentage":   pctDisplay,
 		}
 		row := make([]string, len(columns))
 		for i, c := range columns {

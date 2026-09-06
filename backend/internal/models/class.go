@@ -35,7 +35,7 @@ type AssignClassMonitorsRequest struct {
 	BoyMonitorID  *uuid.UUID `json:"boy_monitor_id"`
 }
 
-type AssignSubjectTeacherRequest struct {
+type AssignClassSubjectTeacherRequest struct {
 	SubjectID uuid.UUID `json:"subject_id" binding:"required"`
 	TeacherID uuid.UUID `json:"teacher_id" binding:"required"`
 }

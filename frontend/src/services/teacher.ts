@@ -109,4 +109,10 @@ export const teacherApi = {
 
   removeSubject: (id: string, subjectId: string) =>
     api.delete(`/teachers/${id}/subjects/${subjectId}`).then((r) => r.data),
+
+  // Every teacher qualified (holds a teacher_subjects row) for a subject —
+  // scopes the class-subject-teacher assignment picker to qualified
+  // teachers only.
+  listBySubject: (subjectId: string) =>
+    api.get<Teacher[]>(`/subjects/${subjectId}/teachers`).then((r) => r.data),
 };

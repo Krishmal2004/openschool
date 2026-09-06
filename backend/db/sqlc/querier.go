@@ -107,7 +107,8 @@ type Querier interface {
 	// distinct actively-enrolled students per academic year, most recent last.
 	DashboardStudentGrowth(ctx context.Context) ([]DashboardStudentGrowthRow, error)
 	DashboardStudentHouseDistribution(ctx context.Context) ([]DashboardStudentHouseDistributionRow, error)
-	// average mark % per subject for the current term.
+	// average mark % per subject for the current term. Absences are excluded —
+	// an "AB" isn't a zero-score performance data point.
 	DashboardSubjectPerformance(ctx context.Context) ([]DashboardSubjectPerformanceRow, error)
 	DashboardTimetableCompletion(ctx context.Context) (DashboardTimetableCompletionRow, error)
 	DeactivateUser(ctx context.Context, id uuid.UUID) (User, error)
@@ -488,6 +489,8 @@ type Querier interface {
 	ListStudentMarksByTerm(ctx context.Context, arg ListStudentMarksByTermParams) ([]ListStudentMarksByTermRow, error)
 	// per-student total marks for one term, across every subject they have a
 	// mark for — a manual-distribution sort aid, not an auto-ranking algorithm.
+	// Absent subjects are excluded from both sides so an "AB" doesn't drag a
+	// student's total down the way a genuine zero would.
 	// cast to float8 rather than leaving as numeric — sqlc's static analyzer
 	// (no live DB connection) mis-infers a bare SUM(numeric) as int64, which
 	// would silently truncate marks with a fractional part.

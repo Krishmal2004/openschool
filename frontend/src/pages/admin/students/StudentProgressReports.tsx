@@ -10,6 +10,7 @@ import {
 } from "../../../queries/useStudentPortfolio";
 import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 export default function StudentProgressReports({ studentId }: { studentId: string }) {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -20,6 +21,7 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
 
   const [termId, setTermId] = useState("");
   const [narrative, setNarrative] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!termId || !narrative.trim()) return;
@@ -88,12 +90,23 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
                 renderIcon={TrashCan}
                 kind="ghost"
                 size="sm"
-                onClick={() => deleteReport.mutate(r.id)}
+                onClick={() => setPendingDeleteId(r.id)}
               />
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        open={pendingDeleteId !== null}
+        title="Delete progress report"
+        description="This will permanently remove this progress report. This action cannot be undone."
+        isPending={deleteReport.isPending}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) deleteReport.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+        }}
+      />
     </div>
   );
 }

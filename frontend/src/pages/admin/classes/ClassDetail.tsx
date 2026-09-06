@@ -110,7 +110,7 @@ export default function ClassDetail() {
   );
 
   // Sri Lankan schools usually name a class's homeroom the same as the
-  // class itself (e.g. class "13-M1" sits in room "13-M1") — suggest that
+  // class itself (e.g. class "13-M1" sits in room "13-M1") - suggest that
   // match automatically while editing, but let the admin override it.
   const suggestedHomeClassroom = nameEdit.trim()
     ? classrooms?.find((c) => c.room_type === "regular" && c.name.trim().toLowerCase() === nameEdit.trim().toLowerCase())
@@ -308,7 +308,7 @@ export default function ClassDetail() {
                 </TabPanel>
 
                 <TabPanel style={{ padding: 0 }}>
-                  <SubjectsTab classId={id} />
+                  <SubjectsTab classId={id} academicYearId={cls.academic_year_id} />
                 </TabPanel>
 
                 <TabPanel style={{ padding: 0 }}>
@@ -336,12 +336,12 @@ export default function ClassDetail() {
               </div>
               <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
                 {[
-                  ["Grade", gradeName ?? "—"],
+                  ["Grade", gradeName ?? "-"],
                   ["Stream", streamName ?? "None"],
                   ["Medium", mediumName ?? "Not designated"],
                   ["Home Classroom", homeClassroomName ?? "Not assigned"],
                   ["Enrolled", `${students?.length ?? 0}`],
-                  ["Academic Year", academicYearLabel ?? "—"],
+                  ["Academic Year", academicYearLabel ?? "-"],
                 ].map(([label, value]) => (
                   <div
                     key={label}

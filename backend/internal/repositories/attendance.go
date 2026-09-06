@@ -54,15 +54,6 @@ func (r *AttendanceRepository) DeleteSession(ctx context.Context, id uuid.UUID) 
 	return r.queries.DeleteAttendanceSession(ctx, id)
 }
 
-func (r *AttendanceRepository) MarkAttendance(ctx context.Context, sessionID uuid.UUID, studentID uuid.UUID, status string, note string) (db.AttendanceRecord, error) {
-	return r.queries.MarkAttendance(ctx, db.MarkAttendanceParams{
-		SessionID: sessionID,
-		StudentID: studentID,
-		Status:    status,
-		Note:      pgtype.Text{String: note, Valid: note != ""},
-	})
-}
-
 // MarkAttendanceInput is one row of a MarkAttendanceBatch call.
 type MarkAttendanceInput struct {
 	StudentID uuid.UUID
@@ -102,11 +93,6 @@ func (r *AttendanceRepository) MarkAttendanceBatch(ctx context.Context, sessionI
 		return nil, err
 	}
 	return out, nil
-}
-
-// GetRecord returns the existing attendance record, or pgx.ErrNoRows if unmarked this session — used to detect status transitions (e.g. into "absent") before upserting.
-func (r *AttendanceRepository) GetRecord(ctx context.Context, sessionID, studentID uuid.UUID) (db.AttendanceRecord, error) {
-	return r.queries.GetAttendanceRecord(ctx, db.GetAttendanceRecordParams{SessionID: sessionID, StudentID: studentID})
 }
 
 // ListRecordsBySession returns every existing record for a session in one

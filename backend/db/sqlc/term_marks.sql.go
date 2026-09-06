@@ -23,7 +23,7 @@ func (q *Queries) DeleteTermMark(ctx context.Context, id uuid.UUID) error {
 }
 
 const getTermMarkByID = `-- name: GetTermMarkByID :one
-SELECT id, student_id, subject_id, term_id, marks, max_marks, entered_by, created_at, updated_at FROM term_marks
+SELECT id, student_id, subject_id, term_id, marks, max_marks, entered_by, created_at, updated_at, is_absent FROM term_marks
 WHERE id = $1
 `
 
@@ -40,6 +40,7 @@ func (q *Queries) GetTermMarkByID(ctx context.Context, id uuid.UUID) (TermMark, 
 		&i.EnteredBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsAbsent,
 	)
 	return i, err
 }
@@ -51,7 +52,8 @@ SELECT
     sp.index_number,
     tm.id          AS term_mark_id,
     tm.marks,
-    tm.max_marks
+    tm.max_marks,
+    tm.is_absent
 FROM student_profiles sp
 INNER JOIN class_students cs ON cs.student_id = sp.id
 LEFT JOIN term_marks tm
@@ -75,6 +77,7 @@ type ListClassMarksForTermSubjectRow struct {
 	TermMarkID  pgtype.UUID    `json:"term_mark_id"`
 	Marks       pgtype.Numeric `json:"marks"`
 	MaxMarks    pgtype.Numeric `json:"max_marks"`
+	IsAbsent    pgtype.Bool    `json:"is_absent"`
 }
 
 // Every student in the class, with their mark for this term+subject if one
@@ -96,6 +99,7 @@ func (q *Queries) ListClassMarksForTermSubject(ctx context.Context, arg ListClas
 			&i.TermMarkID,
 			&i.Marks,
 			&i.MaxMarks,
+			&i.IsAbsent,
 		); err != nil {
 			return nil, err
 		}
@@ -112,6 +116,7 @@ SELECT
     tm.id,
     tm.marks,
     tm.max_marks,
+    tm.is_absent,
     s.id         AS subject_id,
     s.name       AS subject_name,
     s.code       AS subject_code,
@@ -141,6 +146,7 @@ type ListStudentMarksByTermRow struct {
 	ID          uuid.UUID      `json:"id"`
 	Marks       pgtype.Numeric `json:"marks"`
 	MaxMarks    pgtype.Numeric `json:"max_marks"`
+	IsAbsent    bool           `json:"is_absent"`
 	SubjectID   uuid.UUID      `json:"subject_id"`
 	SubjectName string         `json:"subject_name"`
 	SubjectCode string         `json:"subject_code"`
@@ -163,6 +169,7 @@ func (q *Queries) ListStudentMarksByTerm(ctx context.Context, arg ListStudentMar
 			&i.ID,
 			&i.Marks,
 			&i.MaxMarks,
+			&i.IsAbsent,
 			&i.SubjectID,
 			&i.SubjectName,
 			&i.SubjectCode,
@@ -186,17 +193,19 @@ INSERT INTO term_marks (
     term_id,
     marks,
     max_marks,
+    is_absent,
     entered_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 ON CONFLICT (student_id, subject_id, term_id)
 DO UPDATE SET
     marks      = EXCLUDED.marks,
     max_marks  = EXCLUDED.max_marks,
+    is_absent  = EXCLUDED.is_absent,
     entered_by = EXCLUDED.entered_by,
     updated_at = NOW()
-RETURNING id, student_id, subject_id, term_id, marks, max_marks, entered_by, created_at, updated_at
+RETURNING id, student_id, subject_id, term_id, marks, max_marks, entered_by, created_at, updated_at, is_absent
 `
 
 type UpsertTermMarkParams struct {
@@ -205,6 +214,7 @@ type UpsertTermMarkParams struct {
 	TermID    uuid.UUID      `json:"term_id"`
 	Marks     pgtype.Numeric `json:"marks"`
 	MaxMarks  pgtype.Numeric `json:"max_marks"`
+	IsAbsent  bool           `json:"is_absent"`
 	EnteredBy pgtype.UUID    `json:"entered_by"`
 }
 
@@ -215,6 +225,7 @@ func (q *Queries) UpsertTermMark(ctx context.Context, arg UpsertTermMarkParams) 
 		arg.TermID,
 		arg.Marks,
 		arg.MaxMarks,
+		arg.IsAbsent,
 		arg.EnteredBy,
 	)
 	var i TermMark
@@ -228,6 +239,7 @@ func (q *Queries) UpsertTermMark(ctx context.Context, arg UpsertTermMarkParams) 
 		&i.EnteredBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsAbsent,
 	)
 	return i, err
 }

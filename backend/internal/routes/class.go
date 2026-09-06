@@ -10,7 +10,8 @@ import (
 
 func RegisterClassRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
 	repo := repositories.NewClassRepository(pool)
-	service := services.NewClassService(repo)
+	teacherRepo := repositories.NewTeacherRepository(pool)
+	service := services.NewClassService(repo, teacherRepo)
 	handler := handlers.NewClassHandler(service)
 
 	admin.POST("/classes", handler.Create)

@@ -65,7 +65,8 @@ WHERE date >= date_trunc('month', CURRENT_DATE)
   AND date <  date_trunc('month', CURRENT_DATE) + INTERVAL '1 month';
 
 -- name: DashboardSubjectPerformance :many
--- average mark % per subject for the current term.
+-- average mark % per subject for the current term. Absences are excluded —
+-- an "AB" isn't a zero-score performance data point.
 SELECT
     s.name AS subject_name,
     ROUND(AVG(tm.marks / tm.max_marks * 100), 1) AS average_percentage,
@@ -73,6 +74,7 @@ SELECT
 FROM term_marks tm
 INNER JOIN subjects s ON s.id = tm.subject_id
 INNER JOIN terms t ON t.id = tm.term_id AND t.is_current = TRUE
+WHERE NOT tm.is_absent
 GROUP BY s.id, s.name
 ORDER BY s.name ASC;
 
@@ -82,7 +84,8 @@ SELECT
     COUNT(*) AS entries,
     COUNT(DISTINCT tm.student_id) AS students_with_marks
 FROM term_marks tm
-INNER JOIN terms t ON t.id = tm.term_id AND t.is_current = TRUE;
+INNER JOIN terms t ON t.id = tm.term_id AND t.is_current = TRUE
+WHERE NOT tm.is_absent;
 
 -- name: DashboardGradeWisePerformance :many
 SELECT
@@ -95,6 +98,7 @@ INNER JOIN class_students cs ON cs.student_id = sp.id
 INNER JOIN classes c ON c.id = cs.class_id
     AND c.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1)
 INNER JOIN grades g ON g.id = c.grade_id
+WHERE NOT tm.is_absent
 GROUP BY g.id, g.name, g.sort_order
 ORDER BY g.sort_order ASC;
 
@@ -110,6 +114,7 @@ INNER JOIN class_students cs ON cs.student_id = sp.id
 INNER JOIN classes c ON c.id = cs.class_id
     AND c.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1)
 INNER JOIN grades g ON g.id = c.grade_id
+WHERE NOT tm.is_absent
 GROUP BY c.id, c.name, g.name, g.sort_order
 ORDER BY g.sort_order ASC, c.name ASC;
 

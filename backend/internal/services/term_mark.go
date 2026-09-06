@@ -100,7 +100,15 @@ func (s *TermMarkService) BulkUpsertMarks(ctx context.Context, classID uuid.UUID
 			maxMarks = 100
 		}
 
-		marksNumeric, err := pgNumeric(entry.Marks)
+		// Absent overrides whatever marks value was submitted — stored as 0
+		// so the NOT NULL/CHECK(marks >= 0) constraint still holds, with
+		// is_absent distinguishing it from a genuine zero score.
+		marksValue := entry.Marks
+		if entry.IsAbsent {
+			marksValue = 0
+		}
+
+		marksNumeric, err := pgNumeric(marksValue)
 		if err != nil {
 			return nil, err
 		}
@@ -115,6 +123,7 @@ func (s *TermMarkService) BulkUpsertMarks(ctx context.Context, classID uuid.UUID
 			TermID:    termID,
 			Marks:     marksNumeric,
 			MaxMarks:  maxMarksNumeric,
+			IsAbsent:  entry.IsAbsent,
 			EnteredBy: pgtype.UUID{Bytes: actor.ID, Valid: true},
 		})
 		if err != nil {

@@ -248,7 +248,7 @@ func (s *TimetableService) GenerateForGradeSection(ctx context.Context, gradeSec
 	for teacherID := range teacherTaskCount {
 		avail, err := s.availabilityRepo.ListByTeacherYear(ctx, teacherID, academicYearID)
 		if err != nil {
-			continue
+			return models.GenerationResult{}, fmt.Errorf("failed to load teacher availability: %w", err)
 		}
 		for _, a := range avail {
 			markBusy(teacherUnavailable, teacherID, genSlot{Day: a.DayOfWeek, Period: a.PeriodNumber})
@@ -297,7 +297,11 @@ func (s *TimetableService) GenerateForGradeSection(ctx context.Context, gradeSec
 			var ok bool
 			labs, ok = labsBySubject[task.SubjectID]
 			if !ok {
-				labs, _ = s.classroomRepo.ListBySubject(ctx, task.SubjectID)
+				var err error
+				labs, err = s.classroomRepo.ListBySubject(ctx, task.SubjectID)
+				if err != nil {
+					return models.GenerationResult{}, fmt.Errorf("failed to load lab classrooms for subject: %w", err)
+				}
 				labsBySubject[task.SubjectID] = labs
 			}
 		}

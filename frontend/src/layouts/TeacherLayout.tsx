@@ -9,6 +9,7 @@ import {
   Renew,
   Idea,
   EventSchedule,
+  Calendar,
   Notification,
   Settings,
   Report,
@@ -38,7 +39,10 @@ function teachingNavGroups(includeReview: boolean): NavGroup[] {
     },
     {
       label: "Operations",
-      items: [{ path: "/t/attendance", label: "Attendance", Icon: EventSchedule, exact: false }],
+      items: [
+        { path: "/t/attendance", label: "Class Attendance", Icon: EventSchedule, exact: false },
+        { path: "/t/my-attendance", label: "My Attendance", Icon: Calendar, exact: true },
+      ],
     },
   ];
 }

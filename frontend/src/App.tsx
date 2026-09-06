@@ -63,6 +63,7 @@ const GenerateTimetable = lazy(() => import("./pages/admin/timetable/GenerateTim
 const TeacherDashboard = lazy(() => import("./pages/teacher/dashboard/TeacherDashboard"));
 const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
 const TeacherAttendance = lazy(() => import("./pages/teacher/TeacherAttendance"));
+const TeacherMyAttendance = lazy(() => import("./pages/teacher/TeacherMyAttendance"));
 const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 const TeacherTimetable = lazy(() => import("./pages/teacher/TeacherTimetable"));
 const TimetableReview = lazy(() => import("./pages/teacher/TimetableReview"));
@@ -137,6 +138,7 @@ function App() {
             <Route index element={<TeacherDashboard />} />
             <Route path="/t/classes" element={<TeacherClasses />} />
             <Route path="/t/attendance" element={<TeacherAttendance />} />
+            <Route path="/t/my-attendance" element={<TeacherMyAttendance />} />
             <Route path="/t/timetable" element={<TeacherTimetable />} />
             <Route path="/t/timetable/review" element={<TimetableReview />} />
             <Route path="/t/my-society" element={<MySociety />} />

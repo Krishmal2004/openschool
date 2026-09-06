@@ -72,6 +72,28 @@ func (r *TeacherRepository) ListSubjects(ctx context.Context, teacherID uuid.UUI
 	return r.queries.ListSubjectsByTeacher(ctx, teacherID)
 }
 
+// ListBySubject returns every teacher qualified to teach the given subject
+// (i.e. holding a teacher_subjects row for it) — powers the class-subject
+// assignment teacher picker, scoped to qualified teachers only.
+func (r *TeacherRepository) ListBySubject(ctx context.Context, subjectID uuid.UUID) ([]db.TeacherProfile, error) {
+	return r.queries.ListTeachersBySubject(ctx, subjectID)
+}
+
+// HasSubject reports whether a teacher holds a teacher_subjects
+// qualification for the given subject.
+func (r *TeacherRepository) HasSubject(ctx context.Context, teacherID, subjectID uuid.UUID) (bool, error) {
+	subjects, err := r.queries.ListSubjectsByTeacher(ctx, teacherID)
+	if err != nil {
+		return false, err
+	}
+	for _, s := range subjects {
+		if s.ID == subjectID {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (r *TeacherRepository) CountSubjects(ctx context.Context, teacherID uuid.UUID) (int64, error) {
 	return r.queries.CountSubjectsByTeacher(ctx, teacherID)
 }

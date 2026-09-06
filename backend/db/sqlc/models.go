@@ -472,6 +472,7 @@ type TermMark struct {
 	EnteredBy pgtype.UUID        `json:"entered_by"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	IsAbsent  bool               `json:"is_absent"`
 }
 
 type Timetable struct {

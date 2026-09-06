@@ -60,7 +60,7 @@ export default function AddClass() {
   const markTouched = (field: keyof Touched) => setTouched((t) => ({ ...t, [field]: true }));
 
   // Sri Lankan schools usually name a class's homeroom the same as the
-  // class itself (e.g. class "13-M1" sits in room "13-M1") — suggest that
+  // class itself (e.g. class "13-M1" sits in room "13-M1") - suggest that
   // match automatically, but let the admin override it.
   const suggestedHomeClassroom = form.name.trim()
     ? regularClassrooms?.find((c) => c.name.trim().toLowerCase() === form.name.trim().toLowerCase())
@@ -89,7 +89,7 @@ export default function AddClass() {
     if (!isValid) return;
     setRoomError(null);
 
-    // No room picked and no name match found — automatically create one
+    // No room picked and no name match found - automatically create one
     // named after the class itself (the common Sri Lankan case: a class's
     // homeroom is just called the same thing as the class, e.g. "13-M1").
     let homeClassroomId = effectiveHomeClassroomId;
@@ -214,7 +214,7 @@ export default function AddClass() {
             <Select
               id="medium"
               labelText="Medium (optional)"
-              helperText="Set this only if the section is reserved for one language of instruction — medium-designated classes carry students straight over at promotion instead of being reshuffled."
+              helperText="Set this only if the section is reserved for one language of instruction - medium-designated classes carry students straight over at promotion instead of being reshuffled."
               value={form.medium_id}
               onChange={(e) => set("medium_id", e.target.value)}
             >
@@ -229,7 +229,7 @@ export default function AddClass() {
               labelText="Home Classroom (optional)"
               helperText={
                 !form.home_classroom_id && suggestedHomeClassroom
-                  ? "Auto-suggested from the class name — pick a different room to override."
+                  ? "Auto-suggested from the class name - pick a different room to override."
                   : !form.home_classroom_id && form.name.trim()
                     ? `Left as-is, a new room named "${form.name.trim()}" will be created automatically as this class's homeroom.`
                     : "Students stay in this room all day; teachers rotate in."
@@ -250,7 +250,7 @@ export default function AddClass() {
               selectedId={form.form_teacher_id}
               onSelect={(id) => set("form_teacher_id", id)}
               getId={(t) => t.id}
-              itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
+              itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
               placeholder="Search teachers by name or employee number…"
             />
           </div>

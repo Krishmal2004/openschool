@@ -43,7 +43,14 @@ adds a hierarchy used for notification reach and dashboard framing:
 - **Class Teacher** — the form teacher of a specific class (`classes.form_teacher_id`),
   year-scoped.
 - **Subject Teacher** — a teacher assigned to teach a subject in a class
-  (`class_subject_teachers`), year-scoped.
+  (`class_subject_teachers`), year-scoped. Assigning one (from a class's
+  "Subjects & Teachers" tab) requires the teacher already hold that subject
+  as a qualification on the **Teacher Subjects** page (`teacher_subjects`,
+  the single place qualifications are declared) — the teacher picker there
+  is scoped to qualified teachers only, and the backend rejects an
+  unqualified assignment even if attempted directly. Each row also shows
+  whether the pairing is actually covered by the class's currently
+  published timetable.
 
 Rank determines two things in the UI: how much of the school a teacher can
 target when sending a notification (§ Notifications), and what their own
@@ -166,13 +173,30 @@ dashboard shows them (a `RoleBadge` and, for Section Head and above, a
 - **Staff attendance** — one record per staff member per day
   (present/late/absent/leave — a separate status set from student
   attendance), covering both teachers and non-academic staff, with a
-  monthly summary view.
+  monthly summary view. Marked by an admin only; a teacher sees their own
+  record read-only from a dedicated **"My Attendance"** page in the teacher
+  portal (`/me/teacher/attendance`, scoped to the caller's own profile —
+  distinct from "Class Attendance", which is where a teacher marks *their
+  students'* attendance).
 
 ## Academic records
 
-- **Terms** — the school's term/semester structure per academic year.
+- **Terms** — the school's term/semester structure per academic year, with
+  one `is_current` term at a time (same single-current pattern as academic
+  years).
 - **Term marks** — per-subject marks per student per term, with an aggregate
-  ranking query used by promotion (§ below).
+  ranking query used by promotion (§ below). A student can be marked
+  **absent ("AB")** for a subject/term instead of a numeric score
+  (`is_absent`); absent entries are excluded from dashboard averages and
+  the promotion ranking total so an absence never counts as a zero.
+- **Teacher marks entry** (`/t/marks`) — a "My Subjects & Classes" overview
+  grouped by subject, with each class shown as a card carrying a live
+  marks-entered count (e.g. "18/30 entered") for the selected term.
+  Clicking a card opens the entry grid with the current term pre-selected
+  (`terms.is_current`, no manual pick needed for the common case). A term
+  selector at the top doubles as the way to review or enter marks for a
+  past term — the same overview and grid work for any term, not just the
+  current one.
 - **Student portfolio** — progress reports (term-scoped narrative),
   activities (clubs/sports/societies/competitions in one consolidated
   table), leadership roles, awards, and disciplinary records — each a

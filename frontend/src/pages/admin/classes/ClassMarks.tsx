@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Select, SelectItem, NumberInput, Button, InlineNotification } from "@carbon/react";
+import { Select, SelectItem, NumberInput, Button, InlineNotification, Checkbox, Tag } from "@carbon/react";
 import { Save } from "@carbon/icons-react";
-import { useTerms } from "../../../queries/useTerms";
+import { useTerms, useCurrentTerm } from "../../../queries/useTerms";
 import { useSubjects } from "../../../queries/useSubjects";
+import { useClassSubjectTeachers } from "../../../queries/useClasses";
 import { useClassMarks, useSaveClassMarks } from "../../../queries/useTermMarks";
 import { getErrorMessage } from "../../../lib/errorMessage";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
@@ -18,36 +19,49 @@ export default function ClassMarks({
   academicYearId: string;
 }) {
   const { data: terms } = useTerms(academicYearId);
+  const { data: currentTerm } = useCurrentTerm();
   const { data: subjects } = useSubjects();
+  // Scope the subject picker to subjects actually assigned to this class
+  // (class_subject_teachers) rather than every subject in the school.
+  const { data: classSubjectTeachers } = useClassSubjectTeachers(classId);
 
   const [termId, setTermId] = useState("");
+  const [termTouched, setTermTouched] = useState(false);
   const [subjectId, setSubjectId] = useState("");
 
-  const { data: rows, isLoading } = useClassMarks(classId, termId, subjectId);
+  // Auto-select the current term once it loads, unless the admin has
+  // already picked one manually (e.g. to review/enter a past term).
+  const effectiveTermId = termTouched ? termId : termId || currentTerm?.id || "";
+
+  const { data: rows, isLoading } = useClassMarks(classId, effectiveTermId, subjectId);
   const saveMarks = useSaveClassMarks(classId);
 
   // Draft edits keyed by student_id, seeded from the fetched grid whenever
   // the term/subject selection (i.e. a fresh set of rows) changes.
-  const [draft, setDraft] = useState<Record<string, { marks: number; max_marks: number }>>({});
+  const [draft, setDraft] = useState<Record<string, { marks: number; max_marks: number; is_absent: boolean }>>({});
   const [syncedFor, setSyncedFor] = useState("");
-  const rowsKey = `${termId}:${subjectId}`;
-  
+  const rowsKey = `${effectiveTermId}:${subjectId}`;
+
+  const classSubjects = classSubjectTeachers?.map((st) => ({ id: st.subject_id, name: st.subject_name })) ?? [];
   const currentSubject = subjects?.find((s) => s.id === subjectId);
   const defaultMaxMarks = currentSubject?.max_marks ?? 100;
 
   if (rows && syncedFor !== rowsKey) {
     setDraft(
       Object.fromEntries(
-        rows.map((r) => [r.student_id, { marks: r.marks ?? 0, max_marks: r.max_marks ?? defaultMaxMarks }]),
+        rows.map((r) => [
+          r.student_id,
+          { marks: r.marks ?? 0, max_marks: r.max_marks ?? defaultMaxMarks, is_absent: r.is_absent ?? false },
+        ]),
       ),
     );
     setSyncedFor(rowsKey);
   }
 
   const handleSave = () => {
-    if (!termId || !subjectId) return;
+    if (!effectiveTermId || !subjectId) return;
     saveMarks.mutate({
-      term_id: termId,
+      term_id: effectiveTermId,
       subject_id: subjectId,
       entries: Object.entries(draft).map(([student_id, v]) => ({ student_id, ...v })),
     });
@@ -64,18 +78,21 @@ export default function ClassMarks({
             id="marks-term"
             labelText=""
             size="sm"
-            value={termId}
-            onChange={(e) => setTermId(e.target.value)}
+            value={effectiveTermId}
+            onChange={(e) => {
+              setTermId(e.target.value);
+              setTermTouched(true);
+            }}
           >
             <SelectItem value="" text="Choose a term…" />
             {terms?.map((t) => (
-              <SelectItem key={t.id} value={t.id} text={t.name} />
+              <SelectItem key={t.id} value={t.id} text={t.is_current ? `${t.name} (current)` : t.name} />
             ))}
           </Select>
           <div style={{ minWidth: "12rem" }}>
             <EntityCombobox
               id="marks-subject"
-              items={subjects ?? []}
+              items={classSubjects}
               selectedId={subjectId}
               onSelect={setSubjectId}
               getId={(s) => s.id}
@@ -86,7 +103,7 @@ export default function ClassMarks({
         </div>
       </div>
 
-      {!termId || !subjectId ? (
+      {!effectiveTermId || !subjectId ? (
         <EmptyState
           title="Pick a term and subject"
           description="Choose which term test and subject you're recording marks for."
@@ -121,13 +138,16 @@ export default function ClassMarks({
                 <th>Student</th>
                 <th style={{ width: "8rem" }}>Marks</th>
                 <th style={{ width: "8rem" }}>Out of</th>
+                <th style={{ width: "5rem" }}>Absent</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.map((r) => {
+                const isAbsent = draft[r.student_id]?.is_absent ?? false;
+                return (
                 <tr key={r.student_id}>
                   <td className="os-table__mono">{r.index_number}</td>
-                  <td>{r.student_name}</td>
+                  <td>{r.student_name}{isAbsent && <Tag type="red" size="sm" style={{ marginLeft: "0.5rem" }}>AB</Tag>}</td>
                   <td>
                     <NumberInput
                       id={`marks-${r.student_id}`}
@@ -137,6 +157,7 @@ export default function ClassMarks({
                       min={0}
                       max={draft[r.student_id]?.max_marks ?? 100}
                       value={draft[r.student_id]?.marks ?? 0}
+                      disabled={isAbsent}
                       onChange={(_e, { value }) =>
                         setDraft((d) => ({
                           ...d,
@@ -167,8 +188,26 @@ export default function ClassMarks({
                       }
                     />
                   </td>
+                  <td>
+                    <Checkbox
+                      id={`absent-${r.student_id}`}
+                      labelText="AB"
+                      checked={isAbsent}
+                      onChange={(_e, { checked }) =>
+                        setDraft((d) => ({
+                          ...d,
+                          [r.student_id]: {
+                            ...d[r.student_id],
+                            marks: checked ? 0 : d[r.student_id]?.marks ?? 0,
+                            is_absent: checked,
+                          },
+                        }))
+                      }
+                    />
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e0e0e0" }}>

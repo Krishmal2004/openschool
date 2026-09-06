@@ -172,7 +172,7 @@ function MarksTab({ studentId }: { studentId: string }) {
                 </td>
                 <td className="os-table__muted">{m.teacher_name || "—"}</td>
                 <td style={{ textAlign: "right", fontWeight: 600 }}>
-                  {m.marks} / {m.max_marks}
+                  {m.is_absent ? "AB" : `${m.marks} / ${m.max_marks}`}
                 </td>
               </tr>
             ))}

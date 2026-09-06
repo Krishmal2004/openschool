@@ -34,7 +34,7 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const debounced = useDebounced(query, 300);
-  const { data, isFetching } = useGlobalSearch(debounced);
+  const { data, isFetching, isError } = useGlobalSearch(debounced);
 
   const flat: FlatResult[] = useMemo(
     () =>
@@ -121,7 +121,12 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
           {isFetching && flat.length === 0 && (
             <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>Searching…</div>
           )}
-          {!isFetching && flat.length === 0 && (
+          {!isFetching && isError && (
+            <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#da1e28" }}>
+              Search failed — please try again.
+            </div>
+          )}
+          {!isFetching && !isError && flat.length === 0 && (
             <div style={{ padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>
               No matches for &quot;{debounced}&quot;
             </div>

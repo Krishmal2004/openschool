@@ -6,10 +6,11 @@ import { useTeachers, useTeacherSubjects, useAssignTeacherSubject, useRemoveTeac
 import { useSubjects } from "../../../queries/useSubjects";
 import EntityCombobox from "../../../components/common/EntityCombobox";
 import type { Teacher } from "../../../services/teacher";
+import type { Subject } from "../../../services/subject";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 
-function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubjects: any[] }) {
+function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubjects: Subject[] }) {
   const { data: assignedSubjects, isLoading, isError } = useTeacherSubjects(teacher.id);
   const assignMutation = useAssignTeacherSubject(teacher.id);
   const removeMutation = useRemoveTeacherSubject(teacher.id);

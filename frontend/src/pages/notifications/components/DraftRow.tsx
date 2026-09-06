@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Button, InlineNotification } from "@carbon/react";
 import { Send, TrashCan } from "@carbon/icons-react";
 import { useSendNotificationDraft, useDeleteNotificationDraft } from "../../../queries/notifications/useNotifications";
 import type { Notification } from "../../../services/notifications/notification";
 import { getErrorMessage } from "../../../lib/errorMessage";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 export default function DraftRow({ draft }: { draft: Notification }) {
   const send = useSendNotificationDraft();
   const remove = useDeleteNotificationDraft();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Neither action should be clickable while the other is in flight — a
   // send racing a delete on the same draft is not a state worth allowing.
   const busy = send.isPending || remove.isPending;
@@ -21,7 +24,7 @@ export default function DraftRow({ draft }: { draft: Notification }) {
         <Button kind="ghost" size="sm" renderIcon={Send} onClick={() => send.mutate(draft.id)} disabled={busy}>
           Send
         </Button>
-        <Button kind="danger--ghost" size="sm" renderIcon={TrashCan} onClick={() => remove.mutate(draft.id)} disabled={busy}>
+        <Button kind="danger--ghost" size="sm" renderIcon={TrashCan} onClick={() => setConfirmingDelete(true)} disabled={busy}>
           Delete
         </Button>
       </div>
@@ -45,6 +48,14 @@ export default function DraftRow({ draft }: { draft: Notification }) {
           style={{ marginTop: "0.5rem", maxWidth: "100%" }}
         />
       )}
+      <ConfirmDeleteModal
+        open={confirmingDelete}
+        title="Delete draft"
+        description="This will permanently delete this notification draft. This action cannot be undone."
+        isPending={remove.isPending}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={() => remove.mutate(draft.id, { onSuccess: () => setConfirmingDelete(false) })}
+      />
     </div>
   );
 }

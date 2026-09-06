@@ -103,6 +103,10 @@ build one on).
 
 ## Exploratory — modules platform (external, third-party agents)
 
+> **Explicit hold (2026-09-06, user instruction):** do not scope or build
+> any part of this section until the user says so directly. Nothing below
+> is authorization to start — it's kept only so the reasoning isn't lost.
+
 Brainstormed architecture, not yet scoped into an actual implementation
 plan — captured here so the reasoning isn't lost. This section covers a
 different case from the maintenance/ops agents above: **optional,
@@ -255,3 +259,122 @@ not a generic school software feature.
 **Next step:** architecture-level writeup only, same treatment as
 § Exploratory — modules platform — not yet scoped into a file-by-file
 implementation plan.
+
+---
+
+## Phase 12 — Teaching-assignment consolidation, marks UX, and staff-attendance self-service
+
+**Status: built** (2026-09-06), scoped from a live user report plus a
+follow-up codebase survey. See `FEATURES.md` § Roles & positions,
+§ Attendance, § Academic records for the as-built shape. Summary:
+
+1. **Class Subject-Teacher / Teacher Subjects consolidation** — "Teacher
+   Subjects" (`teacher_subjects`) stays the single place qualifications are
+   declared. The per-class "Subjects & Teachers" tab
+   (`AssignClassSubjectTeacherModal.tsx`, renamed from
+   `AssignSubjectTeacherModal.tsx` to remove a naming collision with the
+   unrelated form-teacher `AssignTeacherModal.tsx`) now scopes its teacher
+   picker to teachers already qualified for the chosen subject, via a new
+   `GET /subjects/:id/teachers` endpoint; `ClassService.AssignSubjectTeacher`
+   rejects an unqualified assignment server-side too
+   (`ErrTeacherNotQualifiedForSubject`). Each row also shows a
+   Scheduled/Not scheduled tag cross-referencing the class's published
+   timetable (`usePublishedTimetableForClass`). Fixed a related bug:
+   `TeacherService.RemoveSubject`'s `is_active` deactivation now also
+   checks `class_subject_teachers` first, so a teacher still scheduled to
+   teach a class never gets flipped inactive.
+2. **Class-scoped subject filters** — `ClassMarks.tsx`'s subject picker now
+   pulls from `class_subject_teachers` (the class's actual assignments)
+   instead of the global subject list.
+3. **Marks entry auto-selects the current term** — added
+   `termApi.getCurrent()` / `useCurrentTerm()` (mirroring
+   `useCurrentAcademicYear()`); both `TeacherMarks.tsx` and `ClassMarks.tsx`
+   default to `terms.is_current` with manual override still available.
+4. **Teacher "My Subjects & Classes" overview** — `TeacherMarks.tsx`'s
+   landing view now groups by subject → class cards, each showing a live
+   marks-entered count for the selected term. Also fixed `useMyClasses()`,
+   which previously only returned form-teacher classes with an always-empty
+   `subjects` list — it now unions form-teacher classes with
+   `class_subject_teachers` workload, so subject-only teachers see their
+   classes in "My Classes" and the dashboard panel too.
+5. **Past marks / history** — folded into item 4 rather than a separate
+   page: the same term selector and overview work for any term, not just
+   the current one, so picking a past term browses/edits marks for it.
+6. **Teacher (staff) attendance self-service** — added
+   `GET /me/teacher/attendance` (self-scoped, mirrors the `/me/teacher/*`
+   convention — never an arbitrary `:id`) and a new "My Attendance" page
+   (`TeacherMyAttendance.tsx`), distinct from the existing "Class
+   Attendance" (renamed from "Attendance") page used to mark student
+   attendance.
+7. **"Mark absent" for a test** (added mid-implementation, same session) —
+   `term_marks.is_absent` (migration `000040`); the marks-entry grid in
+   both `TeacherMarks.tsx` and `ClassMarks.tsx` has an AB checkbox per
+   student that disables the marks input and renders "AB" everywhere marks
+   are shown (student/parent portals, PDF export). Dashboard averages and
+   the promotion ranking total exclude absent entries so an "AB" is never
+   treated as a zero score.
+
+Not done: the optional "this month" attendance summary widget on
+`TeacherDashboard.tsx` (item 6 called it out as optional) — still open if
+wanted later.
+
+---
+
+## Bug fixes — 2026-09-06 sweep
+
+Found while researching Phase 12. All fixed except the first, which needs
+a live ThunderID check to confirm root cause before a fix can be written.
+
+- **First-login password change ("Set a new password" appears to save the
+  current/default password instead) — HIGH, still open, root cause
+  unverified.** All the code read end-to-end (`PasswordInterstitial.tsx`,
+  `ChangePasswordModal.tsx`, `useAuth.ts`, `auth.go`'s
+  `ChangePassword`/`setPassword`) is logically correct in isolation. Leading
+  suspect: `internal/thunderid/client.go:182-220`'s `UpdateUser` sends the
+  new password as just another key inside a generic `attributes` bag on a
+  `PUT /users/:id` call shared with every other profile-field update, with
+  no dedicated password-change endpoint — if ThunderID treats an
+  unrecognized `"password"` attribute as a no-op, the call still returns
+  `200 OK`, the local `must_change_password` flag still clears, and the
+  account's actual login password never changes. Same class of risk as the
+  existing "ThunderID attribute-name fragility" open item above — treat
+  this as that risk's first observed real-world hit. **Next step (requires
+  live ThunderID access, not code-only):** confirm whether `PUT /users/:id`
+  with an `attributes` bag is the correct mechanism for a password change,
+  or whether a dedicated endpoint should be used instead.
+- **Global search 403s for every non-admin user (fixed).** The search box
+  is now gated to the admin layout only (`AppHeaderActions({ showSearch })`,
+  `RootLayout.tsx`) instead of rendering for all four portals against an
+  admin-only backend route.
+- **Global search failure looked like "no results" (fixed).**
+  `GlobalSearch.tsx` now shows a distinct "Search failed" state instead of
+  conflating a failed request with a real empty result.
+- **Missing delete confirmations on 4 student-portfolio tabs + notification
+  drafts (fixed).** `StudentDisciplinary.tsx`, `StudentActivities.tsx`,
+  `StudentLeadershipAwards.tsx`, `StudentProgressReports.tsx`, and
+  `DraftRow.tsx` all route their delete button through `ConfirmDeleteModal`
+  now, matching the rest of the app's convention.
+- **Redundant second "Change Password" entry point (fixed).** Removed the
+  page-level button from `TeacherProfile.tsx`; the header icon
+  (`AppHeaderChrome.tsx`, present for every role) is the one entry point.
+- **Timetable period-grid divide-by-zero panic (fixed).**
+  `generatePeriodsFromSettings` now falls back to the sequential generator
+  when `NumberOfPeriods < 2`, instead of a division that could hit zero.
+- **Auto-generation swallowed a teacher-availability lookup error
+  (fixed).** `GenerateForGradeSection` now returns the error instead of
+  silently treating the teacher as available in every slot.
+- **Auto-generation swallowed a lab-classroom lookup error (fixed).** Same
+  fix — returns the error instead of misreporting it as "no lab
+  classroom configured."
+- **Dead code (fixed).** Removed `AttendanceRepository.MarkAttendance`
+  (single-record), `AttendanceRepository.GetRecord`, and
+  `JobSchedulerRepository.ListRunHistory` — all confirmed zero callers.
+- **Doc drift (fixed in passing).** `ARCHITECTURE.md`'s curriculum table
+  row still listed `subject_buckets`/`subject_bucket_options`/
+  `grade_subjects`, dropped by migration `000008` and replaced by
+  `levels`/`selection_groups`/`group_subjects` — corrected.
+
+Everything else already open-item-tracked (CI hardening, unbounded list
+endpoints, Redis rate limiting, load test, teacher self-service *profile*
+edit — re-verified still true, `PUT /teachers/:id` remains admin-only with
+no `/me/teacher` write route) is unchanged.
