@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// GuardianHandler exposes HTTP endpoints for managing student guardians.
 type GuardianHandler struct {
 	service *services.GuardianService
 }
 
+// NewGuardianHandler constructs a GuardianHandler with its service dependency.
 func NewGuardianHandler(service *services.GuardianService) *GuardianHandler {
 	return &GuardianHandler{service: service}
 }
 
-// Create godoc
-// @Summary      Create guardian
-// @Description  Create a new guardian record
-// @Tags         guardians
-// @Accept       json
-// @Produce      json
-// @Param        request body models.CreateGuardianRequest true "Guardian details"
-// @Success      201 {object} models.GuardianResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /guardians [post]
+// Create creates a new guardian record.
 func (h *GuardianHandler) Create(c *gin.Context) {
 	var req models.CreateGuardianRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -45,16 +37,7 @@ func (h *GuardianHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"guardian": guardian, "possible_duplicates": duplicates})
 }
 
-// GetByID godoc
-// @Summary      Get guardian by ID
-// @Description  Get a guardian record by ID
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Guardian ID"
-// @Success      200 {object} models.GuardianResponse
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /guardians/{id} [get]
+// GetByID gets a guardian record by ID.
 func (h *GuardianHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -71,16 +54,7 @@ func (h *GuardianHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, guardian)
 }
 
-// List godoc
-// @Summary      List all guardians
-// @Description  Every guardian on file, optionally filtered by name/phone/email — used by the directory and the "link existing guardian" search picker
-// @Tags         guardians
-// @Produce      json
-// @Param        search query string false "Filter by name/phone/email"
-// @Param        orphans query bool false "Only guardians linked to no student"
-// @Success      200 {array} models.GuardianResponse
-// @Security     BearerAuth
-// @Router       /guardians [get]
+// List returns every guardian on file, optionally filtered by name, phone, or email.
 func (h *GuardianHandler) List(c *gin.Context) {
 	orphansOnly := c.Query("orphans") == "true"
 	guardians, err := h.service.ListGuardians(c.Request.Context(), c.Query("search"), orphansOnly)
@@ -92,15 +66,7 @@ func (h *GuardianHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, guardians)
 }
 
-// ListStudents godoc
-// @Summary      List a guardian's linked students
-// @Description  Every student linked to this guardian, regardless of portal-login status — for the guardian directory
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Guardian ID"
-// @Success      200 {array} models.StudentResponse
-// @Security     BearerAuth
-// @Router       /guardians/{id}/students [get]
+// ListStudents returns every student linked to this guardian, regardless of portal-login status — for the guardian directory.
 func (h *GuardianHandler) ListStudents(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -117,15 +83,7 @@ func (h *GuardianHandler) ListStudents(c *gin.Context) {
 	c.JSON(http.StatusOK, students)
 }
 
-// ListNotifications godoc
-// @Summary      List a guardian's notification history
-// @Description  Notifications sent to this guardian's portal account (empty if they don't have one)
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Guardian ID"
-// @Success      200 {array} notificationsmodels.MyNotificationResponse
-// @Security     BearerAuth
-// @Router       /guardians/{id}/notifications [get]
+// ListNotifications returns notifications sent to this guardian's portal account, empty if they have none.
 func (h *GuardianHandler) ListNotifications(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -142,18 +100,7 @@ func (h *GuardianHandler) ListNotifications(c *gin.Context) {
 	c.JSON(http.StatusOK, notifications)
 }
 
-// Update godoc
-// @Summary      Update guardian
-// @Description  Update a guardian record
-// @Tags         guardians
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Guardian ID"
-// @Param        request body models.UpdateGuardianRequest true "Guardian details"
-// @Success      200 {object} models.GuardianResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /guardians/{id} [put]
+// Update updates a guardian record.
 func (h *GuardianHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -176,17 +123,7 @@ func (h *GuardianHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, guardian)
 }
 
-// Delete godoc
-// @Summary      Delete guardian
-// @Description  Delete a guardian record outright — blocked while linked to any student
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Guardian ID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Failure      409 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /guardians/{id} [delete]
+// Delete deletes a guardian record outright — blocked while linked to any student.
 func (h *GuardianHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -215,18 +152,7 @@ func (h *GuardianHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "guardian deleted"})
 }
 
-// LinkToStudent godoc
-// @Summary      Link guardian to student
-// @Description  Link an existing guardian to a student
-// @Tags         guardians
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.LinkGuardianRequest true "Link details"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/guardians [post]
+// LinkToStudent links an existing guardian to a student.
 func (h *GuardianHandler) LinkToStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -248,17 +174,7 @@ func (h *GuardianHandler) LinkToStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "guardian linked to student"})
 }
 
-// UnlinkFromStudent godoc
-// @Summary      Unlink guardian from student
-// @Description  Remove a guardian link from a student
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        guardian_id path string true "Guardian ID"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/guardians/{guardian_id} [delete]
+// UnlinkFromStudent removes a guardian link from a student.
 func (h *GuardianHandler) UnlinkFromStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -280,16 +196,7 @@ func (h *GuardianHandler) UnlinkFromStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "guardian unlinked from student"})
 }
 
-// ListByStudent godoc
-// @Summary      List guardians by student
-// @Description  Get all guardians linked to a student
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} models.GuardianWithPrimaryResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/guardians [get]
+// ListByStudent gets all guardians linked to a student.
 func (h *GuardianHandler) ListByStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -306,17 +213,7 @@ func (h *GuardianHandler) ListByStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, guardians)
 }
 
-// SetPrimaryContact godoc
-// @Summary      Set primary contact
-// @Description  Set a guardian as the primary contact for a student
-// @Tags         guardians
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        guardian_id path string true "Guardian ID"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/guardians/{guardian_id}/set-primary [put]
+// SetPrimaryContact sets a guardian as the primary contact for a student.
 func (h *GuardianHandler) SetPrimaryContact(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -338,20 +235,7 @@ func (h *GuardianHandler) SetPrimaryContact(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "primary contact updated"})
 }
 
-// ProvisionLogin godoc
-// @Summary      Provision a parent portal login for a guardian
-// @Description  Creates an identity-provider account for an existing guardian and links it, giving them parent-portal access
-// @Tags         guardians
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                                 true  "Guardian ID"
-// @Param        request  body      models.ProvisionGuardianLoginRequest  true  "Login details"
-// @Success      200      {object}  models.GuardianResponse
-// @Failure      400      {object}  map[string]string
-// @Failure      404      {object}  map[string]string
-// @Failure      409      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /guardians/{id}/provision-login [post]
+// ProvisionLogin creates an identity-provider account for an existing guardian and links it, giving them parent-portal access.
 func (h *GuardianHandler) ProvisionLogin(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

@@ -88,11 +88,11 @@ export default function Students() {
       </div>
 
       <AgentFindingsBanner
-        jobNames={[
-          "zero_guardian_watcher",
-          "student_gender_school_type_watcher",
-          "unclassed_student_watcher",
-          "student_onboarding_watcher",
+        titles={[
+          "Students with no guardian on file",
+          "Student gender / school-type mismatches",
+          "Students with no current-year class",
+          "Student accounts stuck in first-login setup",
         ]}
       />
 

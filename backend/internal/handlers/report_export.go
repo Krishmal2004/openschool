@@ -8,27 +8,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// ReportExportHandler exposes HTTP endpoints for exporting admin reports.
 type ReportExportHandler struct {
 	service *services.ReportExportService
 }
 
+// NewReportExportHandler constructs a ReportExportHandler with its service dependency.
 func NewReportExportHandler(service *services.ReportExportService) *ReportExportHandler {
 	return &ReportExportHandler{service: service}
 }
 
-// ExportAttendance godoc
-// @Summary      Export an attendance report as PDF
-// @Description  One row per attendance record for the class across the given date range; columns is an optional comma-separated subset
-// @Tags         reports
-// @Produce      application/pdf
-// @Param        class_id query string true "Class UUID"
-// @Param        from     query string true "Start date (YYYY-MM-DD)"
-// @Param        to       query string true "End date (YYYY-MM-DD)"
-// @Param        columns  query []string false "Column subset"
-// @Success      200 {file} binary
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /reports/attendance [get]
+// ExportAttendance returns a PDF attendance report for a class over a date range.
 func (h *ReportExportHandler) ExportAttendance(c *gin.Context) {
 	var req models.AttendanceReportRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -46,19 +36,7 @@ func (h *ReportExportHandler) ExportAttendance(c *gin.Context) {
 	c.Data(http.StatusOK, "application/pdf", pdfBytes)
 }
 
-// ExportMarks godoc
-// @Summary      Export a marks report as PDF
-// @Description  One row per student's mark for the given class/term/subject; columns is an optional comma-separated subset
-// @Tags         reports
-// @Produce      application/pdf
-// @Param        class_id   query string true "Class UUID"
-// @Param        term_id    query string true "Term UUID"
-// @Param        subject_id query string true "Subject UUID"
-// @Param        columns    query []string false "Column subset"
-// @Success      200 {file} binary
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /reports/marks [get]
+// ExportMarks returns a PDF marks report for a class/term/subject, one row per student.
 func (h *ReportExportHandler) ExportMarks(c *gin.Context) {
 	var req models.MarksReportRequest
 	if err := c.ShouldBindQuery(&req); err != nil {

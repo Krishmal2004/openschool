@@ -10,15 +10,18 @@ import (
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
+// JobsHandler exposes the admin Automation panel's endpoints for the background agent scheduler.
 type JobsHandler struct {
 	scheduler *jobs.Scheduler
 	settings  *repositories.JobSchedulerRepository
 }
 
+// NewJobsHandler constructs a JobsHandler with its scheduler and settings dependencies.
 func NewJobsHandler(scheduler *jobs.Scheduler, settings *repositories.JobSchedulerRepository) *JobsHandler {
 	return &JobsHandler{scheduler: scheduler, settings: settings}
 }
 
+// knownJobNames returns the set of currently-registered agent names, used to reject settings for an agent that no longer exists.
 func (h *JobsHandler) knownJobNames() map[string]bool {
 	names := make(map[string]bool, len(h.scheduler.Jobs()))
 	for _, j := range h.scheduler.Jobs() {
@@ -27,6 +30,7 @@ func (h *JobsHandler) knownJobNames() map[string]bool {
 	return names
 }
 
+// toLastRun converts a generated job-run row into its JSON response shape.
 func toLastRun(r db.JobRun) *models.JobLastRun {
 	lastRun := &models.JobLastRun{
 		Status:    r.Status,
@@ -43,13 +47,7 @@ func toLastRun(r db.JobRun) *models.JobLastRun {
 	return lastRun
 }
 
-// List godoc
-// @Summary      List every registered background job and its current state
-// @Tags         jobs
-// @Produce      json
-// @Success      200 {array} models.JobStatus
-// @Security     BearerAuth
-// @Router       /jobs [get]
+// List lists every registered background job and its current state.
 func (h *JobsHandler) List(c *gin.Context) {
 	ctx := c.Request.Context()
 	jobList := h.scheduler.Jobs()
@@ -92,17 +90,7 @@ func (h *JobsHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
-// SetEnabled godoc
-// @Summary      Enable or disable a background job
-// @Tags         jobs
-// @Accept       json
-// @Produce      json
-// @Param        name path string true "Job name"
-// @Param        request body models.SetJobEnabledRequest true "Enabled state"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /jobs/{name}/enabled [put]
+// SetEnabled enables or disables a background agent.
 func (h *JobsHandler) SetEnabled(c *gin.Context) {
 	name := c.Param("name")
 	if !h.knownJobNames()[name] {
@@ -116,13 +104,13 @@ func (h *JobsHandler) SetEnabled(c *gin.Context) {
 		return
 	}
 
-	// The backup job is the one exception to "every job is safely
-	// optional": disabling it silently stops the school's only backup
-	// mechanism, with no other symptom until data loss during a real
-	// incident. Blocked outright rather than just warned about, both here
-	// and in the Automation UI (which never renders its toggle).
-	if !req.Enabled && name == jobs.BackupJobName {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "the backup job cannot be disabled"})
+	// The system-health agent is the one exception to "every agent is
+	// safely optional": disabling it silently stops the school's only
+	// backup mechanism, with no other symptom until data loss during a
+	// real incident. Blocked outright rather than just warned about, both
+	// here and in the Automation UI (which never renders its toggle).
+	if !req.Enabled && name == jobs.SystemHealthAgentName {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the system-health (backup) agent cannot be disabled"})
 		return
 	}
 
@@ -133,16 +121,7 @@ func (h *JobsHandler) SetEnabled(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
-// RunNow godoc
-// @Summary      Run a background job immediately, outside its schedule
-// @Description  Still honors the job's enabled/disabled setting
-// @Tags         jobs
-// @Produce      json
-// @Param        name path string true "Job name"
-// @Success      200 {object} map[string]interface{}
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /jobs/{name}/run [post]
+// RunNow runs a background agent immediately, outside its schedule, honoring its enabled/disabled setting.
 func (h *JobsHandler) RunNow(c *gin.Context) {
 	name := c.Param("name")
 	if !h.knownJobNames()[name] {

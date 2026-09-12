@@ -310,9 +310,11 @@ type Querier interface {
 	ListActiveStudentsWithoutCurrentClass(ctx context.Context) ([]ListActiveStudentsWithoutCurrentClassRow, error)
 	// ── Zero-guardian student watcher ───────────────────────────────────────────
 	ListActiveStudentsWithoutGuardian(ctx context.Context) ([]ListActiveStudentsWithoutGuardianRow, error)
-	// Ad-hoc, read-mostly queries backing the § Proposed — maintenance/ops
-	// agents in docs/plan.md (internal/jobs/*.go). Grouped in one file since
-	// each is a one-off used by exactly one job, not a full entity's CRUD.
+	// Ad-hoc, read-mostly queries backing the background agents in
+	// internal/jobs/*.go (five consolidated agents, each running several of
+	// these checks concurrently — see internal/jobs/agent_*.go). Grouped in
+	// one file since each is a one-off used by exactly one check, not a full
+	// entity's CRUD.
 	// used by internal/jobs to resolve who gets notified, and to attribute
 	// system-triggered notifications' created_by (NOT NULL FK to users).
 	ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error)
@@ -343,16 +345,35 @@ type Querier interface {
 	// pass NULL); filtered at the SQL WHERE clause level, not in application
 	// code, so a scoped caller can never receive rows outside their grades.
 	ListAttendanceSessionsByDate(ctx context.Context, arg ListAttendanceSessionsByDateParams) ([]ListAttendanceSessionsByDateRow, error)
+	// ── Audit-log anomaly watcher ────────────────────────────────────────────────
+	// Replaces a single fixed threshold with a per-actor statistical baseline:
+	// SecurityAuditAgent computes each active actor's mean and standard
+	// deviation of per-hour change volume from ListAuditActivityBaseline, then
+	// flags the current hour (ListCurrentHourAuditActivity) as an outlier via a
+	// z-score against that actor's *own* normal pattern — an admin who
+	// routinely bulk-edits won't trip the same threshold as one who never
+	// touches more than a few records a day. An actor with too little history
+	// for a meaningful baseline falls back to a fixed absolute floor (computed
+	// in Go), never to "never flagged".
+	// Per-actor mean/stddev of hourly audit-log volume over the trailing
+	// baseline window, counting only hours in which the actor was active at
+	// all (an idle hour isn't "zero activity" in this average — it's excluded
+	// entirely), plus how many such hours were observed so the caller can
+	// decide whether the baseline has enough data to trust.
+	ListAuditActivityBaseline(ctx context.Context, baselineDays int32) ([]ListAuditActivityBaselineRow, error)
 	// entity_type/entity_id are optional filters (pass a zero UUID / empty
 	// string to skip that filter — checked in the repository layer, since
 	// sqlc.narg with a nullable uuid comparison reads awkwardly here).
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]ListAuditLogsRow, error)
-	// ── Audit-log anomaly watcher ────────────────────────────────────────────────
-	// actors with an unusually high volume of audit-logged changes in the last
-	// hour — the simplest defensible anomaly heuristic (a fixed threshold)
-	// rather than a statistical model, per docs/plan.md's own note that this
-	// one needs real heuristics to design.
-	ListBurstAuditActors(ctx context.Context, threshold int32) ([]ListBurstAuditActorsRow, error)
+	// For each current-year class: how many distinct days had an attendance
+	// session created in the trailing window versus how many weekdays fell in
+	// that window (the system has no holiday calendar, so weekday count is
+	// the best available "school days" proxy). AcademicDeliveryAgent turns
+	// this into a compliance rate and flags classes whose attendance-taking
+	// has been chronically inconsistent lately — a class that's usually fine
+	// but simply missed today (already covered by
+	// ListCurrentYearClassesMissingTodaySession) is not what this is for.
+	ListClassAttendanceComplianceRecent(ctx context.Context, windowDays int32) ([]ListClassAttendanceComplianceRecentRow, error)
 	ListClassIDsByGrade(ctx context.Context, arg ListClassIDsByGradeParams) ([]uuid.UUID, error)
 	// Every student in the class, with their mark for this term+subject if one
 	// has been entered yet (NULL columns otherwise) — powers the marks-entry
@@ -374,6 +395,9 @@ type Querier interface {
 	// finding can name which years are wrongly marked current.
 	ListCurrentAcademicYears(ctx context.Context) ([]AcademicYear, error)
 	ListCurrentClasses(ctx context.Context) ([]ListCurrentClassesRow, error)
+	// Every actor's change count so far in the current (partial) hour — the
+	// sample SecurityAuditAgent scores against each actor's baseline.
+	ListCurrentHourAuditActivity(ctx context.Context) ([]ListCurrentHourAuditActivityRow, error)
 	// ── Missing attendance session watcher ───────────────────────────────────────
 	ListCurrentYearClassesMissingTodaySession(ctx context.Context) ([]ListCurrentYearClassesMissingTodaySessionRow, error)
 	ListDisciplinaryRecordsByStudent(ctx context.Context, studentID uuid.UUID) ([]StudentDisciplinaryRecord, error)
@@ -433,6 +457,28 @@ type Querier interface {
 	ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicStaffParams) ([]NonAcademicStaff, error)
 	ListNonAcademicStaffAttendanceByDate(ctx context.Context, date pgtype.Date) ([]ListNonAcademicStaffAttendanceByDateRow, error)
 	ListNonAcademicStaffAttendanceHistory(ctx context.Context, arg ListNonAcademicStaffAttendanceHistoryParams) ([]StaffAttendanceRecord, error)
+	// Actors with audit-logged changes in the trailing 24 hours between
+	// midnight and 5am Sri Lanka time (Asia/Colombo, fixed UTC+5:30, no DST —
+	// converted explicitly so this is correct regardless of the database
+	// server's own configured timezone) — a low-cost complementary signal to
+	// the volume-based check above: a handful of overnight changes is unusual
+	// for a school system regardless of whether it clears any volume
+	// threshold. Sri-Lanka-specific per this system's single-deployment scope
+	// (docs/adr/0003-single-current-academic-year.md).
+	ListOffHoursAuditActivity(ctx context.Context, minChanges int32) ([]ListOffHoursAuditActivityRow, error)
+	// Every term of the current academic year that hasn't ended yet, with how
+	// many actively-enrolled students have at least one mark recorded for it
+	// against how many are enrolled in total, plus the term's date span. The
+	// caller (AcademicDeliveryAgent) turns this into a linear time-vs-coverage
+	// pace comparison — "you're 40% through the term but only 10% of students
+	// have any mark recorded" — catching a term that's quietly falling behind
+	// long before ListTermsNearDeadlineWithNoMarks's all-or-nothing zero-marks
+	// check would fire. Coverage is deliberately "at least one mark", not
+	// "every subject marked" — an exact per-subject expectation would need a
+	// students × subjects-taught cross join this system has no single source
+	// for (subject selection is per-student for A/L buckets) — so this is a
+	// breadth proxy, not a claim of exact completion percentage.
+	ListOpenTermMarksProgress(ctx context.Context) ([]ListOpenTermMarksProgressRow, error)
 	// every prefect appointment a student has held, across all years — for the
 	// student portfolio's read-only "prefect appointments" rollup tab.
 	ListPrefectAppointmentsByStudent(ctx context.Context, studentID uuid.UUID) ([]ListPrefectAppointmentsByStudentRow, error)

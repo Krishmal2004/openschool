@@ -9,12 +9,12 @@ THUNDERID_COMPOSE=docker compose -f quickstart-compose.yml -f compose.override.y
         dev dev-backend dev-frontend \
         build build-backend build-frontend \
         lint lint-backend lint-frontend \
-        migrate migrate-down sqlc swag \
+        migrate migrate-down sqlc \
         thunderid-up thunderid-down thunderid-logs thunderid-reset \
         down clean
 
 help:
-	@echo "OpenSchool — available targets:"
+	@echo "OpenSchool - available targets:"
 	@echo "  setup           - One-time setup: Postgres, ThunderID, deps, .env files"
 	@echo "  dev             - Run backend + frontend together"
 	@echo "  dev-backend     - Run only the Go API (:8080)"
@@ -24,7 +24,6 @@ help:
 	@echo "  migrate         - Apply DB migrations"
 	@echo "  migrate-down    - Roll back the last migration"
 	@echo "  sqlc            - Regenerate typed Go code from db/queries/"
-	@echo "  swag            - Regenerate Swagger/OpenAPI docs"
 	@echo "  thunderid-up    - Start ThunderID (quick-start + OpenSchool overlay)"
 	@echo "  thunderid-down  - Stop ThunderID"
 	@echo "  thunderid-logs  - Tail ThunderID server logs"
@@ -74,9 +73,6 @@ migrate-down:
 
 sqlc:
 	cd $(BACKEND_DIR) && sqlc generate
-
-swag:
-	cd $(BACKEND_DIR) && swag init -g cmd/api/main.go
 
 thunderid-up:
 	cd $(THUNDERID_DIR) && $(THUNDERID_COMPOSE) up -d

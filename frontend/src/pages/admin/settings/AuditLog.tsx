@@ -29,7 +29,7 @@ export default function AuditLog() {
         </div>
       </div>
 
-      <AgentFindingsBanner jobNames={["audit_log_anomaly_watcher"]} />
+      <AgentFindingsBanner titles={["Unusual audit-log activity", "Unusual off-hours account activity"]} />
 
       {isError && <ErrorMessage message="Could not load the audit log." onRetry={refetch} />}
 

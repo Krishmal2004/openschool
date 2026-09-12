@@ -7,23 +7,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// DashboardHandler exposes the admin dashboard's summary-statistics endpoint.
 type DashboardHandler struct {
 	service *services.DashboardService
 }
 
+// NewDashboardHandler constructs a DashboardHandler with its service dependency.
 func NewDashboardHandler(service *services.DashboardService) *DashboardHandler {
 	return &DashboardHandler{service: service}
 }
 
-// Analytics godoc
-// @Summary      Admin dashboard analytics
-// @Description  Composed student/staff/academic/school analytics for the current academic year and term
-// @Tags         dashboard
-// @Produce      json
-// @Success      200 {object} models.DashboardAnalyticsResponse
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /dashboard/analytics [get]
+// Analytics returns composed student/staff/academic/school analytics for the current academic year and term.
 func (h *DashboardHandler) Analytics(c *gin.Context) {
 	analytics, err := h.service.Analytics(c.Request.Context())
 	if err != nil {

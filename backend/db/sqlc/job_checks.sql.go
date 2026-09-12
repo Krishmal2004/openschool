@@ -112,9 +112,11 @@ const listAdminUserIDs = `-- name: ListAdminUserIDs :many
 SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC
 `
 
-// Ad-hoc, read-mostly queries backing the § Proposed — maintenance/ops
-// agents in docs/plan.md (internal/jobs/*.go). Grouped in one file since
-// each is a one-off used by exactly one job, not a full entity's CRUD.
+// Ad-hoc, read-mostly queries backing the background agents in
+// internal/jobs/*.go (five consolidated agents, each running several of
+// these checks concurrently — see internal/jobs/agent_*.go). Grouped in
+// one file since each is a one-off used by exactly one check, not a full
+// entity's CRUD.
 // used by internal/jobs to resolve who gets notified, and to attribute
 // system-triggered notifications' created_by (NOT NULL FK to users).
 func (q *Queries) ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error) {
@@ -137,39 +139,133 @@ func (q *Queries) ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error) {
 	return items, nil
 }
 
-const listBurstAuditActors = `-- name: ListBurstAuditActors :many
+const listAuditActivityBaseline = `-- name: ListAuditActivityBaseline :many
 
-SELECT al.actor_id, u.full_name, COUNT(*) AS change_count
-FROM audit_logs al
-INNER JOIN users u ON u.id = al.actor_id
-WHERE al.created_at > NOW() - INTERVAL '1 hour'
-AND al.actor_id IS NOT NULL
-GROUP BY al.actor_id, u.full_name
-HAVING COUNT(*) > $1::int
-ORDER BY change_count DESC
+SELECT
+    hourly.actor_id,
+    u.full_name,
+    AVG(hourly.cnt)::float8 AS mean_per_hour,
+    COALESCE(STDDEV_POP(hourly.cnt), 0)::float8 AS stddev_per_hour,
+    COUNT(*) AS hours_observed
+FROM (
+    SELECT actor_id, date_trunc('hour', created_at) AS hour_bucket, COUNT(*) AS cnt
+    FROM audit_logs
+    WHERE actor_id IS NOT NULL
+    AND created_at >= NOW() - make_interval(days => $1::int)
+    AND created_at < date_trunc('hour', NOW())
+    GROUP BY actor_id, date_trunc('hour', created_at)
+) hourly
+INNER JOIN users u ON u.id = hourly.actor_id
+GROUP BY hourly.actor_id, u.full_name
 `
 
-type ListBurstAuditActorsRow struct {
-	ActorID     pgtype.UUID `json:"actor_id"`
-	FullName    string      `json:"full_name"`
-	ChangeCount int64       `json:"change_count"`
+type ListAuditActivityBaselineRow struct {
+	ActorID       pgtype.UUID `json:"actor_id"`
+	FullName      string      `json:"full_name"`
+	MeanPerHour   float64     `json:"mean_per_hour"`
+	StddevPerHour float64     `json:"stddev_per_hour"`
+	HoursObserved int64       `json:"hours_observed"`
 }
 
 // ── Audit-log anomaly watcher ────────────────────────────────────────────────
-// actors with an unusually high volume of audit-logged changes in the last
-// hour — the simplest defensible anomaly heuristic (a fixed threshold)
-// rather than a statistical model, per docs/plan.md's own note that this
-// one needs real heuristics to design.
-func (q *Queries) ListBurstAuditActors(ctx context.Context, threshold int32) ([]ListBurstAuditActorsRow, error) {
-	rows, err := q.db.Query(ctx, listBurstAuditActors, threshold)
+// Replaces a single fixed threshold with a per-actor statistical baseline:
+// SecurityAuditAgent computes each active actor's mean and standard
+// deviation of per-hour change volume from ListAuditActivityBaseline, then
+// flags the current hour (ListCurrentHourAuditActivity) as an outlier via a
+// z-score against that actor's *own* normal pattern — an admin who
+// routinely bulk-edits won't trip the same threshold as one who never
+// touches more than a few records a day. An actor with too little history
+// for a meaningful baseline falls back to a fixed absolute floor (computed
+// in Go), never to "never flagged".
+// Per-actor mean/stddev of hourly audit-log volume over the trailing
+// baseline window, counting only hours in which the actor was active at
+// all (an idle hour isn't "zero activity" in this average — it's excluded
+// entirely), plus how many such hours were observed so the caller can
+// decide whether the baseline has enough data to trust.
+func (q *Queries) ListAuditActivityBaseline(ctx context.Context, baselineDays int32) ([]ListAuditActivityBaselineRow, error) {
+	rows, err := q.db.Query(ctx, listAuditActivityBaseline, baselineDays)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListBurstAuditActorsRow{}
+	items := []ListAuditActivityBaselineRow{}
 	for rows.Next() {
-		var i ListBurstAuditActorsRow
-		if err := rows.Scan(&i.ActorID, &i.FullName, &i.ChangeCount); err != nil {
+		var i ListAuditActivityBaselineRow
+		if err := rows.Scan(
+			&i.ActorID,
+			&i.FullName,
+			&i.MeanPerHour,
+			&i.StddevPerHour,
+			&i.HoursObserved,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listClassAttendanceComplianceRecent = `-- name: ListClassAttendanceComplianceRecent :many
+SELECT
+    c.id,
+    c.name,
+    g.name AS grade_name,
+    COUNT(DISTINCT s.date) AS sessions_taken,
+    (
+        SELECT COUNT(*)
+        FROM generate_series(
+            CURRENT_DATE - make_interval(days => $1::int),
+            CURRENT_DATE - 1,
+            INTERVAL '1 day'
+        ) AS d
+        WHERE EXTRACT(ISODOW FROM d) < 6
+    ) AS school_days_in_window
+FROM classes c
+INNER JOIN academic_years ay ON ay.id = c.academic_year_id AND ay.is_current = TRUE
+INNER JOIN grades g ON g.id = c.grade_id
+LEFT JOIN attendance_sessions s
+    ON s.class_id = c.id
+    AND s.date >= CURRENT_DATE - make_interval(days => $1::int)
+    AND s.date < CURRENT_DATE
+GROUP BY c.id, c.name, g.name
+ORDER BY g.name, c.name
+`
+
+type ListClassAttendanceComplianceRecentRow struct {
+	ID                 uuid.UUID `json:"id"`
+	Name               string    `json:"name"`
+	GradeName          string    `json:"grade_name"`
+	SessionsTaken      int64     `json:"sessions_taken"`
+	SchoolDaysInWindow int64     `json:"school_days_in_window"`
+}
+
+// For each current-year class: how many distinct days had an attendance
+// session created in the trailing window versus how many weekdays fell in
+// that window (the system has no holiday calendar, so weekday count is
+// the best available "school days" proxy). AcademicDeliveryAgent turns
+// this into a compliance rate and flags classes whose attendance-taking
+// has been chronically inconsistent lately — a class that's usually fine
+// but simply missed today (already covered by
+// ListCurrentYearClassesMissingTodaySession) is not what this is for.
+func (q *Queries) ListClassAttendanceComplianceRecent(ctx context.Context, windowDays int32) ([]ListClassAttendanceComplianceRecentRow, error) {
+	rows, err := q.db.Query(ctx, listClassAttendanceComplianceRecent, windowDays)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListClassAttendanceComplianceRecentRow{}
+	for rows.Next() {
+		var i ListClassAttendanceComplianceRecentRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.GradeName,
+			&i.SessionsTaken,
+			&i.SchoolDaysInWindow,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -207,6 +303,43 @@ func (q *Queries) ListCurrentAcademicYears(ctx context.Context) ([]AcademicYear,
 			&i.IsCurrent,
 			&i.CreatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCurrentHourAuditActivity = `-- name: ListCurrentHourAuditActivity :many
+SELECT al.actor_id, u.full_name, COUNT(*) AS change_count
+FROM audit_logs al
+INNER JOIN users u ON u.id = al.actor_id
+WHERE al.actor_id IS NOT NULL
+AND al.created_at >= date_trunc('hour', NOW())
+GROUP BY al.actor_id, u.full_name
+`
+
+type ListCurrentHourAuditActivityRow struct {
+	ActorID     pgtype.UUID `json:"actor_id"`
+	FullName    string      `json:"full_name"`
+	ChangeCount int64       `json:"change_count"`
+}
+
+// Every actor's change count so far in the current (partial) hour — the
+// sample SecurityAuditAgent scores against each actor's baseline.
+func (q *Queries) ListCurrentHourAuditActivity(ctx context.Context) ([]ListCurrentHourAuditActivityRow, error) {
+	rows, err := q.db.Query(ctx, listCurrentHourAuditActivity)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCurrentHourAuditActivityRow{}
+	for rows.Next() {
+		var i ListCurrentHourAuditActivityRow
+		if err := rows.Scan(&i.ActorID, &i.FullName, &i.ChangeCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -376,6 +509,135 @@ func (q *Queries) ListInactiveTeachersStillAssigned(ctx context.Context) ([]List
 	for rows.Next() {
 		var i ListInactiveTeachersStillAssignedRow
 		if err := rows.Scan(&i.ID, &i.FullName, &i.EmploymentStatus); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOffHoursAuditActivity = `-- name: ListOffHoursAuditActivity :many
+SELECT al.actor_id, u.full_name, COUNT(*) AS change_count,
+       MIN(al.created_at)::timestamptz AS first_seen, MAX(al.created_at)::timestamptz AS last_seen
+FROM audit_logs al
+INNER JOIN users u ON u.id = al.actor_id
+WHERE al.actor_id IS NOT NULL
+AND al.created_at >= NOW() - INTERVAL '24 hours'
+AND EXTRACT(HOUR FROM (al.created_at AT TIME ZONE 'Asia/Colombo')) BETWEEN 0 AND 4
+GROUP BY al.actor_id, u.full_name
+HAVING COUNT(*) >= $1::int
+ORDER BY change_count DESC
+`
+
+type ListOffHoursAuditActivityRow struct {
+	ActorID     pgtype.UUID        `json:"actor_id"`
+	FullName    string             `json:"full_name"`
+	ChangeCount int64              `json:"change_count"`
+	FirstSeen   pgtype.Timestamptz `json:"first_seen"`
+	LastSeen    pgtype.Timestamptz `json:"last_seen"`
+}
+
+// Actors with audit-logged changes in the trailing 24 hours between
+// midnight and 5am Sri Lanka time (Asia/Colombo, fixed UTC+5:30, no DST —
+// converted explicitly so this is correct regardless of the database
+// server's own configured timezone) — a low-cost complementary signal to
+// the volume-based check above: a handful of overnight changes is unusual
+// for a school system regardless of whether it clears any volume
+// threshold. Sri-Lanka-specific per this system's single-deployment scope
+// (docs/adr/0003-single-current-academic-year.md).
+func (q *Queries) ListOffHoursAuditActivity(ctx context.Context, minChanges int32) ([]ListOffHoursAuditActivityRow, error) {
+	rows, err := q.db.Query(ctx, listOffHoursAuditActivity, minChanges)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOffHoursAuditActivityRow{}
+	for rows.Next() {
+		var i ListOffHoursAuditActivityRow
+		if err := rows.Scan(
+			&i.ActorID,
+			&i.FullName,
+			&i.ChangeCount,
+			&i.FirstSeen,
+			&i.LastSeen,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOpenTermMarksProgress = `-- name: ListOpenTermMarksProgress :many
+SELECT
+    t.id,
+    t.name,
+    t.start_date,
+    t.end_date,
+    ay.label AS academic_year_label,
+    (
+        SELECT COUNT(DISTINCT cs.student_id)
+        FROM class_students cs
+        INNER JOIN classes c ON c.id = cs.class_id
+        WHERE c.academic_year_id = t.academic_year_id
+    ) AS enrolled_students,
+    (
+        SELECT COUNT(DISTINCT tm.student_id)
+        FROM term_marks tm
+        WHERE tm.term_id = t.id
+    ) AS students_with_marks
+FROM terms t
+INNER JOIN academic_years ay ON ay.id = t.academic_year_id AND ay.is_current = TRUE
+WHERE t.end_date >= CURRENT_DATE
+ORDER BY t.end_date
+`
+
+type ListOpenTermMarksProgressRow struct {
+	ID                uuid.UUID   `json:"id"`
+	Name              string      `json:"name"`
+	StartDate         pgtype.Date `json:"start_date"`
+	EndDate           pgtype.Date `json:"end_date"`
+	AcademicYearLabel string      `json:"academic_year_label"`
+	EnrolledStudents  int64       `json:"enrolled_students"`
+	StudentsWithMarks int64       `json:"students_with_marks"`
+}
+
+// Every term of the current academic year that hasn't ended yet, with how
+// many actively-enrolled students have at least one mark recorded for it
+// against how many are enrolled in total, plus the term's date span. The
+// caller (AcademicDeliveryAgent) turns this into a linear time-vs-coverage
+// pace comparison — "you're 40% through the term but only 10% of students
+// have any mark recorded" — catching a term that's quietly falling behind
+// long before ListTermsNearDeadlineWithNoMarks's all-or-nothing zero-marks
+// check would fire. Coverage is deliberately "at least one mark", not
+// "every subject marked" — an exact per-subject expectation would need a
+// students × subjects-taught cross join this system has no single source
+// for (subject selection is per-student for A/L buckets) — so this is a
+// breadth proxy, not a claim of exact completion percentage.
+func (q *Queries) ListOpenTermMarksProgress(ctx context.Context) ([]ListOpenTermMarksProgressRow, error) {
+	rows, err := q.db.Query(ctx, listOpenTermMarksProgress)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOpenTermMarksProgressRow{}
+	for rows.Next() {
+		var i ListOpenTermMarksProgressRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.StartDate,
+			&i.EndDate,
+			&i.AcademicYearLabel,
+			&i.EnrolledStudents,
+			&i.StudentsWithMarks,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

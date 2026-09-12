@@ -4,11 +4,12 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { Add, ArrowDown, ArrowUp, ChevronRight, Warning } from "@carbon/icons-react";
+import { Add, ArrowDown, ArrowUp, TrashCan, Warning } from "@carbon/icons-react";
 import {
   Accordion,
   AccordionItem,
   Button,
+  IconButton,
   InlineNotification,
   SkeletonIcon,
   SkeletonText,
@@ -190,56 +191,51 @@ function GradeGroup({
       </div>
 
       {classes.length === 0 ? (
-        <p style={{ fontSize: "0.8125rem", color: "#6f6f6f", margin: "0 0 1rem" }}>
+        <p style={{ fontSize: "0.8125rem", color: "#8d8d8d", margin: "0 0 1rem" }}>
           No classes yet for this grade.
         </p>
       ) : (
-        <table className="os-table">
+        <table className="os-table" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr>
-              <th>Class</th>
-              <th>Form Teacher</th>
-              <th>Stream</th>
-              <th>Medium</th>
-              <th>Home Classroom</th>
-              <th style={{ width: "12rem" }} />
+              <th style={{ width: "16%" }}>Class</th>
+              <th style={{ width: "22%", textAlign: "center" }}>Form Teacher</th>
+              <th style={{ width: "14%", textAlign: "center" }}>Stream</th>
+              <th style={{ width: "14%", textAlign: "center" }}>Medium</th>
+              <th style={{ width: "22%", textAlign: "center" }}>Home Classroom</th>
+              <th style={{ width: "12%", textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {classes.map((c) => (
               <tr key={c.id}>
-                <td style={{ fontWeight: 500 }}>{c.name}</td>
-                <td className="os-table__muted">
+                <td>
+                  <Link to={`/classes/${c.id}`} className="os-table__link">
+                    {c.name}
+                  </Link>
+                </td>
+                <td className="os-table__muted" style={{ textAlign: "center" }}>
                   {teacherName(c.form_teacher_id) ?? "No form teacher"}
                 </td>
-                <td>
+                <td style={{ textAlign: "center" }}>
                   {streamName(c.stream_id) && (
                     <Tag type="blue" size="sm">
                       {streamName(c.stream_id)}
                     </Tag>
                   )}
                 </td>
-                <td>
+                <td style={{ textAlign: "center" }}>
                   {c.medium_name && (
                     <Tag type="purple" size="sm">
                       {c.medium_name}
                     </Tag>
                   )}
                 </td>
-                <td className="os-table__muted">{c.home_classroom_name ?? "—"}</td>
-                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                  <Button
-                    kind="ghost"
-                    size="sm"
-                    renderIcon={ChevronRight}
-                    as={Link}
-                    to={`/classes/${c.id}`}
-                  >
-                    View
-                  </Button>
-                  <Button kind="danger--ghost" size="sm" onClick={() => onDeleteClass(c)}>
-                    Delete
-                  </Button>
+                <td className="os-table__muted" style={{ textAlign: "center" }}>{c.home_classroom_name ?? "—"}</td>
+                <td style={{ textAlign: "right" }}>
+                  <IconButton label="Delete" kind="ghost" size="sm" onClick={() => onDeleteClass(c)}>
+                    <TrashCan />
+                  </IconButton>
                 </td>
               </tr>
             ))}
@@ -397,17 +393,8 @@ export default function Classes() {
 
   return (
     <div className="os-page">
-      <div
-        className="os-page__header"
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          rowGap: "0.75rem",
-        }}
-      >
-        <div>
+      <div className="os-page__header">
+        <div className="os-page__header-left">
           <h1 className="os-page__title">Grades &amp; Classes</h1>
           <p className="os-page__subtitle">
             The grades this school runs, and their classes for the current
@@ -425,142 +412,159 @@ export default function Classes() {
       </div>
 
       <AgentFindingsBanner
-        jobNames={[
-          "empty_grade_watcher",
-          "employment_status_consistency",
-          "unclassed_student_watcher",
+        titles={[
+          "Grades with no current-year classes",
+          "Inactive teachers still assigned to classes",
+          "Students with no current-year class",
         ]}
       />
 
-      {isError && (
-        <ErrorMessage
-          message="Could not load grades and classes."
-          onRetry={() => {
-            refetchGrades();
-            refetchClasses();
-          }}
-        />
-      )}
-
-      {deleteGrade.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete grade"
-          subtitle={getErrorMessage(
-            deleteGrade.error,
-            "The grade may be used by a class or curriculum level.",
+      <div className="os-section">
+        <div className="os-section__header">
+          <h2 className="os-section__title">Grades</h2>
+          {!isLoading && !isError && (
+            <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+              {orderedGrades.length} {orderedGrades.length === 1 ? "grade" : "grades"}
+            </span>
           )}
-          lowContrast
-          onClose={() => deleteGrade.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
-
-      {deleteClass.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete class"
-          subtitle={getErrorMessage(
-            deleteClass.error,
-            "The class may still have students enrolled.",
-          )}
-          lowContrast
-          onClose={() => deleteClass.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
-
-      {reorder.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not reorder"
-          subtitle={getErrorMessage(reorder.error, "Please try again.")}
-          lowContrast
-          onClose={() => reorder.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
-
-      {!isLoading && !isError && needsRenumber && orderedGrades.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            marginBottom: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <InlineNotification
-            kind="warning"
-            title={
-              duplicateCount > 0
-                ? `${duplicateCount} grades share the same position`
-                : "Positions have gaps"
-            }
-            subtitle="Renumber them in the order shown below."
-            lowContrast
-            hideCloseButton
-            style={{ maxWidth: "100%", margin: 0, flex: 1 }}
-          />
-          <Button
-            kind="tertiary"
-            size="sm"
-            disabled={busy}
-            onClick={() => reorder.mutate(orderedGrades)}
-          >
-            {busy ? "Fixing…" : "Fix ordering"}
-          </Button>
         </div>
-      )}
 
-      {isLoading && (
-        <div>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <GradeGroupSkeleton key={i} />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && !isError && orderedGrades.length === 0 && (
-        <EmptyState
-          title="No grades yet"
-          description="Add the grades this school runs, then create classes under each one."
-          action={
-            <Button renderIcon={Add} kind="primary" onClick={openCreateGrade}>
-              Add Grade
-            </Button>
-          }
-        />
-      )}
-
-      {!isLoading && orderedGrades.length > 0 && (
-        <div style={{ opacity: busy ? 0.6 : 1 }}>
-          <Accordion align="start">
-            {orderedGrades.map((g, i) => (
-              <GradeGroup
-                key={g.id}
-                grade={g}
-                index={i}
-                isLast={i === orderedGrades.length - 1}
-                from={from}
-                to={to}
-                busy={busy}
-                classes={classesByGrade.get(g.id) ?? []}
-                open={openGrades.has(g.id)}
-                onToggleOpen={() => toggleOpen(g.id)}
-                onMoveUp={() => move(i, -1)}
-                onMoveDown={() => move(i, 1)}
-                onEditGrade={() => openEditGrade(g)}
-                onDeleteGrade={() => setGradeToDelete(g)}
-                onDeleteClass={(c) => setClassToDelete(c)}
-                streamName={streamName}
-                teacherName={teacherName}
+        {(deleteGrade.isError || deleteClass.isError || reorder.isError) && (
+          <div style={{ padding: "1rem 1.5rem 0" }}>
+            {deleteGrade.isError && (
+              <InlineNotification
+                kind="error"
+                title="Could not delete grade"
+                subtitle={getErrorMessage(
+                  deleteGrade.error,
+                  "The grade may be used by a class or curriculum level.",
+                )}
+                lowContrast
+                onClose={() => deleteGrade.reset()}
+                style={{ maxWidth: "100%", marginBottom: "1rem" }}
               />
+            )}
+
+            {deleteClass.isError && (
+              <InlineNotification
+                kind="error"
+                title="Could not delete class"
+                subtitle={getErrorMessage(
+                  deleteClass.error,
+                  "The class may still have students enrolled.",
+                )}
+                lowContrast
+                onClose={() => deleteClass.reset()}
+                style={{ maxWidth: "100%", marginBottom: "1rem" }}
+              />
+            )}
+
+            {reorder.isError && (
+              <InlineNotification
+                kind="error"
+                title="Could not reorder"
+                subtitle={getErrorMessage(reorder.error, "Please try again.")}
+                lowContrast
+                onClose={() => reorder.reset()}
+                style={{ maxWidth: "100%", marginBottom: "1rem" }}
+              />
+            )}
+          </div>
+        )}
+
+        {isError && (
+          <div style={{ padding: "1.25rem 1.5rem" }}>
+            <ErrorMessage
+              message="Could not load grades and classes."
+              onRetry={() => {
+                refetchGrades();
+                refetchClasses();
+              }}
+            />
+          </div>
+        )}
+
+        {!isLoading && !isError && needsRenumber && orderedGrades.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+              padding: "1rem 1.5rem 0",
+            }}
+          >
+            <InlineNotification
+              kind="warning"
+              title={
+                duplicateCount > 0
+                  ? `${duplicateCount} grades share the same position`
+                  : "Positions have gaps"
+              }
+              subtitle="Renumber them in the order shown below."
+              lowContrast
+              hideCloseButton
+              style={{ maxWidth: "100%", margin: 0, flex: 1 }}
+            />
+            <Button
+              kind="tertiary"
+              size="sm"
+              disabled={busy}
+              onClick={() => reorder.mutate(orderedGrades)}
+            >
+              {busy ? "Fixing…" : "Fix ordering"}
+            </Button>
+          </div>
+        )}
+
+        {isLoading && (
+          <div style={{ padding: "1rem 1.5rem" }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <GradeGroupSkeleton key={i} />
             ))}
-          </Accordion>
-        </div>
-      )}
+          </div>
+        )}
+
+        {!isLoading && !isError && orderedGrades.length === 0 && (
+          <EmptyState
+            title="No grades yet"
+            description="Add the grades this school runs, then create classes under each one."
+            action={
+              <Button renderIcon={Add} kind="primary" onClick={openCreateGrade}>
+                Add Grade
+              </Button>
+            }
+          />
+        )}
+
+        {!isLoading && orderedGrades.length > 0 && (
+          <div style={{ opacity: busy ? 0.6 : 1, padding: "1rem 1.5rem" }}>
+            <Accordion align="start">
+              {orderedGrades.map((g, i) => (
+                <GradeGroup
+                  key={g.id}
+                  grade={g}
+                  index={i}
+                  isLast={i === orderedGrades.length - 1}
+                  from={from}
+                  to={to}
+                  busy={busy}
+                  classes={classesByGrade.get(g.id) ?? []}
+                  open={openGrades.has(g.id)}
+                  onToggleOpen={() => toggleOpen(g.id)}
+                  onMoveUp={() => move(i, -1)}
+                  onMoveDown={() => move(i, 1)}
+                  onEditGrade={() => openEditGrade(g)}
+                  onDeleteGrade={() => setGradeToDelete(g)}
+                  onDeleteClass={(c) => setClassToDelete(c)}
+                  streamName={streamName}
+                  teacherName={teacherName}
+                />
+              ))}
+            </Accordion>
+          </div>
+        )}
+      </div>
 
       {gradeModal && (
         <GradeFormModal

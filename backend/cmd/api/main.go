@@ -84,9 +84,7 @@ func main() {
 	}
 
 	r := gin.Default()
-	// No reverse proxy in front of this service by default; trusting all
-	// proxies (Gin's default) would let a client spoof its own IP via
-	// X-Forwarded-For, undermining rate limiting and IP-based logging.
+	// No reverse proxy is used, so trusting proxies could allow IP spoofing.
 	r.SetTrustedProxies(nil)
 	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.BodySizeLimit())
@@ -98,20 +96,14 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	// API-wide per-IP rate limit, on top of any endpoint-specific ones
-	// (e.g. /setup/admin's stricter limiter). Kept generous by default: a
-	// school's users are frequently behind one shared NAT/proxy IP, so a
-	// tight limit here would throttle the whole school together, not just
-	// an abusive client. Tune via env once real traffic patterns are known.
+	// Generous per-IP rate limit prevents throttling users behind shared school networks.
 	r.Use(middleware.RateLimit(envFloat("API_RATE_LIMIT_RPS", 30), envInt("API_RATE_LIMIT_BURST", 60)))
 
 	scheduler := routes.Setup(r, db)
 	scheduler.Start()
 	defer scheduler.Stop()
 
-	// Swagger exposes the full API surface (routes, request/response
-	// shapes); harmless to leave public, but there's no reason to serve it
-	// outside development.
+	// Swagger is available only during development, not in production.
 	if os.Getenv("APP_ENV") == "development" {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}

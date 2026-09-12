@@ -10,14 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// StudentPortfolioHandler exposes HTTP endpoints for a student's activities, awards, and disciplinary records.
 type StudentPortfolioHandler struct {
 	service *services.StudentPortfolioService
 }
 
+// NewStudentPortfolioHandler constructs a StudentPortfolioHandler with its service dependency.
 func NewStudentPortfolioHandler(service *services.StudentPortfolioService) *StudentPortfolioHandler {
 	return &StudentPortfolioHandler{service: service}
 }
 
+// studentIDParam parses and validates the :id URL parameter as a student ID.
 func studentIDParam(c *gin.Context) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -27,6 +30,7 @@ func studentIDParam(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
+// recordIDParam parses and validates the :record_id URL parameter.
 func recordIDParam(c *gin.Context) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param("record_id"))
 	if err != nil {
@@ -36,8 +40,7 @@ func recordIDParam(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
-// optionalActorID returns the caller's user id, or nil if the claim is
-// missing/invalid — several portfolio writes credit an actor optionally.
+// optionalActorID returns the caller's user ID, or nil if the claim is missing or invalid.
 func optionalActorID(c *gin.Context) *uuid.UUID {
 	id, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -48,16 +51,7 @@ func optionalActorID(c *gin.Context) *uuid.UUID {
 
 // --- Progress reports -------------------------------------------------------
 
-// CreateProgressReport godoc
-// @Summary      Add a progress report
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.CreateProgressReportRequest true "Report"
-// @Success      201 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/progress-reports [post]
+// CreateProgressReport adds a progress report.
 func (h *StudentPortfolioHandler) CreateProgressReport(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -81,14 +75,7 @@ func (h *StudentPortfolioHandler) CreateProgressReport(c *gin.Context) {
 	c.JSON(http.StatusCreated, report)
 }
 
-// ListProgressReports godoc
-// @Summary      List a student's progress reports
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/progress-reports [get]
+// ListProgressReports lists a student's progress reports.
 func (h *StudentPortfolioHandler) ListProgressReports(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -102,17 +89,7 @@ func (h *StudentPortfolioHandler) ListProgressReports(c *gin.Context) {
 	c.JSON(http.StatusOK, reports)
 }
 
-// UpdateProgressReport godoc
-// @Summary      Update a progress report
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Report ID"
-// @Param        request body models.UpdateProgressReportRequest true "Report"
-// @Success      200 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/progress-reports/{record_id} [put]
+// UpdateProgressReport updates a progress report.
 func (h *StudentPortfolioHandler) UpdateProgressReport(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -135,15 +112,7 @@ func (h *StudentPortfolioHandler) UpdateProgressReport(c *gin.Context) {
 	c.JSON(http.StatusOK, report)
 }
 
-// DeleteProgressReport godoc
-// @Summary      Delete a progress report
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Report ID"
-// @Success      200 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/progress-reports/{record_id} [delete]
+// DeleteProgressReport deletes a progress report.
 func (h *StudentPortfolioHandler) DeleteProgressReport(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -162,16 +131,7 @@ func (h *StudentPortfolioHandler) DeleteProgressReport(c *gin.Context) {
 
 // --- Activities --------------------------------------------------------------
 
-// CreateActivity godoc
-// @Summary      Add a student activity (club/sport/society/competition)
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.CreateActivityRequest true "Activity"
-// @Success      201 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/activities [post]
+// CreateActivity adds a student activity (club/sport/society/competition).
 func (h *StudentPortfolioHandler) CreateActivity(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -190,14 +150,7 @@ func (h *StudentPortfolioHandler) CreateActivity(c *gin.Context) {
 	c.JSON(http.StatusCreated, activity)
 }
 
-// ListActivities godoc
-// @Summary      List a student's activities
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/activities [get]
+// ListActivities lists a student's activities.
 func (h *StudentPortfolioHandler) ListActivities(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -211,17 +164,7 @@ func (h *StudentPortfolioHandler) ListActivities(c *gin.Context) {
 	c.JSON(http.StatusOK, activities)
 }
 
-// UpdateActivity godoc
-// @Summary      Update a student activity
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Activity ID"
-// @Param        request body models.UpdateActivityRequest true "Activity"
-// @Success      200 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/activities/{record_id} [put]
+// UpdateActivity updates a student activity.
 func (h *StudentPortfolioHandler) UpdateActivity(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -244,15 +187,7 @@ func (h *StudentPortfolioHandler) UpdateActivity(c *gin.Context) {
 	c.JSON(http.StatusOK, activity)
 }
 
-// DeleteActivity godoc
-// @Summary      Delete a student activity
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Activity ID"
-// @Success      200 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/activities/{record_id} [delete]
+// DeleteActivity deletes a student activity.
 func (h *StudentPortfolioHandler) DeleteActivity(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -271,16 +206,7 @@ func (h *StudentPortfolioHandler) DeleteActivity(c *gin.Context) {
 
 // --- Leadership roles ----------------------------------------------------------
 
-// CreateLeadershipRole godoc
-// @Summary      Add a student leadership role
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.CreateLeadershipRoleRequest true "Role"
-// @Success      201 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/leadership-roles [post]
+// CreateLeadershipRole adds a student leadership role.
 func (h *StudentPortfolioHandler) CreateLeadershipRole(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -299,14 +225,7 @@ func (h *StudentPortfolioHandler) CreateLeadershipRole(c *gin.Context) {
 	c.JSON(http.StatusCreated, role)
 }
 
-// ListLeadershipRoles godoc
-// @Summary      List a student's leadership roles
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/leadership-roles [get]
+// ListLeadershipRoles lists a student's leadership roles.
 func (h *StudentPortfolioHandler) ListLeadershipRoles(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -320,15 +239,7 @@ func (h *StudentPortfolioHandler) ListLeadershipRoles(c *gin.Context) {
 	c.JSON(http.StatusOK, roles)
 }
 
-// DeleteLeadershipRole godoc
-// @Summary      Delete a student leadership role
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Role ID"
-// @Success      200 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/leadership-roles/{record_id} [delete]
+// DeleteLeadershipRole deletes a student leadership role.
 func (h *StudentPortfolioHandler) DeleteLeadershipRole(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -347,16 +258,7 @@ func (h *StudentPortfolioHandler) DeleteLeadershipRole(c *gin.Context) {
 
 // --- Awards ------------------------------------------------------------------
 
-// CreateAward godoc
-// @Summary      Add a student award
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.CreateAwardRequest true "Award"
-// @Success      201 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/awards [post]
+// CreateAward adds a student award.
 func (h *StudentPortfolioHandler) CreateAward(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -375,14 +277,7 @@ func (h *StudentPortfolioHandler) CreateAward(c *gin.Context) {
 	c.JSON(http.StatusCreated, award)
 }
 
-// ListAwards godoc
-// @Summary      List a student's awards
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/awards [get]
+// ListAwards lists a student's awards.
 func (h *StudentPortfolioHandler) ListAwards(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -396,15 +291,7 @@ func (h *StudentPortfolioHandler) ListAwards(c *gin.Context) {
 	c.JSON(http.StatusOK, awards)
 }
 
-// DeleteAward godoc
-// @Summary      Delete a student award
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Award ID"
-// @Success      200 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/awards/{record_id} [delete]
+// DeleteAward deletes a student award.
 func (h *StudentPortfolioHandler) DeleteAward(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -423,16 +310,7 @@ func (h *StudentPortfolioHandler) DeleteAward(c *gin.Context) {
 
 // --- Disciplinary records -------------------------------------------------------
 
-// CreateDisciplinaryRecord godoc
-// @Summary      Add a disciplinary record
-// @Tags         student-portfolio
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.CreateDisciplinaryRecordRequest true "Record"
-// @Success      201 {object} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/disciplinary-records [post]
+// CreateDisciplinaryRecord adds a disciplinary record.
 func (h *StudentPortfolioHandler) CreateDisciplinaryRecord(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -451,14 +329,7 @@ func (h *StudentPortfolioHandler) CreateDisciplinaryRecord(c *gin.Context) {
 	c.JSON(http.StatusCreated, record)
 }
 
-// ListDisciplinaryRecords godoc
-// @Summary      List a student's disciplinary records
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/disciplinary-records [get]
+// ListDisciplinaryRecords lists a student's disciplinary records.
 func (h *StudentPortfolioHandler) ListDisciplinaryRecords(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {
@@ -472,15 +343,7 @@ func (h *StudentPortfolioHandler) ListDisciplinaryRecords(c *gin.Context) {
 	c.JSON(http.StatusOK, records)
 }
 
-// DeleteDisciplinaryRecord godoc
-// @Summary      Delete a disciplinary record
-// @Tags         student-portfolio
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        record_id path string true "Record ID"
-// @Success      200 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/disciplinary-records/{record_id} [delete]
+// DeleteDisciplinaryRecord deletes a disciplinary record.
 func (h *StudentPortfolioHandler) DeleteDisciplinaryRecord(c *gin.Context) {
 	studentID, ok := studentIDParam(c)
 	if !ok {

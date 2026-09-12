@@ -4,22 +4,27 @@ package mailer
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
 	"net/smtp"
 	"os"
+	"strings"
+	"time"
 )
 
-// Mailer sends a plain-text email. Send must not leak transport details to
-// the caller — callers should treat a returned error as "email could not be
-// delivered right now" and log it themselves if they need specifics.
+// sendTimeout bounds a single Send end-to-end so a slow or unreachable SMTP host can't hang the caller indefinitely.
+const sendTimeout = 15 * time.Second
+
+// Mailer sends a plain-text email; a returned error means only "could not deliver right now", nothing more specific.
 type Mailer interface {
 	Send(ctx context.Context, to, subject, body string) error
 }
 
-// FrontendURL returns the base URL of the frontend app, used to build links
-// (e.g. a password-reset link) that get emailed to users.
+// FrontendURL returns the base URL of the frontend app, used to build links (e.g. a password-reset link) emailed to users.
 func FrontendURL() string {
 	if v := os.Getenv("FRONTEND_URL"); v != "" {
 		return v
@@ -27,12 +32,7 @@ func FrontendURL() string {
 	return "http://localhost:5173"
 }
 
-// NewFromEnv builds a Mailer from SMTP_* env vars. If SMTP_HOST isn't set —
-// e.g. a fresh dev checkout that hasn't configured outbound mail yet — it
-// falls back to logging the message instead of failing every password-reset
-// request outright, mirroring how other optional config in this codebase
-// (CORS_ORIGINS, API_RATE_LIMIT_*) degrades to a sane default rather than
-// erroring.
+// NewFromEnv builds a Mailer from SMTP_* env vars, falling back to logging the message if SMTP_HOST is unset.
 func NewFromEnv() Mailer {
 	host := os.Getenv("SMTP_HOST")
 	if host == "" {
@@ -59,32 +59,100 @@ func NewFromEnv() Mailer {
 	}
 }
 
+// smtpMailer is the Mailer that actually delivers over SMTP once configured.
 type smtpMailer struct {
 	host, port, username, password, from string
 }
 
-func (m *smtpMailer) Send(_ context.Context, to, subject, body string) error {
+// Send dials with a bounded deadline, uses implicit TLS on port 465 or opportunistic STARTTLS otherwise, and delivers one message.
+func (m *smtpMailer) Send(ctx context.Context, to, subject, body string) error {
+	deadline := time.Now().Add(sendTimeout)
+	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
+		deadline = d
+	}
+
 	addr := net.JoinHostPort(m.host, m.port)
 
-	var auth smtp.Auth
+	var dialer net.Dialer
+	conn, err := dialer.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return fmt.Errorf("mailer: dial %s failed: %w", addr, err)
+	}
+	// One deadline on the connection bounds the whole conversation, since net/smtp has no context parameter of its own.
+	if err := conn.SetDeadline(deadline); err != nil {
+		conn.Close()
+		return fmt.Errorf("mailer: setting deadline for %s failed: %w", addr, err)
+	}
+
+	if m.port == "465" {
+		conn = tls.Client(conn, &tls.Config{ServerName: m.host, MinVersion: tls.VersionTLS12})
+	}
+
+	client, err := smtp.NewClient(conn, m.host)
+	if err != nil {
+		conn.Close()
+		return fmt.Errorf("mailer: SMTP handshake with %s failed: %w", addr, err)
+	}
+	defer client.Close()
+
+	if m.port != "465" {
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(&tls.Config{ServerName: m.host, MinVersion: tls.VersionTLS12}); err != nil {
+				return fmt.Errorf("mailer: STARTTLS with %s failed: %w", addr, err)
+			}
+		}
+	}
+
 	if m.username != "" {
-		auth = smtp.PlainAuth("", m.username, m.password, m.host)
+		if err := client.Auth(smtp.PlainAuth("", m.username, m.password, m.host)); err != nil {
+			return fmt.Errorf("mailer: authentication with %s failed: %w", addr, err)
+		}
 	}
 
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\n%s\r\n",
-		m.from, to, subject, body)
-
-	if err := smtp.SendMail(addr, auth, m.from, []string{to}, []byte(msg)); err != nil {
-		return fmt.Errorf("mailer: send via %s failed: %w", addr, err)
+	if err := client.Mail(m.from); err != nil {
+		return fmt.Errorf("mailer: MAIL FROM rejected by %s: %w", addr, err)
 	}
-	return nil
+	if err := client.Rcpt(to); err != nil {
+		return fmt.Errorf("mailer: RCPT TO rejected by %s: %w", addr, err)
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("mailer: DATA rejected by %s: %w", addr, err)
+	}
+	if _, err := w.Write([]byte(buildMessage(m.from, to, subject, body))); err != nil {
+		return fmt.Errorf("mailer: writing message to %s failed: %w", addr, err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("mailer: finalizing message to %s failed: %w", addr, err)
+	}
+
+	return client.Quit()
 }
 
-// consoleMailer is the no-SMTP-configured fallback: it logs the email body
-// instead of delivering it, so local dev / early setup doesn't require a
-// mail server just to exercise the password-reset flow.
+// buildMessage assembles an RFC 5322 message with Date and Message-Id, since several mail servers spam-filter messages missing them.
+func buildMessage(from, to, subject, body string) string {
+	var idBytes [16]byte
+	_, _ = rand.Read(idBytes[:])
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "From: %s\r\n", from)
+	fmt.Fprintf(&b, "To: %s\r\n", to)
+	fmt.Fprintf(&b, "Subject: %s\r\n", subject)
+	fmt.Fprintf(&b, "Date: %s\r\n", time.Now().UTC().Format(time.RFC1123Z))
+	fmt.Fprintf(&b, "Message-Id: <%s@openschool>\r\n", hex.EncodeToString(idBytes[:]))
+	b.WriteString("MIME-Version: 1.0\r\n")
+	b.WriteString("Content-Type: text/plain; charset=\"UTF-8\"\r\n")
+	b.WriteString("\r\n")
+	b.WriteString(body)
+	b.WriteString("\r\n")
+	return b.String()
+}
+
+// consoleMailer is the no-SMTP-configured fallback: it logs the email instead of delivering it.
 type consoleMailer struct{}
 
+// Send logs the message that would have been sent, since no SMTP server is configured.
 func (consoleMailer) Send(_ context.Context, to, subject, body string) error {
 	log.Printf("mailer: SMTP not configured, not sending email — to=%s subject=%q\n%s", to, subject, body)
 	return nil

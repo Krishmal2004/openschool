@@ -5,45 +5,34 @@
 // depending on them. None of the app's other code imports this package —
 // it's wired in exactly once, from routes.Setup.
 //
-// Structure, one job per file:
+// Structure, one agent per file:
 //   - job.go       — the Job contract every agent implements (this file)
-//   - registry.go  — BuildAll, the single place that lists every job
+//   - registry.go  — BuildAll, the single place that lists every agent
 //   - scheduler.go — the generic cron runner + job_runs bookkeeping
-//   - system.go    — shared helpers (resolving a "system" actor, notifying admins)
-//   - <name>.go    — one job's actual check/action, self-contained
+//   - system.go    — shared helpers (severity, notifyAdmins, runChecks)
+//   - agent_*.go   — one agent's checks, self-contained
 //
-// Adding a new job means adding one <name>.go file implementing Job, plus
-// one line in registry.go's BuildAll — nothing else in the framework
-// changes.
+// Adding a wholly new agent means adding one agent_*.go file implementing
+// Job, plus one line in registry.go's BuildAll — nothing else changes.
 package jobs
 
 import "context"
 
-// Result is what a job reports back after running, independent of whether
-// anything was actually wrong — Findings lets the Automation panel show
-// "3 issues found" without parsing Summary text.
+// Result is what a job's Run returns: a one-line Summary and a Findings count for the Automation panel.
 type Result struct {
 	Summary  string
 	Findings int
 }
 
-// Job is a single scheduled maintenance check or action. Run must be safe
-// to call concurrently with itself only in the sense that the scheduler
-// guarantees it won't be — each job runs to completion before its next
-// scheduled tick fires (see scheduler.go) — but must NOT assume anything
-// about which other jobs are running alongside it.
+// Job is a single scheduled agent; Run must tolerate running alongside any other Job, just never alongside itself.
 type Job interface {
-	// Name is the stable identifier stored in job_settings/job_runs and
-	// shown in the admin Automation panel. Renaming it orphans any existing
-	// history/settings row, so treat it as an on-disk identifier once shipped.
+	// Name is the stable on-disk identifier stored in job_settings/job_runs — renaming it orphans existing history.
 	Name() string
 
-	// Schedule is a standard 5-field cron expression (robfig/cron/v3,
-	// minute-level granularity, no seconds field).
+	// Schedule is a standard 5-field cron expression (robfig/cron/v3, no seconds field).
 	Schedule() string
 
-	// Description is a one-line, human-readable explanation shown in the
-	// admin Automation panel next to the on/off toggle.
+	// Description is a one-line explanation shown next to the Automation panel's toggle.
 	Description() string
 
 	Run(ctx context.Context) (Result, error)

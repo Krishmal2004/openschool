@@ -15,6 +15,7 @@ const evictAfter = 30 * time.Minute
 // sweepInterval is how often the eviction pass runs.
 const sweepInterval = 10 * time.Minute
 
+// limiterEntry pairs one key's token bucket with when it was last used, so the sweep goroutine knows what's idle.
 type limiterEntry struct {
 	limiter  *rate.Limiter
 	lastSeen time.Time

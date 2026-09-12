@@ -10,16 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// TermMarkHandler exposes HTTP endpoints for entering and viewing term marks.
 type TermMarkHandler struct {
 	service *services.TermMarkService
 }
 
+// NewTermMarkHandler constructs a TermMarkHandler with its service dependency.
 func NewTermMarkHandler(service *services.TermMarkService) *TermMarkHandler {
 	return &TermMarkHandler{service: service}
 }
 
-// statusForMarkError maps a not-assigned-to-subject failure to 403, so
-// callers can tell "you can't see this" apart from a genuine 404/500.
+// statusForMarkError maps a not-assigned-to-subject failure to 403 instead of a genuine 404/500.
 func statusForMarkError(err error, fallbackStatus int) int {
 	if errors.Is(err, services.ErrNotAssignedToSubject) {
 		return http.StatusForbidden
@@ -27,18 +28,7 @@ func statusForMarkError(err error, fallbackStatus int) int {
 	return fallbackStatus
 }
 
-// BulkUpsert godoc
-// @Summary      Record term marks for a class
-// @Description  Upserts one term-test mark per student for a given term and subject
-// @Tags         marks
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                          true  "Class UUID"
-// @Param        request  body      models.BulkUpsertMarksRequest  true  "Marks"
-// @Success      200      {array}   map[string]any
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /classes/{id}/marks [put]
+// BulkUpsert upserts one term-test mark per student for a given term and subject.
 func (h *TermMarkHandler) BulkUpsert(c *gin.Context) {
 	classID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -67,18 +57,7 @@ func (h *TermMarkHandler) BulkUpsert(c *gin.Context) {
 	c.JSON(http.StatusOK, marks)
 }
 
-// ListClassMarks godoc
-// @Summary      List a class's marks for a term/subject
-// @Description  Every student in the class with their mark, if entered, for the given term and subject
-// @Tags         marks
-// @Produce      json
-// @Param        id          path      string  true  "Class UUID"
-// @Param        term_id     query     string  true  "Term UUID"
-// @Param        subject_id  query     string  true  "Subject UUID"
-// @Success      200  {array}   map[string]any
-// @Failure      400  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /classes/{id}/marks [get]
+// ListClassMarks returns every student in the class with their mark, if entered, for the given term and subject.
 func (h *TermMarkHandler) ListClassMarks(c *gin.Context) {
 	classID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -111,17 +90,7 @@ func (h *TermMarkHandler) ListClassMarks(c *gin.Context) {
 	c.JSON(http.StatusOK, rows)
 }
 
-// ListStudentMarks godoc
-// @Summary      List a student's marks for a term
-// @Description  Every subject mark recorded for the student in the given term
-// @Tags         marks
-// @Produce      json
-// @Param        id       path      string  true  "Student UUID"
-// @Param        term_id  query     string  true  "Term UUID"
-// @Success      200  {array}   map[string]any
-// @Failure      400  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/marks [get]
+// ListStudentMarks returns every subject mark recorded for the student in the given term.
 func (h *TermMarkHandler) ListStudentMarks(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -149,15 +118,7 @@ func (h *TermMarkHandler) ListStudentMarks(c *gin.Context) {
 	c.JSON(http.StatusOK, rows)
 }
 
-// DeleteMark godoc
-// @Summary      Delete a recorded mark
-// @Tags         marks
-// @Produce      json
-// @Param        id   path      string  true  "Term mark UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      400  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /marks/{id} [delete]
+// DeleteMark deletes a recorded mark.
 func (h *TermMarkHandler) DeleteMark(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

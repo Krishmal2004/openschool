@@ -11,25 +11,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// NonAcademicStaffHandler exposes HTTP endpoints for managing non-academic staff.
 type NonAcademicStaffHandler struct {
 	service *services.NonAcademicStaffService
 }
 
+// NewNonAcademicStaffHandler constructs a NonAcademicStaffHandler with its service dependency.
 func NewNonAcademicStaffHandler(service *services.NonAcademicStaffService) *NonAcademicStaffHandler {
 	return &NonAcademicStaffHandler{service: service}
 }
 
-// Create godoc
-// @Summary      Create non-academic staff
-// @Description  Create a new non-academic staff record (Lab Assistant, Librarian, Office Staff, etc.) — no login/IDP account
-// @Tags         non-academic-staff
-// @Accept       json
-// @Produce      json
-// @Param        request body models.CreateNonAcademicStaffRequest true "Staff details"
-// @Success      201 {object} models.NonAcademicStaffResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff [post]
+// Create creates a new non-academic staff record (Lab Assistant, Librarian, Office Staff, etc.) — no login/IDP account.
 func (h *NonAcademicStaffHandler) Create(c *gin.Context) {
 	var req models.CreateNonAcademicStaffRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -46,15 +38,7 @@ func (h *NonAcademicStaffHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, staff)
 }
 
-// GetByID godoc
-// @Summary      Get non-academic staff by ID
-// @Tags         non-academic-staff
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Success      200 {object} models.NonAcademicStaffResponse
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff/{id} [get]
+// GetByID gets non-academic staff by ID.
 func (h *NonAcademicStaffHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -71,15 +55,7 @@ func (h *NonAcademicStaffHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, staff)
 }
 
-// List godoc
-// @Summary      List non-academic staff
-// @Tags         non-academic-staff
-// @Produce      json
-// @Param        search query string false "Filter by name/employee number"
-// @Param        designation query string false "Filter by designation"
-// @Success      200 {array} models.NonAcademicStaffResponse
-// @Security     BearerAuth
-// @Router       /non-academic-staff [get]
+// List lists non-academic staff.
 func (h *NonAcademicStaffHandler) List(c *gin.Context) {
 	staff, err := h.service.List(c.Request.Context(), c.Query("search"), c.Query("designation"))
 	if err != nil {
@@ -90,17 +66,7 @@ func (h *NonAcademicStaffHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, staff)
 }
 
-// Update godoc
-// @Summary      Update non-academic staff
-// @Tags         non-academic-staff
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Param        request body models.UpdateNonAcademicStaffRequest true "Staff details"
-// @Success      200 {object} models.NonAcademicStaffResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff/{id} [put]
+// Update updates non-academic staff.
 func (h *NonAcademicStaffHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -123,17 +89,7 @@ func (h *NonAcademicStaffHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, staff)
 }
 
-// UpdateEmploymentStatus godoc
-// @Summary      Update non-academic staff employment status
-// @Tags         non-academic-staff
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Param        request body models.UpdateNonAcademicStaffEmploymentStatusRequest true "Status"
-// @Success      200 {object} models.NonAcademicStaffResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff/{id}/employment-status [put]
+// UpdateEmploymentStatus updates non-academic staff employment status.
 func (h *NonAcademicStaffHandler) UpdateEmploymentStatus(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -156,17 +112,7 @@ func (h *NonAcademicStaffHandler) UpdateEmploymentStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, staff)
 }
 
-// UpdateHouse godoc
-// @Summary      Update non-academic staff house (admin override, audited)
-// @Tags         non-academic-staff
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Param        request body models.UpdateNonAcademicStaffHouseRequest true "House"
-// @Success      200 {object} models.NonAcademicStaffResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff/{id}/house [put]
+// UpdateHouse updates non-academic staff house (admin override, audited).
 func (h *NonAcademicStaffHandler) UpdateHouse(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -195,16 +141,7 @@ func (h *NonAcademicStaffHandler) UpdateHouse(c *gin.Context) {
 	c.JSON(http.StatusOK, staff)
 }
 
-// Delete godoc
-// @Summary      Delete non-academic staff
-// @Description  Hard delete — nothing references non_academic_staff rows yet
-// @Tags         non-academic-staff
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /non-academic-staff/{id} [delete]
+// Delete permanently removes the staff record (nothing else references non-academic staff rows).
 func (h *NonAcademicStaffHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

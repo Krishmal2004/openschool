@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// PrefectHandler exposes HTTP endpoints for managing student prefects.
 type PrefectHandler struct {
 	service *services.PrefectService
 }
 
+// NewPrefectHandler constructs a PrefectHandler with its service dependency.
 func NewPrefectHandler(service *services.PrefectService) *PrefectHandler {
 	return &PrefectHandler{service: service}
 }
 
-// Assign godoc
-// @Summary      Appoint (or re-appoint) a student as a prefect
-// @Description  Upserts the prefect rank for a student in an academic year
-// @Tags         prefects
-// @Accept       json
-// @Produce      json
-// @Param        request body models.AssignPrefectRequest true "Appointment"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /prefects [put]
+// Assign upserts the prefect rank for a student in an academic year.
 func (h *PrefectHandler) Assign(c *gin.Context) {
 	var req models.AssignPrefectRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -45,15 +37,7 @@ func (h *PrefectHandler) Assign(c *gin.Context) {
 	c.JSON(http.StatusOK, prefect)
 }
 
-// List godoc
-// @Summary      List prefects for an academic year
-// @Tags         prefects
-// @Produce      json
-// @Param        academic_year_id query string true "Academic year UUID"
-// @Success      200 {array} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /prefects [get]
+// List lists prefects for an academic year.
 func (h *PrefectHandler) List(c *gin.Context) {
 	yearID, err := uuid.Parse(c.Query("academic_year_id"))
 	if err != nil {
@@ -70,14 +54,7 @@ func (h *PrefectHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// ListByStudent godoc
-// @Summary      List a student's prefect appointments across all years
-// @Tags         prefects
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/prefect-appointments [get]
+// ListByStudent lists a student's prefect appointments across all years.
 func (h *PrefectHandler) ListByStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -94,13 +71,7 @@ func (h *PrefectHandler) ListByStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// ListYears godoc
-// @Summary      List academic years that have a prefect board
-// @Tags         prefects
-// @Produce      json
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /prefects/years [get]
+// ListYears lists academic years that have a prefect board.
 func (h *PrefectHandler) ListYears(c *gin.Context) {
 	years, err := h.service.ListYears(c.Request.Context())
 	if err != nil {
@@ -111,15 +82,7 @@ func (h *PrefectHandler) ListYears(c *gin.Context) {
 	c.JSON(http.StatusOK, years)
 }
 
-// Delete godoc
-// @Summary      Remove a prefect appointment
-// @Tags         prefects
-// @Produce      json
-// @Param        id path string true "Prefect UUID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /prefects/{id} [delete]
+// Delete removes a prefect appointment.
 func (h *PrefectHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

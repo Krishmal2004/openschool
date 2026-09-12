@@ -11,14 +11,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// CurriculumHandler exposes HTTP endpoints for mediums, levels, and subject-selection groups.
 type CurriculumHandler struct {
 	service *services.CurriculumService
 }
 
+// NewCurriculumHandler constructs a CurriculumHandler with its service dependency.
 func NewCurriculumHandler(service *services.CurriculumService) *CurriculumHandler {
 	return &CurriculumHandler{service: service}
 }
 
+// toMediumResponse converts a generated medium row into its JSON response shape.
 func toMediumResponse(m db.Medium) models.MediumResponse {
 	return models.MediumResponse{
 		ID:        m.ID.String(),
@@ -27,6 +30,7 @@ func toMediumResponse(m db.Medium) models.MediumResponse {
 	}
 }
 
+// toSelectionGroupResponse converts a generated selection-group row into its JSON response shape.
 func toSelectionGroupResponse(g db.SelectionGroup) models.SelectionGroupResponse {
 	return models.SelectionGroupResponse{
 		ID:        g.ID.String(),
@@ -41,17 +45,7 @@ func toSelectionGroupResponse(g db.SelectionGroup) models.SelectionGroupResponse
 
 // ── mediums ─────────────────────────────────────────────────────────────────
 
-// CreateMedium godoc
-// @Summary      Create medium
-// @Description  Create a school-defined medium of instruction
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.CreateMediumRequest  true  "Medium info"
-// @Success      201      {object}  models.MediumResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /mediums [post]
+// CreateMedium creates a school-defined medium of instruction.
 func (h *CurriculumHandler) CreateMedium(c *gin.Context) {
 	var req models.CreateMediumRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -68,14 +62,7 @@ func (h *CurriculumHandler) CreateMedium(c *gin.Context) {
 	c.JSON(http.StatusCreated, toMediumResponse(medium))
 }
 
-// ListMediums godoc
-// @Summary      List mediums
-// @Tags         curriculum
-// @Produce      json
-// @Success      200  {array}   models.MediumResponse
-// @Failure      500  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /mediums [get]
+// ListMediums lists mediums.
 func (h *CurriculumHandler) ListMediums(c *gin.Context) {
 	mediums, err := h.service.ListMediums(c.Request.Context())
 	if err != nil {
@@ -91,17 +78,7 @@ func (h *CurriculumHandler) ListMediums(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// UpdateMedium godoc
-// @Summary      Update medium
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                      true  "Medium UUID"
-// @Param        request  body      models.UpdateMediumRequest  true  "Medium info"
-// @Success      200      {object}  models.MediumResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /mediums/{id} [put]
+// UpdateMedium updates a medium of instruction.
 func (h *CurriculumHandler) UpdateMedium(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -124,17 +101,7 @@ func (h *CurriculumHandler) UpdateMedium(c *gin.Context) {
 	c.JSON(http.StatusOK, toMediumResponse(medium))
 }
 
-// DeleteMedium godoc
-// @Summary      Delete medium
-// @Description  Blocked while the medium is referenced by a group subject or enrollment
-// @Tags         curriculum
-// @Produce      json
-// @Param        id   path      string  true  "Medium UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      409  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /mediums/{id} [delete]
+// DeleteMedium is blocked while the medium is referenced by a group subject or enrollment.
 func (h *CurriculumHandler) DeleteMedium(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -156,17 +123,7 @@ func (h *CurriculumHandler) DeleteMedium(c *gin.Context) {
 
 // ── levels ──────────────────────────────────────────────────────────────────
 
-// CreateLevel godoc
-// @Summary      Create level
-// @Description  Create an admin-defined curriculum level
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.CreateLevelRequest  true  "Level info"
-// @Success      201      {object}  models.LevelResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels [post]
+// CreateLevel creates an admin-defined curriculum level.
 func (h *CurriculumHandler) CreateLevel(c *gin.Context) {
 	var req models.CreateLevelRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -183,15 +140,7 @@ func (h *CurriculumHandler) CreateLevel(c *gin.Context) {
 	c.JSON(http.StatusCreated, services.ToLevelResponse(level))
 }
 
-// GetLevel godoc
-// @Summary      Get level
-// @Tags         curriculum
-// @Produce      json
-// @Param        id   path      string  true  "Level UUID"
-// @Success      200  {object}  models.LevelResponse
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id} [get]
+// GetLevel returns a single curriculum level by ID.
 func (h *CurriculumHandler) GetLevel(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -208,16 +157,7 @@ func (h *CurriculumHandler) GetLevel(c *gin.Context) {
 	c.JSON(http.StatusOK, services.ToLevelResponse(level))
 }
 
-// ListLevels godoc
-// @Summary      List levels
-// @Description  Optionally filtered by grade via ?grade_id=
-// @Tags         curriculum
-// @Produce      json
-// @Param        grade_id  query     string  false  "Grade UUID"
-// @Success      200       {array}   models.LevelResponse
-// @Failure      500       {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels [get]
+// ListLevels returns curriculum levels, optionally filtered by grade via ?grade_id=.
 func (h *CurriculumHandler) ListLevels(c *gin.Context) {
 	var (
 		levels []db.Level
@@ -248,17 +188,7 @@ func (h *CurriculumHandler) ListLevels(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// UpdateLevel godoc
-// @Summary      Update level
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                     true  "Level UUID"
-// @Param        request  body      models.UpdateLevelRequest  true  "Level info"
-// @Success      200      {object}  models.LevelResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id} [put]
+// UpdateLevel updates a curriculum level.
 func (h *CurriculumHandler) UpdateLevel(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -281,19 +211,7 @@ func (h *CurriculumHandler) UpdateLevel(c *gin.Context) {
 	c.JSON(http.StatusOK, services.ToLevelResponse(level))
 }
 
-// DuplicateLevel godoc
-// @Summary      Duplicate level
-// @Description  Copy a level with all its selection groups and their subjects, under a new label
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                        true  "Source level UUID"
-// @Param        request  body      models.DuplicateLevelRequest  true  "New level info"
-// @Success      201      {object}  models.LevelResponse
-// @Failure      400      {object}  map[string]string
-// @Failure      404      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id}/duplicate [post]
+// DuplicateLevel copies a level with all its selection groups and their subjects, under a new label.
 func (h *CurriculumHandler) DuplicateLevel(c *gin.Context) {
 	sourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -320,17 +238,7 @@ func (h *CurriculumHandler) DuplicateLevel(c *gin.Context) {
 	c.JSON(http.StatusCreated, services.ToLevelResponse(level))
 }
 
-// DeleteLevel godoc
-// @Summary      Delete level
-// @Description  Blocked while any of the level's groups still carry enrollments
-// @Tags         curriculum
-// @Produce      json
-// @Param        id   path      string  true  "Level UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      409  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id} [delete]
+// DeleteLevel is blocked while any of the level's groups still carry enrollments.
 func (h *CurriculumHandler) DeleteLevel(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -350,16 +258,7 @@ func (h *CurriculumHandler) DeleteLevel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "level deleted"})
 }
 
-// GetCurriculumTree godoc
-// @Summary      Get curriculum tree
-// @Description  A level with its selection groups and each group's subjects nested
-// @Tags         curriculum
-// @Produce      json
-// @Param        id   path      string  true  "Level UUID"
-// @Success      200  {object}  models.CurriculumTreeResponse
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id}/tree [get]
+// GetCurriculumTree returns a level with its selection groups and each group's subjects nested.
 func (h *CurriculumHandler) GetCurriculumTree(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -382,18 +281,7 @@ func (h *CurriculumHandler) GetCurriculumTree(c *gin.Context) {
 
 // ── selection groups ────────────────────────────────────────────────────────
 
-// CreateSelectionGroup godoc
-// @Summary      Create selection group
-// @Description  A pool the student picks between min_select and max_select subjects from
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                              true  "Level UUID"
-// @Param        request  body      models.CreateSelectionGroupRequest  true  "Group info"
-// @Success      201      {object}  models.SelectionGroupResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id}/groups [post]
+// CreateSelectionGroup creates a selection group — a pool the student picks between min_select and max_select subjects from.
 func (h *CurriculumHandler) CreateSelectionGroup(c *gin.Context) {
 	levelID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -420,15 +308,7 @@ func (h *CurriculumHandler) CreateSelectionGroup(c *gin.Context) {
 	c.JSON(http.StatusCreated, toSelectionGroupResponse(group))
 }
 
-// ListSelectionGroups godoc
-// @Summary      List selection groups of a level
-// @Tags         curriculum
-// @Produce      json
-// @Param        id   path      string  true  "Level UUID"
-// @Success      200  {array}   models.SelectionGroupResponse
-// @Failure      500  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /levels/{id}/groups [get]
+// ListSelectionGroups lists selection groups of a level.
 func (h *CurriculumHandler) ListSelectionGroups(c *gin.Context) {
 	levelID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -450,17 +330,7 @@ func (h *CurriculumHandler) ListSelectionGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// UpdateSelectionGroup godoc
-// @Summary      Update selection group
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        group_id  path      string                              true  "Group UUID"
-// @Param        request   body      models.UpdateSelectionGroupRequest  true  "Group info"
-// @Success      200       {object}  models.SelectionGroupResponse
-// @Failure      400       {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id} [put]
+// UpdateSelectionGroup updates a subject-selection group.
 func (h *CurriculumHandler) UpdateSelectionGroup(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {
@@ -483,17 +353,7 @@ func (h *CurriculumHandler) UpdateSelectionGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, toSelectionGroupResponse(group))
 }
 
-// DeleteSelectionGroup godoc
-// @Summary      Delete selection group
-// @Description  Blocked while enrollments reference the group
-// @Tags         curriculum
-// @Produce      json
-// @Param        group_id  path      string  true  "Group UUID"
-// @Success      200       {object}  map[string]string
-// @Failure      404       {object}  map[string]string
-// @Failure      409       {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id} [delete]
+// DeleteSelectionGroup is blocked while enrollments reference the group.
 func (h *CurriculumHandler) DeleteSelectionGroup(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {
@@ -515,18 +375,7 @@ func (h *CurriculumHandler) DeleteSelectionGroup(c *gin.Context) {
 
 // ── group subjects ──────────────────────────────────────────────────────────
 
-// AddGroupSubject godoc
-// @Summary      Add subject to group
-// @Description  Upserts the subject's medium restriction and prerequisite note
-// @Tags         curriculum
-// @Accept       json
-// @Produce      json
-// @Param        group_id  path      string                         true  "Group UUID"
-// @Param        request   body      models.AddGroupSubjectRequest  true  "Group subject info"
-// @Success      201       {object}  map[string]string
-// @Failure      400       {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id}/subjects [post]
+// AddGroupSubject upserts the subject's medium restriction and prerequisite note.
 func (h *CurriculumHandler) AddGroupSubject(c *gin.Context) {
 	groupID, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {
@@ -552,15 +401,7 @@ func (h *CurriculumHandler) AddGroupSubject(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "subject added to group"})
 }
 
-// ListGroupSubjects godoc
-// @Summary      List a group's subjects
-// @Tags         curriculum
-// @Produce      json
-// @Param        group_id  path      string  true  "Group UUID"
-// @Success      200       {array}   models.GroupSubjectResponse
-// @Failure      500       {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id}/subjects [get]
+// ListGroupSubjects lists a group's subjects.
 func (h *CurriculumHandler) ListGroupSubjects(c *gin.Context) {
 	groupID, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {
@@ -577,16 +418,7 @@ func (h *CurriculumHandler) ListGroupSubjects(c *gin.Context) {
 	c.JSON(http.StatusOK, subjects)
 }
 
-// RemoveGroupSubject godoc
-// @Summary      Remove subject from group
-// @Tags         curriculum
-// @Produce      json
-// @Param        group_id    path      string  true  "Group UUID"
-// @Param        subject_id  path      string  true  "Subject UUID"
-// @Success      200         {object}  map[string]string
-// @Failure      400         {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id}/subjects/{subject_id} [delete]
+// RemoveGroupSubject removes a subject from a selection group.
 func (h *CurriculumHandler) RemoveGroupSubject(c *gin.Context) {
 	groupID, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {

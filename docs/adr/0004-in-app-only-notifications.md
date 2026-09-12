@@ -8,7 +8,7 @@ OpenSchool needs to notify students, guardians, and staff about
 attendance, timetable changes, and administrative announcements. Adding
 a real delivery channel (email/SMS/WhatsApp) requires an external
 provider, credentials, deliverability handling, and a retry/failure
-story — a meaningfully larger scope than the rest of the notification
+story - a meaningfully larger scope than the rest of the notification
 feature.
 
 ## Decision
@@ -25,15 +25,19 @@ channel.
 - **A recipient who doesn't check the app misses the notification
   entirely.** There is no fallback delivery channel and no read receipt
   guarantee beyond what the app itself shows.
-- **Recipient lists are resolved at send time and are not retroactive** —
+- **Recipient lists are resolved at send time and are not retroactive** -
   someone added to a class/grade after a notification was sent does not
   retroactively become a recipient of it. This is documented, expected
   behavior, not a bug.
 - **A failed recipient-lookup during fan-out is currently silent** (see
   `audit.md`'s notes on `notification.go`/`timetable.go`'s `_, _ := ...`
-  recipient-resolution calls) — delivery is deliberately best-effort, but
+  recipient-resolution calls) - delivery is deliberately best-effort, but
   failures during that best-effort resolution aren't logged anywhere
   today, making a "why didn't I get notified" report hard to investigate.
 - **Revisiting this decision** (adding email/SMS) is a substantial-enough
   scope change that it should get its own ADR rather than being folded
   into a notification-module bug fix.
+- **Not violated by the password-reset email** (`internal/mailer`, see
+  [ADR 0005](./0005-hand-rolled-password-reset.md)) - that's a one-time,
+  unauthenticated delivery for a user who can't yet see an in-app
+  notification, not a second channel for the notification feature itself.

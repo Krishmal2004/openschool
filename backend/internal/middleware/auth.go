@@ -18,8 +18,10 @@ import (
 	"github.com/openschool-org/openschool/internal/identity"
 )
 
+// StringOrSlice unmarshals a JSON value that may be either a single string or an array of strings.
 type StringOrSlice []string
 
+// UnmarshalJSON accepts the "roles" claim as either a bare string or a string array.
 func (s *StringOrSlice) UnmarshalJSON(data []byte) error {
 	var single string
 	if err := json.Unmarshal(data, &single); err == nil {
@@ -35,6 +37,7 @@ func (s *StringOrSlice) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Claims is the subset of a ThunderID access token's JWT claims AuthMiddleware reads.
 type Claims struct {
 	Sub         string        `json:"sub"`
 	Email       string        `json:"email"`
@@ -46,12 +49,15 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// jwks holds the cached, auto-refreshing JWKS key set InitJWKS builds; AuthMiddleware validates every token's signature against it.
 var jwks keyfunc.Keyfunc
 
+// stripX5CTransport strips the x5c certificate chain from a JWKS response before keyfunc parses it.
 type stripX5CTransport struct {
 	base http.RoundTripper
 }
 
+// RoundTrip runs the wrapped transport, then removes each key's x5c field from a successful JWKS response.
 func (t *stripX5CTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base.RoundTrip(req)
 	if err != nil || resp.StatusCode != http.StatusOK {
@@ -65,7 +71,7 @@ func (t *stripX5CTransport) RoundTrip(req *http.Request) (*http.Response, error)
 	}
 
 	var jwks struct {
-		Keys []map[string]interface{} `json:"keys"`
+		Keys []map[string]any `json:"keys"`
 	}
 	if err := json.Unmarshal(body, &jwks); err != nil {
 		resp.Body = io.NopCloser(bytes.NewReader(body))
@@ -88,6 +94,7 @@ func (t *stripX5CTransport) RoundTrip(req *http.Request) (*http.Response, error)
 	return resp, nil
 }
 
+// InitJWKS fetches and caches the JWKS key set at jwksURL, with a transport that skips TLS verification in development and strips x5c from every response.
 func InitJWKS(jwksURL string) error {
 	baseTransport := http.DefaultTransport
 	if os.Getenv("APP_ENV") == "development" {
@@ -114,6 +121,7 @@ func InitJWKS(jwksURL string) error {
 	return nil
 }
 
+// AuthMiddleware validates the request's Bearer JWT against the cached JWKS and sets the caller's identity on the context.
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -138,7 +146,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			jwt.WithValidMethods([]string{"RS256"}),
 			jwt.WithIssuer(identity.Issuer()),
 		}
-		// Audience validation is opt-in via THUNDERID_AUDIENCE: this instance's ThunderID client isn't configured with a resource indicator, so there's no single correct value to hardcode by default.
 		if aud := identity.Audience(); aud != "" {
 			parserOpts = append(parserOpts, jwt.WithAudience(aud))
 		}

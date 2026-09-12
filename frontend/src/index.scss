@@ -333,6 +333,10 @@ html, body, #root {
 
 .cds--side-nav__icon { fill: #525252; }
 
+// Breathing room below the last nav item (System > Automation) so it isn't
+// flush against the bottom edge of the sidebar.
+.cds--side-nav__items { padding-bottom: 1.5rem; }
+
 // ─── Page layout ────────────────────────────────────────────────────────────
 .os-layout {
   display: flex;

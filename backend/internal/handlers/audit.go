@@ -10,9 +10,7 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
-// auditLogResponse mirrors db.ListAuditLogsRow but marshals before/after as
-// raw JSON instead of the base64 string encoding/json would otherwise
-// produce for a plain []byte field.
+// auditLogResponse mirrors db.ListAuditLogsRow with before/after marshaled as raw JSON instead of base64.
 type auditLogResponse struct {
 	ID         uuid.UUID       `json:"id"`
 	EntityType string          `json:"entity_type"`
@@ -26,6 +24,7 @@ type auditLogResponse struct {
 	CreatedAt  string          `json:"created_at"`
 }
 
+// toAuditLogResponse converts a generated audit-log row into its JSON response shape.
 func toAuditLogResponse(row db.ListAuditLogsRow) auditLogResponse {
 	resp := auditLogResponse{
 		ID:         row.ID,
@@ -49,23 +48,17 @@ func toAuditLogResponse(row db.ListAuditLogsRow) auditLogResponse {
 	return resp
 }
 
+// AuditHandler exposes the read-only audit-log endpoint for admins.
 type AuditHandler struct {
 	service *services.AuditService
 }
 
+// NewAuditHandler constructs an AuditHandler with its service dependency.
 func NewAuditHandler(service *services.AuditService) *AuditHandler {
 	return &AuditHandler{service: service}
 }
 
-// List godoc
-// @Summary      List audit log entries
-// @Description  Admin-only trail of manual house re-assignments and attendance edits made after the 24h lock
-// @Tags         audit
-// @Produce      json
-// @Param        entity_type query string false "Filter by entity type"
-// @Param        entity_id   query string false "Filter by entity id"
-// @Security     BearerAuth
-// @Router       /audit-logs [get]
+// List returns the admin-only trail of manual house re-assignments and attendance edits made after the 24h lock.
 func (h *AuditHandler) List(c *gin.Context) {
 	entityType := c.Query("entity_type")
 

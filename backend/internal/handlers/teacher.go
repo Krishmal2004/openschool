@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// TeacherHandler exposes HTTP endpoints for managing teachers.
 type TeacherHandler struct {
 	service *services.TeacherService
 }
 
+// NewTeacherHandler constructs a TeacherHandler with its service dependency.
 func NewTeacherHandler(service *services.TeacherService) *TeacherHandler {
 	return &TeacherHandler{service: service}
 }
 
-// Create godoc
-// @Summary      Create teacher
-// @Description  Onboard a new teacher - creates ThunderID user and teacher profile
-// @Tags         teachers
-// @Accept       json
-// @Produce      json
-// @Param        request body models.CreateTeacherRequest true "Teacher details"
-// @Success      201 {object} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers [post]
+// Create onboards a new teacher, creating both a ThunderID user and a teacher profile.
 func (h *TeacherHandler) Create(c *gin.Context) {
 	var req models.CreateTeacherRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -51,17 +43,7 @@ func (h *TeacherHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, teacher)
 }
 
-// GetByID godoc
-// @Summary      Get teacher by ID
-// @Description  Get a teacher profile by ID
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Success      200 {object} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id} [get]
+// GetByID gets a teacher profile by ID.
 func (h *TeacherHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -78,15 +60,7 @@ func (h *TeacherHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, teacher)
 }
 
-// List godoc
-// @Summary      List teachers
-// @Description  Get all teachers
-// @Tags         teachers
-// @Produce      json
-// @Success      200 {array} models.TeacherResponse
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers [get]
+// List gets all teachers.
 func (h *TeacherHandler) List(c *gin.Context) {
 	teachers, err := h.service.ListTeachers(c.Request.Context())
 	if err != nil {
@@ -97,18 +71,7 @@ func (h *TeacherHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, teachers)
 }
 
-// Update godoc
-// @Summary      Update teacher
-// @Description  Update a teacher profile
-// @Tags         teachers
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        request body models.UpdateTeacherRequest true "Teacher details"
-// @Success      200 {object} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id} [put]
+// Update updates a teacher profile.
 func (h *TeacherHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -131,18 +94,7 @@ func (h *TeacherHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, teacher)
 }
 
-// UpdateHouse godoc
-// @Summary      Update teacher house
-// @Description  Assign or clear a teacher's house (System Administrator only)
-// @Tags         teachers
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        request body models.UpdateTeacherHouseRequest true "House assignment"
-// @Success      200 {object} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/house [put]
+// UpdateHouse assigns or clears a teacher's house (System Administrator only).
 func (h *TeacherHandler) UpdateHouse(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -171,18 +123,7 @@ func (h *TeacherHandler) UpdateHouse(c *gin.Context) {
 	c.JSON(http.StatusOK, teacher)
 }
 
-// UpdateEmploymentStatus godoc
-// @Summary      Update teacher employment status
-// @Description  Mark a teacher active, resigned, or transferred
-// @Tags         teachers
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        request body models.UpdateTeacherEmploymentStatusRequest true "Status"
-// @Success      200 {object} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/employment-status [put]
+// UpdateEmploymentStatus marks a teacher active, resigned, or transferred.
 func (h *TeacherHandler) UpdateEmploymentStatus(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -205,16 +146,7 @@ func (h *TeacherHandler) UpdateEmploymentStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, teacher)
 }
 
-// Delete godoc
-// @Summary      Delete teacher
-// @Description  Delete a teacher profile and ThunderID user account
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id} [delete]
+// Delete deletes a teacher profile and ThunderID user account.
 func (h *TeacherHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -242,18 +174,7 @@ func (h *TeacherHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "teacher deleted"})
 }
 
-// AssignSubject godoc
-// @Summary      Assign subject to teacher
-// @Description  Assign a subject qualification to a teacher
-// @Tags         teachers
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        request body models.AssignSubjectToTeacherRequest true "Subject details"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/subjects [post]
+// AssignSubject assigns a subject qualification to a teacher.
 func (h *TeacherHandler) AssignSubject(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -275,17 +196,7 @@ func (h *TeacherHandler) AssignSubject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "subject assigned to teacher"})
 }
 
-// RemoveSubject godoc
-// @Summary      Remove subject from teacher
-// @Description  Remove a subject qualification from a teacher
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        subject_id path string true "Subject ID"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/subjects/{subject_id} [delete]
+// RemoveSubject removes a subject qualification from a teacher.
 func (h *TeacherHandler) RemoveSubject(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -307,16 +218,7 @@ func (h *TeacherHandler) RemoveSubject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "subject removed from teacher"})
 }
 
-// Workload godoc
-// @Summary      Get teacher workload
-// @Description  Every class+subject a teacher is assigned to teach, across academic years
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Success      200 {array} map[string]any
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/workload [get]
+// Workload returns every class+subject a teacher is assigned to teach, across academic years.
 func (h *TeacherHandler) Workload(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -333,16 +235,7 @@ func (h *TeacherHandler) Workload(c *gin.Context) {
 	c.JSON(http.StatusOK, workload)
 }
 
-// ListSubjects godoc
-// @Summary      List teacher subjects
-// @Description  Get all subjects assigned to a teacher
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Success      200 {array} models.TeacherSubjectResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /teachers/{id}/subjects [get]
+// ListSubjects gets all subjects assigned to a teacher.
 func (h *TeacherHandler) ListSubjects(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -359,16 +252,7 @@ func (h *TeacherHandler) ListSubjects(c *gin.Context) {
 	c.JSON(http.StatusOK, subjects)
 }
 
-// ListBySubject godoc
-// @Summary      List teachers qualified for a subject
-// @Description  Every teacher holding the given subject as a teacher_subjects qualification
-// @Tags         teachers
-// @Produce      json
-// @Param        id path string true "Subject ID"
-// @Success      200 {array} models.TeacherResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /subjects/{id}/teachers [get]
+// ListBySubject returns every teacher holding the given subject as a teacher_subjects qualification.
 func (h *TeacherHandler) ListBySubject(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

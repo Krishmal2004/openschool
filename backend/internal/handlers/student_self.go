@@ -12,9 +12,7 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
-// StudentSelfHandler serves the self-service endpoints a signed-in student
-// uses to see their own profile, attendance, marks, and subject selection —
-// resolved from their own token, never from a trusted student ID in the URL.
+// StudentSelfHandler serves a signed-in student's own profile/attendance/marks endpoints, resolved from their token.
 type StudentSelfHandler struct {
 	students    *repositories.StudentRepository
 	attendance  *services.AttendanceService
@@ -22,10 +20,12 @@ type StudentSelfHandler struct {
 	enrollments *services.EnrollmentService
 }
 
+// NewStudentSelfHandler constructs a StudentSelfHandler with its service dependencies.
 func NewStudentSelfHandler(students *repositories.StudentRepository, attendance *services.AttendanceService, marks *services.TermMarkService, enrollments *services.EnrollmentService) *StudentSelfHandler {
 	return &StudentSelfHandler{students: students, attendance: attendance, marks: marks, enrollments: enrollments}
 }
 
+// resolveStudentID resolves the signed-in student's own profile ID from the request's JWT.
 func (h *StudentSelfHandler) resolveStudentID(c *gin.Context) (uuid.UUID, bool) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -40,13 +40,7 @@ func (h *StudentSelfHandler) resolveStudentID(c *gin.Context) (uuid.UUID, bool) 
 	return student.ID, true
 }
 
-// Profile godoc
-// @Summary      The signed-in student's own profile
-// @Tags         student
-// @Produce      json
-// @Success      200  {object}  map[string]any
-// @Security     BearerAuth
-// @Router       /me/student [get]
+// Profile returns the signed-in student's own profile.
 func (h *StudentSelfHandler) Profile(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {
@@ -62,13 +56,7 @@ func (h *StudentSelfHandler) Profile(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// Attendance godoc
-// @Summary      The signed-in student's own attendance history
-// @Tags         student
-// @Produce      json
-// @Success      200  {array}   map[string]any
-// @Security     BearerAuth
-// @Router       /me/student/attendance [get]
+// Attendance returns the signed-in student's own attendance history.
 func (h *StudentSelfHandler) Attendance(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {
@@ -84,14 +72,7 @@ func (h *StudentSelfHandler) Attendance(c *gin.Context) {
 	c.JSON(http.StatusOK, records)
 }
 
-// Marks godoc
-// @Summary      The signed-in student's own term marks
-// @Tags         student
-// @Produce      json
-// @Param        term_id  query     string  true  "Term UUID"
-// @Success      200  {array}   map[string]any
-// @Security     BearerAuth
-// @Router       /me/student/marks [get]
+// Marks returns the signed-in student's own term marks.
 func (h *StudentSelfHandler) Marks(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {
@@ -112,15 +93,7 @@ func (h *StudentSelfHandler) Marks(c *gin.Context) {
 	c.JSON(http.StatusOK, marks)
 }
 
-// ListEnrollments godoc
-// @Summary      The signed-in student's own subject picks for a level
-// @Tags         student
-// @Produce      json
-// @Param        level_id          query     string  true  "Level UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200  {array}   models.EnrollmentResponse
-// @Security     BearerAuth
-// @Router       /me/student/enrollments [get]
+// ListEnrollments returns the signed-in student's own subject picks for a level.
 func (h *StudentSelfHandler) ListEnrollments(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {
@@ -153,19 +126,7 @@ func (h *StudentSelfHandler) ListEnrollments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"picks": picks, "locked": locked})
 }
 
-// SubmitEnrollment godoc
-// @Summary      Submit the signed-in student's own subject picks
-// @Description  Validates then replaces the student's picks for a level+year; rejected if already confirmed/locked
-// @Tags         student
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.SubmitEnrollmentRequest  true  "Picks"
-// @Success      200      {object}  models.EnrollmentValidationResponse
-// @Failure      400      {object}  map[string]string
-// @Failure      409      {object}  map[string]string
-// @Failure      422      {object}  models.EnrollmentValidationResponse
-// @Security     BearerAuth
-// @Router       /me/student/enrollments [post]
+// SubmitEnrollment validates then replaces the student's picks for a level+year; rejected if already confirmed/locked.
 func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {
@@ -196,17 +157,7 @@ func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 	c.JSON(http.StatusOK, models.EnrollmentValidationResponse{Valid: true, Errors: nil})
 }
 
-// ConfirmEnrollment godoc
-// @Summary      Confirm and lock the signed-in student's subject picks
-// @Description  Once confirmed, picks for this level+year can't be changed until an admin unlocks them
-// @Tags         student
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.ConfirmEnrollmentRequest  true  "Level + academic year"
-// @Success      200      {object}  map[string]string
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/student/enrollments/confirm [post]
+// ConfirmEnrollment locks the student's picks for this level and year until an admin unlocks them.
 func (h *StudentSelfHandler) ConfirmEnrollment(c *gin.Context) {
 	studentID, ok := h.resolveStudentID(c)
 	if !ok {

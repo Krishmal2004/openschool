@@ -9,10 +9,28 @@ function humanizeJobName(name: string) {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// The backup job can't be disabled — see the matching check in
-// internal/handlers/jobs.go's SetEnabled. Disabling it silently stops the
-// school's only backup mechanism, with no other symptom until an incident.
-const NON_DISABLEABLE_JOBS = new Set(["backup_migration_drift"]);
+// Every agent's schedule is a fixed 5-field cron expression it sets in code
+// (not user-configurable), so a small lookup table reads better than a raw
+// cron string next to each agent's name. Falls back to the raw expression
+// for anything not in the table, so a future agent's schedule never renders
+// as blank.
+const SCHEDULE_LABELS: Record<string, string> = {
+  "0 * * * *": "Hourly",
+  "0 2 * * *": "Daily at 2:00 AM",
+  "0 3 * * *": "Daily at 3:00 AM",
+  "0 5 * * *": "Daily at 5:00 AM",
+  "0 12 * * 1-5": "Weekdays at 12:00 PM",
+};
+
+function humanizeSchedule(cron: string) {
+  return SCHEDULE_LABELS[cron] ?? cron;
+}
+
+// The system-health agent (backup + migration drift) can't be disabled —
+// see the matching check in internal/handlers/jobs.go's SetEnabled.
+// Disabling it silently stops the school's only backup mechanism, with no
+// other symptom until an incident.
+const NON_DISABLEABLE_JOBS = new Set(["system_health_agent"]);
 
 function statusTag(status: JobRunStatus) {
   switch (status) {
@@ -36,16 +54,17 @@ export default function Automation() {
         <div className="os-page__header-left">
           <h1 className="os-page__title">Automation</h1>
           <p className="os-page__subtitle">
-            Scheduled background checks that support the system's operation —
-            none of the app's other features depend on them, so any of these
-            can be turned off safely, except the backup job.
+            Five scheduled background agents that support the system's
+            operation — none of the app's other features depend on them, so
+            any of these can be turned off safely, except System Health
+            (backup).
           </p>
         </div>
       </div>
 
       {isError && (
         <div style={{ marginBottom: "1.5rem" }}>
-          <ErrorMessage message="Could not load background jobs." onRetry={refetch} />
+          <ErrorMessage message="Could not load background agents." onRetry={refetch} />
         </div>
       )}
 
@@ -87,7 +106,7 @@ export default function Automation() {
               <div style={{ flex: 1, minWidth: "20rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>{humanizeJobName(job.name)}</span>
-                  <span className="os-table__mono" style={{ fontSize: "0.75rem" }}>{job.schedule}</span>
+                  <Tag type="blue" size="sm">{humanizeSchedule(job.schedule)}</Tag>
                 </div>
                 <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>{job.description}</p>
 

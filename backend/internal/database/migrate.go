@@ -9,6 +9,7 @@ import (
 	"github.com/openschool-org/openschool/db/migrations"
 )
 
+// RunMigrations applies all pending embedded migrations to the database at dbURL.
 func RunMigrations(dbURL string) error {
 	migrationURL := "pgx5://" + dbURL[len("postgres://"):]
 
