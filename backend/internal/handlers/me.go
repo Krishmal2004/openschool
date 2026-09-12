@@ -9,22 +9,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// MeHandler exposes the signed-in user's own account-summary endpoint.
 type MeHandler struct {
 	service *services.MeService
 }
 
+// NewMeHandler constructs a MeHandler with its service dependency.
 func NewMeHandler(service *services.MeService) *MeHandler {
 	return &MeHandler{service: service}
 }
 
-// Get godoc
-// @Summary      Current user
-// @Description  Returns the signed-in identity's claims, provisioning a local user row on first sign-in
-// @Tags         me
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200 {object} map[string]any
-// @Router       /me [get]
+// Get returns the signed-in identity's claims, provisioning a local user row on first sign-in.
 func (h *MeHandler) Get(c *gin.Context) {
 	userID := c.GetString("userID")
 	email := c.GetString("email")

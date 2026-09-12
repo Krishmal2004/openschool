@@ -9,14 +9,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// StudentHandler exposes HTTP endpoints for managing students.
 type StudentHandler struct {
 	service *services.StudentService
 }
 
+// NewStudentHandler constructs a StudentHandler with its service dependency.
 func NewStudentHandler(service *services.StudentService) *StudentHandler {
 	return &StudentHandler{service: service}
 }
 
+// Create registers a new student.
 func (h *StudentHandler) Create(c *gin.Context) {
 	var req models.CreateStudentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,17 +42,7 @@ func (h *StudentHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, student)
 }
 
-// GetByID godoc
-// @Summary      Get student by ID
-// @Description  Get a student profile by ID
-// @Tags         students
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {object} models.StudentResponse
-// @Failure      400 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id} [get]
+// GetByID gets a student profile by ID.
 func (h *StudentHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -66,17 +59,7 @@ func (h *StudentHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, student)
 }
 
-// GetWithClass godoc
-// @Summary      Get student with class
-// @Description  Get a student profile with their current class details
-// @Tags         students
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {object} models.StudentWithClassResponse
-// @Failure      400 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/class [get]
+// GetWithClass gets a student profile with their current class details.
 func (h *StudentHandler) GetWithClass(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -93,15 +76,7 @@ func (h *StudentHandler) GetWithClass(c *gin.Context) {
 	c.JSON(http.StatusOK, student)
 }
 
-// List godoc
-// @Summary      List students
-// @Description  Get all students
-// @Tags         students
-// @Produce      json
-// @Success      200 {array} models.StudentResponse
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students [get]
+// List gets all students.
 func (h *StudentHandler) List(c *gin.Context) {
 	students, err := h.service.ListStudents(c.Request.Context())
 	if err != nil {
@@ -112,16 +87,7 @@ func (h *StudentHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, students)
 }
 
-// ListByClass godoc
-// @Summary      List students by class
-// @Description  Get all students enrolled in a specific class
-// @Tags         students
-// @Produce      json
-// @Param        id path string true "Class ID"
-// @Success      200 {array} models.StudentResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /classes/{id}/students [get]
+// ListByClass gets all students enrolled in a specific class.
 func (h *StudentHandler) ListByClass(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -138,18 +104,7 @@ func (h *StudentHandler) ListByClass(c *gin.Context) {
 	c.JSON(http.StatusOK, students)
 }
 
-// Update godoc
-// @Summary      Update student
-// @Description  Update a student profile
-// @Tags         students
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.UpdateStudentRequest true "Student details"
-// @Success      200 {object} models.StudentResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id} [put]
+// Update updates a student profile.
 func (h *StudentHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -172,18 +127,7 @@ func (h *StudentHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, student)
 }
 
-// UpdateHouse godoc
-// @Summary      Update student house
-// @Description  Assign or clear a student's house
-// @Tags         students
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.UpdateStudentHouseRequest true "House assignment"
-// @Success      200 {object} models.StudentResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/house [put]
+// UpdateHouse assigns or clears a student's house.
 func (h *StudentHandler) UpdateHouse(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -212,18 +156,7 @@ func (h *StudentHandler) UpdateHouse(c *gin.Context) {
 	c.JSON(http.StatusOK, student)
 }
 
-// UpdateEnrollmentStatus godoc
-// @Summary      Update student enrollment status
-// @Description  Mark a student active or left (withdrawn/transferred out of the school)
-// @Tags         students
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Param        request body models.UpdateStudentEnrollmentStatusRequest true "Status"
-// @Success      200 {object} models.StudentResponse
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/enrollment-status [put]
+// UpdateEnrollmentStatus marks a student active or left (withdrawn/transferred out of the school).
 func (h *StudentHandler) UpdateEnrollmentStatus(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -246,16 +179,7 @@ func (h *StudentHandler) UpdateEnrollmentStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, student)
 }
 
-// Delete godoc
-// @Summary      Delete student
-// @Description  Delete a student profile and ThunderID user account
-// @Tags         students
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id} [delete]
+// Delete deletes a student profile and ThunderID user account.
 func (h *StudentHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

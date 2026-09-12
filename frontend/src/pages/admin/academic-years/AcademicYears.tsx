@@ -85,7 +85,7 @@ export default function AcademicYears() {
         </Button>
       </div>
 
-      <AgentFindingsBanner jobNames={["current_academic_year_invariant"]} />
+      <AgentFindingsBanner titles={["Current-academic-year invariant violated"]} />
 
       <YearsList
         years={years}

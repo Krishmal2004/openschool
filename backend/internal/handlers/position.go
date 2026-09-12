@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// PositionHandler exposes HTTP endpoints for the in-app teacher position hierarchy.
 type PositionHandler struct {
 	service *services.PositionService
 }
 
+// NewPositionHandler constructs a PositionHandler with its service dependency.
 func NewPositionHandler(service *services.PositionService) *PositionHandler {
 	return &PositionHandler{service: service}
 }
 
-// AssignPrincipal godoc
-// @Summary      Assign the school's Principal
-// @Description  Permanent appointment (not scoped to an academic year) — replaces any existing Principal
-// @Tags         positions
-// @Accept       json
-// @Produce      json
-// @Param        request body models.AssignPrincipalRequest true "Assignment"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /positions/principal [put]
+// AssignPrincipal makes a permanent appointment, replacing any existing Principal.
 func (h *PositionHandler) AssignPrincipal(c *gin.Context) {
 	var req models.AssignPrincipalRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -51,17 +43,7 @@ func (h *PositionHandler) AssignPrincipal(c *gin.Context) {
 	c.JSON(http.StatusOK, position)
 }
 
-// AssignVicePrincipal godoc
-// @Summary      Assign a Vice Principal
-// @Description  Permanent appointment (not scoped to an academic year); upserts the Vice Principal's notification grant (whole-school or grade-scoped)
-// @Tags         positions
-// @Accept       json
-// @Produce      json
-// @Param        request body models.AssignVicePrincipalRequest true "Assignment"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /positions/vice-principal [put]
+// AssignVicePrincipal makes a permanent Vice Principal appointment with a whole-school or grade-scoped notification grant.
 func (h *PositionHandler) AssignVicePrincipal(c *gin.Context) {
 	var req models.AssignVicePrincipalRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -84,14 +66,7 @@ func (h *PositionHandler) AssignVicePrincipal(c *gin.Context) {
 	c.JSON(http.StatusOK, position)
 }
 
-// List godoc
-// @Summary      List leadership positions (Principal, Vice Principals)
-// @Tags         positions
-// @Produce      json
-// @Success      200 {array} map[string]string
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /positions [get]
+// List lists leadership positions (Principal, Vice Principals).
 func (h *PositionHandler) List(c *gin.Context) {
 	list, err := h.service.List(c.Request.Context())
 	if err != nil {
@@ -102,15 +77,7 @@ func (h *PositionHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// Delete godoc
-// @Summary      Remove a position assignment
-// @Tags         positions
-// @Produce      json
-// @Param        id path string true "Position UUID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /positions/{id} [delete]
+// Delete removes a position assignment.
 func (h *PositionHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

@@ -30,7 +30,7 @@ as a new IDP role or a single stored rank column.
   configuration.
 - **Section Head, Class Teacher, and Subject Teacher already existed**
   under different names/tables before this decision (`section_heads`,
-  `classes.form_teacher_id`, `class_subject_teachers`) — only Principal
+  `classes.form_teacher_id`, `class_subject_teachers`) - only Principal
   and Vice Principal needed new schema, reusing the same "in-app overlay
   on a base role" pattern that already proved out.
 - **Rank is computed, not stored.** `RankForTeacher` checks each

@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// SectionHeadHandler exposes HTTP endpoints for assigning section heads.
 type SectionHeadHandler struct {
 	service *services.SectionHeadService
 }
 
+// NewSectionHeadHandler constructs a SectionHeadHandler with its service dependency.
 func NewSectionHeadHandler(service *services.SectionHeadService) *SectionHeadHandler {
 	return &SectionHeadHandler{service: service}
 }
 
-// Assign godoc
-// @Summary      Assign a teacher-in-charge (section head)
-// @Description  Upserts the TIC for a grade, or for one A/L stream within a grade when stream_id is set
-// @Tags         section-heads
-// @Accept       json
-// @Produce      json
-// @Param        request body models.AssignSectionHeadRequest true "Assignment"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /section-heads [put]
+// Assign upserts the TIC for a grade, or for one A/L stream within a grade when stream_id is set.
 func (h *SectionHeadHandler) Assign(c *gin.Context) {
 	var req models.AssignSectionHeadRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -45,15 +37,7 @@ func (h *SectionHeadHandler) Assign(c *gin.Context) {
 	c.JSON(http.StatusOK, sectionHead)
 }
 
-// List godoc
-// @Summary      List section heads for an academic year
-// @Tags         section-heads
-// @Produce      json
-// @Param        academic_year_id query string true "Academic year UUID"
-// @Success      200 {array} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /section-heads [get]
+// List lists section heads for an academic year.
 func (h *SectionHeadHandler) List(c *gin.Context) {
 	yearID, err := uuid.Parse(c.Query("academic_year_id"))
 	if err != nil {
@@ -70,15 +54,7 @@ func (h *SectionHeadHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// Delete godoc
-// @Summary      Remove a section head assignment
-// @Tags         section-heads
-// @Produce      json
-// @Param        id path string true "Section head UUID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /section-heads/{id} [delete]
+// Delete removes a section head assignment.
 func (h *SectionHeadHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

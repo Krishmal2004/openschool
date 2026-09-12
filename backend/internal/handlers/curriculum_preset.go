@@ -7,23 +7,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// CurriculumPresetHandler exposes the HTTP endpoint for applying a curriculum preset.
 type CurriculumPresetHandler struct {
 	service *services.CurriculumPresetService
 }
 
+// NewCurriculumPresetHandler constructs a CurriculumPresetHandler with its service dependency.
 func NewCurriculumPresetHandler(service *services.CurriculumPresetService) *CurriculumPresetHandler {
 	return &CurriculumPresetHandler{service: service}
 }
 
-// Preview godoc
-// @Summary      Preview the Sri Lankan national curriculum preset
-// @Description  Computes exactly what Run would create, without writing anything — for admin review before committing
-// @Tags         curriculum
-// @Produce      json
-// @Success      200  {object}  services.PresetSummary
-// @Failure      500  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /curriculum/preset/preview [get]
+// Preview computes exactly what Run would create, without writing anything — for admin review before committing.
 func (h *CurriculumPresetHandler) Preview(c *gin.Context) {
 	summary, err := h.service.Preview(c.Request.Context())
 	if err != nil {
@@ -34,15 +28,7 @@ func (h *CurriculumPresetHandler) Preview(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-// Run godoc
-// @Summary      Seed the Sri Lankan national curriculum
-// @Description  Idempotently creates subjects, levels, and selection groups for the standard Grade 1-13 curriculum, scoped to whichever grades exist in this school
-// @Tags         curriculum
-// @Produce      json
-// @Success      200  {object}  services.PresetSummary
-// @Failure      500  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /curriculum/preset [post]
+// Run seeds the standard Sri Lankan Grade 1-13 curriculum for whichever grades exist in this school.
 func (h *CurriculumPresetHandler) Run(c *gin.Context) {
 	summary, err := h.service.Run(c.Request.Context())
 	if err != nil {

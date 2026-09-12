@@ -8,23 +8,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// IdentityReconciliationHandler exposes the admin endpoint for finding identity-provider accounts with no matching local user.
 type IdentityReconciliationHandler struct {
 	service *services.IdentityReconciliationService
 }
 
+// NewIdentityReconciliationHandler constructs an IdentityReconciliationHandler with its service dependency.
 func NewIdentityReconciliationHandler(service *services.IdentityReconciliationService) *IdentityReconciliationHandler {
 	return &IdentityReconciliationHandler{service: service}
 }
 
-// ListOrphaned godoc
-// @Summary      List orphaned identity provider accounts
-// @Description  Admin-triggered: ThunderID accounts with no matching local users row, left behind by a failed signup rollback
-// @Tags         identity
-// @Produce      json
-// @Success      200 {array} services.OrphanedIdentity
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /admin/orphaned-accounts [get]
+// ListOrphaned returns identity-provider accounts with no matching local user row, left behind by a failed signup rollback.
 func (h *IdentityReconciliationHandler) ListOrphaned(c *gin.Context) {
 	orphaned, err := h.service.FindOrphaned(c.Request.Context())
 	if err != nil {
@@ -35,16 +29,7 @@ func (h *IdentityReconciliationHandler) ListOrphaned(c *gin.Context) {
 	c.JSON(http.StatusOK, orphaned)
 }
 
-// DeleteOrphaned godoc
-// @Summary      Delete an orphaned identity provider account
-// @Description  Admin-triggered cleanup; re-verifies the account is still orphaned immediately before deleting
-// @Tags         identity
-// @Produce      json
-// @Param        id path string true "ThunderID user ID"
-// @Success      200 {object} map[string]string
-// @Failure      409 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /admin/orphaned-accounts/{id} [delete]
+// DeleteOrphaned re-verifies an account is still orphaned, then deletes it.
 func (h *IdentityReconciliationHandler) DeleteOrphaned(c *gin.Context) {
 	id := c.Param("id")
 

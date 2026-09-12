@@ -74,7 +74,13 @@ export default function Attendance() {
         </div>
       </div>
 
-      <AgentFindingsBanner jobNames={["stale_attendance_watcher", "missing_attendance_session_watcher"]} />
+      <AgentFindingsBanner
+        titles={[
+          "Incomplete attendance sessions",
+          "Classes missing today's attendance session",
+          "Classes with inconsistent attendance-taking",
+        ]}
+      />
 
       {!isToday && (
         <div style={{ marginBottom: "1rem" }}>

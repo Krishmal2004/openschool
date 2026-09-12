@@ -17,10 +17,10 @@ type UpdateSubjectRequest struct {
 }
 
 type SubjectResponse struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Code      string   `json:"code"`
-	Type      *string  `json:"type"`
-	MaxMarks  float64  `json:"max_marks"`
-	CreatedAt string   `json:"created_at"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Code      string  `json:"code"`
+	Type      *string `json:"type"`
+	MaxMarks  float64 `json:"max_marks"`
+	CreatedAt string  `json:"created_at"`
 }

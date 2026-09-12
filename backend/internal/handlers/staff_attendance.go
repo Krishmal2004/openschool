@@ -13,6 +13,7 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// parseYearMonth reads and validates the year/month query parameters shared by this handler's endpoints.
 func parseYearMonth(c *gin.Context) (int, int, error) {
 	year, err := strconv.Atoi(c.Query("year"))
 	if err != nil {
@@ -25,25 +26,17 @@ func parseYearMonth(c *gin.Context) (int, int, error) {
 	return year, month, nil
 }
 
+// StaffAttendanceHandler exposes HTTP endpoints for teacher/staff self-attendance.
 type StaffAttendanceHandler struct {
 	service *services.StaffAttendanceService
 }
 
+// NewStaffAttendanceHandler constructs a StaffAttendanceHandler with its service dependency.
 func NewStaffAttendanceHandler(service *services.StaffAttendanceService) *StaffAttendanceHandler {
 	return &StaffAttendanceHandler{service: service}
 }
 
-// Mark godoc
-// @Summary      Mark staff attendance
-// @Description  Upserts a single teacher's or non-academic staff member's attendance for a date
-// @Tags         staff-attendance
-// @Accept       json
-// @Produce      json
-// @Param        request body models.MarkStaffAttendanceRequest true "Attendance"
-// @Success      200 {object} map[string]interface{}
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /staff-attendance [post]
+// Mark upserts a single teacher's or non-academic staff member's attendance for a date.
 func (h *StaffAttendanceHandler) Mark(c *gin.Context) {
 	var req models.MarkStaffAttendanceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,16 +59,7 @@ func (h *StaffAttendanceHandler) Mark(c *gin.Context) {
 	c.JSON(http.StatusOK, record)
 }
 
-// ListByDate godoc
-// @Summary      List staff attendance for a date
-// @Description  Every active teacher and non-academic staff member's attendance status for the given date (unmarked staff show no status)
-// @Tags         staff-attendance
-// @Produce      json
-// @Param        date query string true "Date (YYYY-MM-DD)"
-// @Success      200 {object} map[string]interface{}
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /staff-attendance [get]
+// ListByDate returns every staff member's attendance status for a given date.
 func (h *StaffAttendanceHandler) ListByDate(c *gin.Context) {
 	date, err := time.Parse("2006-01-02", c.Query("date"))
 	if err != nil {
@@ -92,17 +76,7 @@ func (h *StaffAttendanceHandler) ListByDate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"teachers": teachers, "non_academic_staff": staff})
 }
 
-// MonthlySummary godoc
-// @Summary      Monthly staff attendance summary
-// @Description  Per-status counts (present/late/absent/leave) for every active staff member in the given month
-// @Tags         staff-attendance
-// @Produce      json
-// @Param        year query int true "Year"
-// @Param        month query int true "Month (1-12)"
-// @Success      200 {object} map[string]interface{}
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /staff-attendance/monthly-summary [get]
+// MonthlySummary returns per-status attendance counts for every active staff member in a given month.
 func (h *StaffAttendanceHandler) MonthlySummary(c *gin.Context) {
 	year, month, err := parseYearMonth(c)
 	if err != nil {
@@ -122,17 +96,7 @@ func (h *StaffAttendanceHandler) MonthlySummary(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"teachers": teachers, "non_academic_staff": staff})
 }
 
-// TeacherHistory godoc
-// @Summary      A teacher's staff-attendance history for a month
-// @Tags         staff-attendance
-// @Produce      json
-// @Param        id path string true "Teacher ID"
-// @Param        year query int true "Year"
-// @Param        month query int true "Month (1-12)"
-// @Success      200 {array} models.StaffAttendanceRow
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /staff-attendance/teachers/{id}/history [get]
+// TeacherHistory returns a teacher's staff-attendance history for a month.
 func (h *StaffAttendanceHandler) TeacherHistory(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -155,17 +119,7 @@ func (h *StaffAttendanceHandler) TeacherHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, records)
 }
 
-// NonAcademicStaffHistory godoc
-// @Summary      A non-academic staff member's attendance history for a month
-// @Tags         staff-attendance
-// @Produce      json
-// @Param        id path string true "Staff ID"
-// @Param        year query int true "Year"
-// @Param        month query int true "Month (1-12)"
-// @Success      200 {array} models.StaffAttendanceRow
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /staff-attendance/non-academic-staff/{id}/history [get]
+// NonAcademicStaffHistory returns a non-academic staff member's attendance history for a month.
 func (h *StaffAttendanceHandler) NonAcademicStaffHistory(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

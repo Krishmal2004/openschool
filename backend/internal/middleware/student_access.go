@@ -4,44 +4,34 @@ package middleware
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/models"
 )
 
+// RequireStudentAccess aborts with 403 unless the caller is an admin, a teacher, the student themself, or a guardian of the student named by the :id URL parameter.
 func RequireStudentAccess(pool *pgxpool.Pool) gin.HandlerFunc {
 	queries := db.New(pool)
 	return func(c *gin.Context) {
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		userID, err := uuid.Parse(userIDStr.(string))
+		userID, err := UserIDFromContext(c)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user id"})
 			return
 		}
 
-		userRoles, exists := c.Get("roles")
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "no roles found"})
-			return
-		}
-		userRoleList, ok := userRoles.([]string)
+		userRoleList, ok := rolesFromContext(c)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid roles format"})
 			return
 		}
 
-		for _, role := range userRoleList {
-			if role == "admin" || role == "teacher" {
-				c.Next()
-				return
-			}
+		if slices.Contains(userRoleList, models.RoleAdmin) || slices.Contains(userRoleList, models.RoleTeacher) {
+			c.Next()
+			return
 		}
 
 		studentIDStr := c.Param("id")
@@ -55,26 +45,22 @@ func RequireStudentAccess(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		for _, role := range userRoleList {
-			if role == "student" {
-				student, err := queries.GetStudentByUserID(c.Request.Context(), pgtype.UUID{Bytes: userID, Valid: true})
-				if err == nil && student.ID == studentID {
-					c.Next()
-					return
-				}
+		if slices.Contains(userRoleList, models.RoleStudent) {
+			student, err := queries.GetStudentByUserID(c.Request.Context(), pgtype.UUID{Bytes: userID, Valid: true})
+			if err == nil && student.ID == studentID {
+				c.Next()
+				return
 			}
 		}
 
-		for _, role := range userRoleList {
-			if role == "parent" {
-				isGuardian, err := queries.IsGuardianOfStudent(c.Request.Context(), db.IsGuardianOfStudentParams{
-					UserID:    pgtype.UUID{Bytes: userID, Valid: true},
-					StudentID: studentID,
-				})
-				if err == nil && isGuardian {
-					c.Next()
-					return
-				}
+		if slices.Contains(userRoleList, models.RoleParent) {
+			isGuardian, err := queries.IsGuardianOfStudent(c.Request.Context(), db.IsGuardianOfStudentParams{
+				UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+				StudentID: studentID,
+			})
+			if err == nil && isGuardian {
+				c.Next()
+				return
 			}
 		}
 

@@ -75,6 +75,22 @@ func (r *JobChecksRepository) DeleteExpiredPasswordResetTokens(ctx context.Conte
 	return r.queries.DeleteExpiredPasswordResetTokens(ctx)
 }
 
-func (r *JobChecksRepository) ListBurstAuditActors(ctx context.Context, threshold int32) ([]db.ListBurstAuditActorsRow, error) {
-	return r.queries.ListBurstAuditActors(ctx, threshold)
+func (r *JobChecksRepository) ListOpenTermMarksProgress(ctx context.Context) ([]db.ListOpenTermMarksProgressRow, error) {
+	return r.queries.ListOpenTermMarksProgress(ctx)
+}
+
+func (r *JobChecksRepository) ListClassAttendanceComplianceRecent(ctx context.Context, windowDays int32) ([]db.ListClassAttendanceComplianceRecentRow, error) {
+	return r.queries.ListClassAttendanceComplianceRecent(ctx, windowDays)
+}
+
+func (r *JobChecksRepository) ListAuditActivityBaseline(ctx context.Context, baselineDays int32) ([]db.ListAuditActivityBaselineRow, error) {
+	return r.queries.ListAuditActivityBaseline(ctx, baselineDays)
+}
+
+func (r *JobChecksRepository) ListCurrentHourAuditActivity(ctx context.Context) ([]db.ListCurrentHourAuditActivityRow, error) {
+	return r.queries.ListCurrentHourAuditActivity(ctx)
+}
+
+func (r *JobChecksRepository) ListOffHoursAuditActivity(ctx context.Context, minChanges int32) ([]db.ListOffHoursAuditActivityRow, error) {
+	return r.queries.ListOffHoursAuditActivity(ctx, minChanges)
 }

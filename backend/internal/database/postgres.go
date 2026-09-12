@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// BuildDSN builds a Postgres connection string from the DB_* environment variables.
 func BuildDSN() string {
 	u := url.URL{
 		Scheme:   "postgres",
@@ -22,18 +23,14 @@ func BuildDSN() string {
 	return u.String()
 }
 
+// Connect opens a pooled connection to the database at dsn.
 func Connect(dsn string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse DSN: %w", err)
 	}
 
-	// Defaults sized for a single school's daily traffic (on the order of a
-	// few thousand users, concentrated in bursts like morning attendance and
-	// end-of-day notifications) rather than a bare-minimum dev default —
-	// Postgres's own default max_connections is 100, so this still leaves
-	// plenty of headroom for migrate/psql/other tools. Override via env for
-	// a specific deployment's measured load.
+	// Defaults support typical school traffic while remaining configurable through environment variables.
 	config.MaxConns = envInt32("DB_MAX_CONNS", 25)
 	config.MinConns = envInt32("DB_MIN_CONNS", 5)
 	config.MaxConnLifetime = 30 * time.Minute
@@ -43,6 +40,7 @@ func Connect(dsn string) (*pgxpool.Pool, error) {
 	return pgxpool.NewWithConfig(context.Background(), config)
 }
 
+// envInt32 reads an integer environment variable, falling back to a default if unset or invalid.
 func envInt32(key string, fallback int32) int32 {
 	v := os.Getenv(key)
 	if v == "" {

@@ -7,24 +7,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// SearchHandler exposes the admin global-search endpoint.
 type SearchHandler struct {
 	service *services.SearchService
 }
 
+// NewSearchHandler constructs a SearchHandler with its service dependency.
 func NewSearchHandler(service *services.SearchService) *SearchHandler {
 	return &SearchHandler{service: service}
 }
 
-// Global godoc
-// @Summary      Admin global search
-// @Description  Bounded (top 5 per entity) name/identifier search across students, teachers, guardians, and non-academic staff, for the admin header's jump-to-record search
-// @Tags         search
-// @Produce      json
-// @Param        q query string true "Search term"
-// @Success      200 {object} models.GlobalSearchResponse
-// @Failure      500 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /admin/search [get]
+// Global searches students, teachers, guardians, and non-academic staff for the admin header's jump-to-record search.
 func (h *SearchHandler) Global(c *gin.Context) {
 	result, err := h.service.Global(c.Request.Context(), c.Query("q"))
 	if err != nil {

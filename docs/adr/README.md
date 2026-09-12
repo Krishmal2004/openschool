@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 An ADR captures a significant design decision, the context that drove it,
-and its known tradeoffs — so it doesn't get silently relitigated or
+and its known tradeoffs - so it doesn't get silently relitigated or
 "fixed" by someone who wasn't there for the original reasoning. These are
 short and status-tracked, not a design essay; see
 [`ARCHITECTURE.md`](../ARCHITECTURE.md) for how the pieces they describe
@@ -17,10 +17,12 @@ current behavior.
 | [0003](./0003-single-current-academic-year.md) | Single school, single current academic year per deployment | Accepted |
 | [0004](./0004-in-app-only-notifications.md) | In-app-only notifications (no email/SMS channel) | Accepted |
 | [0005](./0005-hand-rolled-password-reset.md) | Hand-rolled password lifecycle (no IDP primitive) | Accepted, known weakness |
+| [0006](./0006-five-agent-job-consolidation.md) | Five consolidated background agents instead of many single-purpose jobs | Accepted |
+| [0007](./0007-plain-comments-over-swaggo.md) | Plain one-line doc comments in handlers instead of swaggo annotations | Accepted |
 
 ## Adding a new ADR
 
 Copy the format of an existing one: **Status**, **Context**, **Decision**,
 **Consequences**. Number sequentially, never renumber or delete a
-superseded record — mark its status `Superseded by NNNN` instead and add
+superseded record - mark its status `Superseded by NNNN` instead and add
 the new one.

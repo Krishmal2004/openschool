@@ -18,7 +18,7 @@ deployment rather than a multi-tenant model.
   toggled via `SetCurrentAcademicYear`. Nearly every academic-data query
   implicitly filters by this flag rather than taking an explicit year
   parameter.
-- This same flag doubles as promotion's "publish switch" — see
+- This same flag doubles as promotion's "publish switch" - see
   [`FEATURES.md`'s promotion section](../FEATURES.md#promotion--class-reassignment):
   promotion and class-shuffle write into a **not-yet-current** year, which
   stays fully editable and invisible to the rest of the app until an
@@ -35,5 +35,5 @@ deployment rather than a multi-tenant model.
   database level; behavior if that happens is undefined and untested.
   `SetCurrentAcademicYear` is the only sanctioned way to change it.
 - **Promotion's preview-then-commit flow gets a "draft" concept for
-  free.** This was a deliberate reuse, not an oversight — see
+  free.** This was a deliberate reuse, not an oversight - see
   `docs/plan.md` Phase 5 for the original reasoning.

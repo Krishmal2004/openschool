@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// TermHandler exposes HTTP endpoints for managing academic terms.
 type TermHandler struct {
 	service *services.TermService
 }
 
+// NewTermHandler constructs a TermHandler with its service dependency.
 func NewTermHandler(service *services.TermService) *TermHandler {
 	return &TermHandler{service: service}
 }
 
-// Create godoc
-// @Summary      Create term
-// @Description  Create a new term within an academic year
-// @Tags         terms
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.CreateTermRequest  true  "Term info"
-// @Success      201      {object}  models.TermResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms [post]
+// Create creates a new term within an academic year.
 func (h *TermHandler) Create(c *gin.Context) {
 	var req models.CreateTermRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -45,16 +37,7 @@ func (h *TermHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, term)
 }
 
-// ListByAcademicYear godoc
-// @Summary      List terms
-// @Description  Retrieve all terms for an academic year, ordered by sort_order
-// @Tags         terms
-// @Produce      json
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200  {array}   models.TermResponse
-// @Failure      400  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms [get]
+// ListByAcademicYear retrieves all terms for an academic year, ordered by sort_order.
 func (h *TermHandler) ListByAcademicYear(c *gin.Context) {
 	yearIDStr := c.Query("academic_year_id")
 	yearID, err := uuid.Parse(yearIDStr)
@@ -72,15 +55,7 @@ func (h *TermHandler) ListByAcademicYear(c *gin.Context) {
 	c.JSON(http.StatusOK, terms)
 }
 
-// GetCurrent godoc
-// @Summary      Get current term
-// @Description  Retrieve the term marked as current
-// @Tags         terms
-// @Produce      json
-// @Success      200  {object}  models.TermResponse
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms/current [get]
+// GetCurrent retrieves the term marked as current.
 func (h *TermHandler) GetCurrent(c *gin.Context) {
 	term, err := h.service.GetCurrentTerm(c.Request.Context())
 	if err != nil {
@@ -91,17 +66,7 @@ func (h *TermHandler) GetCurrent(c *gin.Context) {
 	c.JSON(http.StatusOK, term)
 }
 
-// SetCurrent godoc
-// @Summary      Set current term
-// @Description  Mark a term as the current one; clears the previous current
-// @Tags         terms
-// @Produce      json
-// @Param        id   path      string  true  "Term UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms/{id}/set-current [put]
+// SetCurrent marks a term as the current one; clears the previous current.
 func (h *TermHandler) SetCurrent(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -121,18 +86,7 @@ func (h *TermHandler) SetCurrent(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "current term updated"})
 }
 
-// Update godoc
-// @Summary      Update term
-// @Description  Update a term's name, dates, or sort order by ID
-// @Tags         terms
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                    true  "Term UUID"
-// @Param        request  body      models.UpdateTermRequest  true  "Term info"
-// @Success      200      {object}  models.TermResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms/{id} [put]
+// Update updates a term's name, dates, or sort order by ID.
 func (h *TermHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -155,18 +109,7 @@ func (h *TermHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, term)
 }
 
-// Delete godoc
-// @Summary      Delete term
-// @Description  Delete a term by ID; blocked if marks have been recorded against it
-// @Tags         terms
-// @Produce      json
-// @Param        id   path      string  true  "Term UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      409  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /terms/{id} [delete]
+// Delete deletes a term by ID; blocked if marks have been recorded against it.
 func (h *TermHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

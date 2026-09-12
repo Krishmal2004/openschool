@@ -10,10 +10,12 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// EnrollmentHandler exposes HTTP endpoints for class enrollment and subject selection.
 type EnrollmentHandler struct {
 	service *services.EnrollmentService
 }
 
+// NewEnrollmentHandler constructs an EnrollmentHandler with its service dependency.
 func NewEnrollmentHandler(service *services.EnrollmentService) *EnrollmentHandler {
 	return &EnrollmentHandler{service: service}
 }
@@ -35,17 +37,7 @@ func requireAcademicYear(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
-// Validate godoc
-// @Summary      Validate enrollment picks
-// @Description  Dry run: checks picks against every group of the level without saving
-// @Tags         enrollments
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.SubmitEnrollmentRequest  true  "Proposed picks"
-// @Success      200      {object}  models.EnrollmentValidationResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /enrollments/validate [post]
+// Validate dry-runs a student's picks against every group of the level without saving.
 func (h *EnrollmentHandler) Validate(c *gin.Context) {
 	var req models.SubmitEnrollmentRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -75,19 +67,7 @@ func (h *EnrollmentHandler) Validate(c *gin.Context) {
 	})
 }
 
-// Submit godoc
-// @Summary      Submit enrollment picks
-// @Description  Validates then replaces the student's picks for that level and academic year
-// @Tags         enrollments
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                          true  "Student UUID"
-// @Param        request  body      models.SubmitEnrollmentRequest  true  "Picks"
-// @Success      200      {object}  models.EnrollmentValidationResponse
-// @Failure      400      {object}  map[string]string
-// @Failure      422      {object}  models.EnrollmentValidationResponse
-// @Security     BearerAuth
-// @Router       /students/{id}/enrollments [post]
+// Submit validates then replaces the student's picks for that level and academic year.
 func (h *EnrollmentHandler) Submit(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -125,16 +105,7 @@ func (h *EnrollmentHandler) Submit(c *gin.Context) {
 	c.JSON(http.StatusOK, models.EnrollmentValidationResponse{Valid: true, Errors: nil})
 }
 
-// ListByStudent godoc
-// @Summary      List a student's subjects
-// @Tags         enrollments
-// @Produce      json
-// @Param        id                path      string  true  "Student UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200               {array}   models.EnrollmentResponse
-// @Failure      400               {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/enrollments [get]
+// ListByStudent lists a student's subjects.
 func (h *EnrollmentHandler) ListByStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -156,18 +127,7 @@ func (h *EnrollmentHandler) ListByStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, enrollments)
 }
 
-// Delete godoc
-// @Summary      Remove one enrollment pick
-// @Tags         enrollments
-// @Produce      json
-// @Param        id                path      string  true  "Student UUID"
-// @Param        group_id          path      string  true  "Group UUID"
-// @Param        subject_id        path      string  true  "Subject UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200               {object}  map[string]string
-// @Failure      400               {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/enrollments/{group_id}/{subject_id} [delete]
+// Delete removes one enrollment pick.
 func (h *EnrollmentHandler) Delete(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -204,19 +164,7 @@ func (h *EnrollmentHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "enrollment removed"})
 }
 
-// Unlock godoc
-// @Summary      Unlock a student's confirmed subject selection
-// @Description  Admin-only: removes the lock so the student's picks for this level+year can be changed again
-// @Tags         enrollments
-// @Produce      json
-// @Param        id                path      string  true  "Student UUID"
-// @Param        level_id          path      string  true  "Level UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200               {object}  map[string]string
-// @Failure      400               {object}  map[string]string
-// @Failure      404               {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /students/{id}/enrollments/lock/{level_id} [delete]
+// Unlock removes the enrollment lock so the student's picks for this level and year can be changed again (admin-only).
 func (h *EnrollmentHandler) Unlock(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -247,16 +195,7 @@ func (h *EnrollmentHandler) Unlock(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "subject selection unlocked"})
 }
 
-// ListStudentsBySubject godoc
-// @Summary      List students taking a subject
-// @Tags         enrollments
-// @Produce      json
-// @Param        id                path      string  true  "Subject UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200               {array}   models.EnrolledStudentResponse
-// @Failure      400               {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /subjects/{id}/students [get]
+// ListStudentsBySubject lists students taking a subject.
 func (h *EnrollmentHandler) ListStudentsBySubject(c *gin.Context) {
 	subjectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -278,16 +217,7 @@ func (h *EnrollmentHandler) ListStudentsBySubject(c *gin.Context) {
 	c.JSON(http.StatusOK, students)
 }
 
-// ListStudentsByGroup godoc
-// @Summary      List students enrolled through a group
-// @Tags         enrollments
-// @Produce      json
-// @Param        group_id          path      string  true  "Group UUID"
-// @Param        academic_year_id  query     string  true  "Academic year UUID"
-// @Success      200               {array}   models.EnrolledStudentResponse
-// @Failure      400               {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /groups/{group_id}/students [get]
+// ListStudentsByGroup lists students enrolled through a group.
 func (h *EnrollmentHandler) ListStudentsByGroup(c *gin.Context) {
 	groupID, err := uuid.Parse(c.Param("group_id"))
 	if err != nil {

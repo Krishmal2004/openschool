@@ -69,7 +69,7 @@ export default function ClassMarks({
 
   return (
     <div>
-      <AgentFindingsBanner jobNames={["term_marks_deadline_watcher"]} />
+      <AgentFindingsBanner titles={["Terms nearing deadline with no marks entered", "Terms falling behind on marks-entry pace"]} />
       <div className="os-section">
       <div className="os-section__header" style={{ flexWrap: "wrap", rowGap: "0.75rem" }}>
         <h2 className="os-section__title">Term Marks</h2>

@@ -10,14 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// HouseHandler exposes HTTP endpoints for managing houses and their member assignments.
 type HouseHandler struct {
 	service *services.HouseService
 }
 
+// NewHouseHandler constructs a HouseHandler with its service dependency.
 func NewHouseHandler(service *services.HouseService) *HouseHandler {
 	return &HouseHandler{service: service}
 }
 
+// Create registers a new house.
 func (h *HouseHandler) Create(c *gin.Context) {
 	var req models.CreateHouseRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -34,6 +37,7 @@ func (h *HouseHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, house)
 }
 
+// GetByID returns a single house by ID.
 func (h *HouseHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -50,6 +54,7 @@ func (h *HouseHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, house)
 }
 
+// List returns every house.
 func (h *HouseHandler) List(c *gin.Context) {
 	houses, err := h.service.ListHouses(c.Request.Context())
 	if err != nil {
@@ -60,6 +65,7 @@ func (h *HouseHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, houses)
 }
 
+// Update edits an existing house.
 func (h *HouseHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -82,6 +88,7 @@ func (h *HouseHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, house)
 }
 
+// Delete removes a house.
 func (h *HouseHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -101,6 +108,7 @@ func (h *HouseHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "house deleted"})
 }
 
+// ReassignMissing assigns a house to every student currently missing one.
 func (h *HouseHandler) ReassignMissing(c *gin.Context) {
 	assigned, err := h.service.ReassignMissing(c.Request.Context())
 	if err != nil {
@@ -111,6 +119,7 @@ func (h *HouseHandler) ReassignMissing(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"assigned": assigned})
 }
 
+// ReassignMissingStaff assigns a house to every staff member currently missing one.
 func (h *HouseHandler) ReassignMissingStaff(c *gin.Context) {
 	assigned, err := h.service.ReassignMissingStaff(c.Request.Context())
 	if err != nil {

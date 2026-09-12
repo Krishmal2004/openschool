@@ -30,108 +30,31 @@ list, or [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's built.
 
 ## System at a glance
 
-```mermaid
-flowchart TB
-    subgraph Portals["Role-based portals"]
-        direction LR
-        Admin(["Admin"])
-        Teacher(["Teacher"])
-        Student(["Student"])
-        Parent(["Parent"])
-    end
-
-    SPA["Frontend SPA<br/>React + Vite + Carbon Design System"]
-
-    subgraph Backend["Backend API - Go + Gin"]
-        direction TB
-        REST["REST endpoints<br/>role-gated per route"]
-        subgraph Modules["Feature modules"]
-            direction LR
-            People["People &amp; Academics<br/>students · teachers · guardians<br/>grades · classes · curriculum"]
-            Ops["Daily Operations<br/>attendance · marks · timetable"]
-            Comms["Engagement<br/>notifications · reports · audit log"]
-            Jobs["Automation<br/>scheduled data-quality &amp; ops jobs"]
-        end
-    end
-
-    DB[("PostgreSQL")]
-    IDP["ThunderID<br/>identity provider"]
-
-    Admin --> SPA
-    Teacher --> SPA
-    Student --> SPA
-    Parent --> SPA
-
-    SPA -- "sign-in (OAuth/OIDC)" --> IDP
-    SPA -- "REST calls + bearer JWT" --> REST
-    REST --> Modules
-    REST -- "validate JWT · provision accounts" --> IDP
-    Modules -- "pgx / sqlc" --> DB
-```
-
-One Go binary, one Postgres database, one external identity provider - no
-queue, cache, or extra services to operate. See
+One Go (Gin) backend, one React (Carbon Design System) frontend, one
+Postgres database, one external identity provider (ThunderID) - no queue,
+cache, or extra services to operate. The backend groups its REST endpoints
+into feature modules (People & Academics, Daily Operations, Engagement,
+Automation), each role-gated per route. See
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full component
 breakdown, data model, and layering within the backend.
 
 ## Who uses what
 
-There's one sign-in page - which of the four portals below a user lands on
-is decided entirely by the `roles` claim on their token, never a separate
-URL per role:
+There's one sign-in page - which portal a user lands on is decided
+entirely by the `roles` claim on their token, never a separate URL per
+role:
 
-```mermaid
-flowchart TB
-    Start(["Sign in<br/>ThunderID"]) --> Role{"Role on token"}
+- **Admin** - people, school setup & curriculum, grades/classes/timetable,
+  attendance oversight, promotion & reports, automation.
+- **Teacher** - their classes & subjects, marking attendance, recording
+  marks, their timetable, and (Section Head and above) timetable review.
+- **Student** - their own profile, attendance history, term marks, and
+  timetable.
+- **Parent** - their linked children's attendance, marks, and timetable.
 
-    Role -->|admin| Admin
-    Role -->|teacher| Teacher
-    Role -->|student| Student
-    Role -->|parent| Parent
-
-    subgraph Admin["🛠️ Admin - runs the school"]
-        direction TB
-        A1["People<br/>students · teachers · guardians · staff"]
-        A2["School setup &amp; curriculum"]
-        A3["Grades, classes &amp; timetable"]
-        A4["Attendance oversight"]
-        A5["Promotion &amp; reports"]
-        A6["Automation<br/>scheduled data-quality checks"]
-    end
-
-    subgraph Teacher["🍎 Teacher - runs the classroom"]
-        direction TB
-        T1["My Classes &amp; Subjects"]
-        T2["Class Attendance<br/>mark student attendance"]
-        T3["Record Marks<br/>My Subjects &amp; Classes overview"]
-        T4["My Timetable"]
-        T5["My Attendance<br/>own attendance, read-only"]
-        T6["My Society /<br/>Review Timetables (Section Head+)"]
-    end
-
-    subgraph Student["🎓 Student - tracks their own record"]
-        direction TB
-        S1["My Profile"]
-        S2["My Attendance history"]
-        S3["My Term Marks"]
-        S4["My Timetable"]
-    end
-
-    subgraph Parent["👪 Parent - tracks their children"]
-        direction TB
-        P1["Linked Children"]
-        P2["Child Attendance &amp; Marks"]
-        P3["Child Timetable"]
-    end
-
-    Admin --> Notif(["Notification Center<br/>every portal"])
-    Teacher --> Notif
-    Student --> Notif
-    Parent --> Notif
-```
-
-A parent or student can only ever see their own (or their own child's)
-data - enforced server-side, not just hidden in the UI. See
+Every portal also has its own Notification Center. A parent or student can
+only ever see their own (or their own child's) data - enforced
+server-side, not just hidden in the UI. See
 [`docs/FEATURES.md`](docs/FEATURES.md) § Portals at a glance for the full
 per-role breakdown, or [`docs/SETUP.md`](docs/SETUP.md) to walk through
 every module hands-on.

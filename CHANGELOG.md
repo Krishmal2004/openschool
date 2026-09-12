@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project intends to adopt [Semantic Versioning](https://semver.org/)
-once the first tagged release is cut. No versioned releases exist yet — this
+once the first tagged release is cut. No versioned releases exist yet - this
 file currently tracks development history on `main`/`development` under
 `[Unreleased]`.
 

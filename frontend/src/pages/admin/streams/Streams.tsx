@@ -155,7 +155,7 @@ export default function Streams() {
         </Button>
       </div>
 
-      <AgentFindingsBanner jobNames={["empty_stream_watcher"]} />
+      <AgentFindingsBanner titles={["Streams with no current-year classes"]} />
 
       <div className="os-section">
         <div className="os-section__header">

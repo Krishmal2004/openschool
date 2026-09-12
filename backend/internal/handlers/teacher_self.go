@@ -13,11 +13,7 @@ import (
 	timetableservices "github.com/openschool-org/openschool/internal/services/timetable"
 )
 
-// TeacherSelfHandler serves the self-service endpoints a signed-in teacher
-// uses to resolve their own teacher_profile ID — everything else (classes,
-// subjects, attendance, marks) is then fetched via the existing
-// teacherOrAdmin routes (e.g. GET /teachers/:id/workload) using that ID,
-// exactly like the admin UI would for any other teacher.
+// TeacherSelfHandler resolves a signed-in teacher's own profile ID for the existing teacherOrAdmin routes to use.
 type TeacherSelfHandler struct {
 	teachers        *repositories.TeacherRepository
 	school          *repositories.SchoolRepository
@@ -28,6 +24,7 @@ type TeacherSelfHandler struct {
 	staffAttendance *services.StaffAttendanceService
 }
 
+// NewTeacherSelfHandler constructs a TeacherSelfHandler with its service dependencies.
 func NewTeacherSelfHandler(
 	teachers *repositories.TeacherRepository,
 	school *repositories.SchoolRepository,
@@ -48,11 +45,7 @@ func NewTeacherSelfHandler(
 	}
 }
 
-// leadershipTeacher resolves the caller's teacher profile and current
-// academic year, and 403s unless their computed rank is Principal or Vice
-// Principal — the shared gate for the "monitor" endpoints (Analytics,
-// Timetables) that only those two ranks get, unlike the broader Section
-// Head+ gate LeadershipOverview uses.
+// leadershipTeacher resolves the caller's teacher profile and 403s unless their rank is Principal or Vice Principal.
 func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (db.TeacherProfile, bool) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -85,14 +78,7 @@ func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (db.TeacherProfil
 	return teacher, true
 }
 
-// Profile godoc
-// @Summary      The signed-in teacher's own profile
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {object}  map[string]any
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher [get]
+// Profile returns the signed-in teacher's own profile.
 func (h *TeacherSelfHandler) Profile(c *gin.Context) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -109,15 +95,7 @@ func (h *TeacherSelfHandler) Profile(c *gin.Context) {
 	c.JSON(http.StatusOK, teacher)
 }
 
-// Position godoc
-// @Summary      The signed-in teacher's leadership position rank and notification reach
-// @Description  Used by the teacher dashboard/notification composer to tailor themselves to the caller's role in the hierarchy (Principal, Vice Principal, Section Head, Class Teacher, Subject Teacher, Teacher)
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {object}  services.PositionSummary
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/position [get]
+// Position returns the signed-in teacher's leadership rank and notification reach.
 func (h *TeacherSelfHandler) Position(c *gin.Context) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -146,14 +124,7 @@ func (h *TeacherSelfHandler) Position(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-// Society godoc
-// @Summary      The society the signed-in teacher is Teacher-in-Charge of, for the current academic year
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {object}  map[string]any
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/society [get]
+// Society returns the society the signed-in teacher is Teacher-in-Charge of, for the current academic year.
 func (h *TeacherSelfHandler) Society(c *gin.Context) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -186,16 +157,7 @@ func (h *TeacherSelfHandler) Society(c *gin.Context) {
 	c.JSON(http.StatusOK, society)
 }
 
-// LeadershipOverview godoc
-// @Summary      The signed-in teacher's leadership overview panel data
-// @Description  Real, scoped counts (classes/students/today's attendance) for Principal, Vice Principal, and Section Head — 403 for anyone below Section Head, not empty data
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {object}  services.LeadershipOverviewSummary
-// @Failure      403  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/leadership-overview [get]
+// LeadershipOverview returns the signed-in teacher's scoped leadership-panel counts (Section Head and above only).
 func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -228,16 +190,7 @@ func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 	c.JSON(http.StatusOK, overview)
 }
 
-// Analytics godoc
-// @Summary      School-wide analytics for the signed-in Principal/Vice Principal
-// @Description  Same composed analytics as the admin dashboard — Principal/VP are whole-school monitors by design (ADR 0002), so this isn't grade-scoped. 403 for any other rank.
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {object}  models.DashboardAnalyticsResponse
-// @Failure      403  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/analytics [get]
+// Analytics returns school-wide analytics for the signed-in Principal or Vice Principal.
 func (h *TeacherSelfHandler) Analytics(c *gin.Context) {
 	if _, ok := h.leadershipTeacher(c); !ok {
 		return
@@ -252,16 +205,7 @@ func (h *TeacherSelfHandler) Analytics(c *gin.Context) {
 	c.JSON(http.StatusOK, analytics)
 }
 
-// Timetables godoc
-// @Summary      Every class's timetable for the current academic year, for the signed-in Principal/Vice Principal
-// @Description  Same listing as the admin Timetables page, read-only here. 403 for any other rank.
-// @Tags         teacher
-// @Produce      json
-// @Success      200  {array}   db.ListTimetablesByAcademicYearRow
-// @Failure      403  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/timetables [get]
+// Timetables returns the same listing as the admin Timetables page, read-only, for Principal/Vice Principal.
 func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 	if _, ok := h.leadershipTeacher(c); !ok {
 		return
@@ -282,18 +226,7 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// Attendance godoc
-// @Summary      The signed-in teacher's own staff-attendance history for a month
-// @Description  Distinct from student attendance marking (/classes/:id/attendance) — this is the teacher's own presence record. Always scoped to the caller's own teacher profile, never an arbitrary :id, so it can't be used to look up another teacher's attendance.
-// @Tags         teacher
-// @Produce      json
-// @Param        year query int true "Year"
-// @Param        month query int true "Month (1-12)"
-// @Success      200  {array}   db.StaffAttendanceRecord
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /me/teacher/attendance [get]
+// Attendance returns the signed-in teacher's own staff-attendance history for a month.
 func (h *TeacherSelfHandler) Attendance(c *gin.Context) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	db "github.com/openschool-org/openschool/db/sqlc"
 	models "github.com/openschool-org/openschool/internal/models/timetable"
 	repositories "github.com/openschool-org/openschool/internal/repositories/timetable"
-
 )
 
 var ErrGradeSectionNotFound = errors.New("grade section not found, or still has grades assigned")

@@ -7,49 +7,42 @@ import (
 	"strings"
 )
 
-// ErrDuplicateUser is returned by Provider.CreateUser when the identity
-// provider rejects the account because a unique attribute (email, username,
-// phone, etc.) is already taken by another account.
+// ErrDuplicateUser is returned by Provider.CreateUser when a unique attribute is already taken by another account.
 var ErrDuplicateUser = errors.New("a user with these details already exists")
 
+// User is the provider-neutral account shape returned by every Provider method.
 type User struct {
-	ID string
-	// Username/Email are best-effort, extracted from whatever attributes
-	// the identity provider returned for this user (may be empty) — used
-	// only for display in the orphaned-account reconciliation view, never
-	// for authorization decisions.
+	ID       string
 	Username string
 	Email    string
 }
 
+// Provider is the identity-provider seam every concrete client (e.g. ThunderID) implements.
 type Provider interface {
 	CreateUser(ctx context.Context, userType string, attrs map[string]any) (*User, error)
 	UpdateUser(ctx context.Context, userID string, userType string, attrs map[string]any) error
 	DeleteUser(ctx context.Context, userID string) error
 	AssignRole(ctx context.Context, roleID string, userID string) error
-	// ListUsers returns every user account the identity provider knows
-	// about, across all pages. Used by the orphaned-identity reconciliation
-	// job (docs/plan.md §0) to find accounts with no matching local `users`
-	// row — the compensating delete in a signup rollback only logs on
-	// failure, so this is the recovery path when that happens.
+	// ListUsers returns every account the provider knows of, used by the orphaned-identity reconciliation job to find local `users` rows with no match.
 	ListUsers(ctx context.Context) ([]User, error)
 }
 
+// JWKSURL returns the identity provider's JWKS endpoint used to validate access tokens.
 func JWKSURL() string {
 	return os.Getenv("THUNDERID_JWKS_URL")
 }
 
+// Issuer returns the expected `iss` claim on access tokens issued by the identity provider.
 func Issuer() string {
 	return os.Getenv("THUNDERID_ISSUER")
 }
 
-// Audience returns the expected `aud` claim on end-user access tokens (the
-// frontend SPA's OAuth client id), if configured. Empty means audience
-// validation is skipped — see the caller in middleware/auth.go.
+// Audience returns the expected `aud` claim on access tokens, or empty to skip audience validation.
 func Audience() string {
 	return os.Getenv("THUNDERID_AUDIENCE")
 }
 
+// RoleID returns the identity provider's role ID configured for the given base role.
 func RoleID(role string) string {
 	return os.Getenv("THUNDERID_ROLE_" + strings.ToUpper(role))
 }

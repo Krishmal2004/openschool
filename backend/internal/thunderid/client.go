@@ -24,26 +24,18 @@ func idpError(op string, statusCode int, body []byte) error {
 	return fmt.Errorf("identity provider request failed (status %d)", statusCode)
 }
 
+// Client is a ThunderID API client implementing identity.Provider, backed by one cached client-credentials token.
 type Client struct {
-	baseUrl    string
-	ouID       string
-	httpClient *http.Client
-
-	// Every CreateUser/UpdateUser/DeleteUser/AssignRole call fetched a fresh
-	// client-credentials token before this cache existed — at least doubling
-	// outbound requests to the IDP on every identity-touching write under
-	// real load (bulk imports, a school day's worth of writes). Guarded by a
-	// mutex since Client is shared across concurrent Gin request handlers.
+	baseUrl     string
+	ouID        string
+	httpClient  *http.Client
 	tokenMu     sync.Mutex
 	cachedToken string
 	tokenExpiry time.Time
 }
 
+// NewClient builds a ThunderID API client from THUNDERID_* environment variables.
 func NewClient() *Client {
-	// Skipping cert verification is only ever acceptable against ThunderID's
-	// self-signed local-dev certificate. Doing this unconditionally would
-	// silently disable TLS verification in production too, exposing the
-	// channel that creates users and assigns roles to a MITM.
 	transport := http.DefaultTransport
 	if os.Getenv("APP_ENV") == "development" {
 		transport = &http.Transport{
@@ -58,16 +50,37 @@ func NewClient() *Client {
 	}
 }
 
-type CreateUserRequest struct {
-	OuID       string                 `json:"ouId"`
-	Type       string                 `json:"type"`
-	Attributes map[string]interface{} `json:"attributes"`
+// createUserRequest is the POST /users request body.
+type createUserRequest struct {
+	OuID       string         `json:"ouId"`
+	Type       string         `json:"type"`
+	Attributes map[string]any `json:"attributes"`
 }
 
+// updateUserRequest is the PUT /users/{id} request body.
+type updateUserRequest struct {
+	OuID       string         `json:"ouId"`
+	Type       string         `json:"type"`
+	Attributes map[string]any `json:"attributes"`
+}
+
+// roleAssignment identifies one principal to add to a role in an assignments request.
+type roleAssignment struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
+}
+
+// assignRoleRequest is the POST /roles/{id}/assignments/add request body.
+type assignRoleRequest struct {
+	Assignments []roleAssignment `json:"assignments"`
+}
+
+// thunderIDUser is the subset of ThunderID's user object every write endpoint returns.
 type ThunderIDUser struct {
 	ID string `json:"id"`
 }
 
+// getAccessToken returns the cached client-credentials token, fetching and caching a new one if it's missing or about to expire.
 func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 	c.tokenMu.Lock()
 	defer c.tokenMu.Unlock()
@@ -128,165 +141,105 @@ func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 	return result.AccessToken, nil
 }
 
-func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[string]any) (*identity.User, error) {
+// doRequest is the shared authenticated-call path every Client method funnels through: it attaches a bearer token
+// (wrapping a token-fetch failure the same way for every caller), JSON-encodes body when non-nil, and returns the raw
+// response status and bytes so each caller applies its own success-status check and error handling.
+func (c *Client) doRequest(ctx context.Context, method, path string, body any) (int, []byte, error) {
 	token, err := c.getAccessToken(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get ThunderID token: %w", err)
+		return 0, nil, fmt.Errorf("failed to get ThunderID token: %w", err)
 	}
 
-	body := CreateUserRequest{
-		OuID:       c.ouID,
-		Type:       userType,
-		Attributes: attrs,
+	var reqBody io.Reader
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			return 0, nil, err
+		}
+		reqBody = bytes.NewReader(data)
 	}
 
-	data, err := json.Marshal(body)
+	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+path, reqBody)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseUrl+"/users", bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
-
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		return 0, nil, err
+	}
+	return resp.StatusCode, respBody, nil
+}
+
+// CreateUser provisions a new ThunderID account and returns its identity-provider ID.
+func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[string]any) (*identity.User, error) {
+	status, body, err := c.doRequest(ctx, http.MethodPost, "/users", createUserRequest{
+		OuID: c.ouID, Type: userType, Attributes: attrs,
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode != http.StatusCreated {
-		if thunderErrorCode(respBody) == "USR-1014" {
+	if status != http.StatusCreated {
+		if thunderErrorCode(body) == "USR-1014" {
 			return nil, identity.ErrDuplicateUser
 		}
-		return nil, idpError("CreateUser", resp.StatusCode, respBody)
+		return nil, idpError("CreateUser", status, body)
 	}
 
 	var user ThunderIDUser
-	if err := json.Unmarshal(respBody, &user); err != nil {
+	if err := json.Unmarshal(body, &user); err != nil {
 		return nil, err
 	}
-
 	return &identity.User{ID: user.ID}, nil
 }
 
-func (c *Client) UpdateUser(ctx context.Context, userID string, userType string, attrs map[string]interface{}) error {
-	token, err := c.getAccessToken(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get ThunderID token: %w", err)
-	}
-
-	body := map[string]interface{}{
-		"ouId":       c.ouID,
-		"type":       userType,
-		"attributes": attrs,
-	}
-
-	data, err := json.Marshal(body)
+// UpdateUser replaces the given ThunderID account's type and attributes.
+func (c *Client) UpdateUser(ctx context.Context, userID string, userType string, attrs map[string]any) error {
+	status, body, err := c.doRequest(ctx, http.MethodPut, "/users/"+userID, updateUserRequest{
+		OuID: c.ouID, Type: userType, Attributes: attrs,
+	})
 	if err != nil {
 		return err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut,
-		c.baseUrl+"/users/"+userID, bytes.NewBuffer(data))
-	if err != nil {
-		return err
+	if status != http.StatusOK {
+		return idpError("UpdateUser", status, body)
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return idpError("UpdateUser", resp.StatusCode, respBody)
-	}
-
 	return nil
 }
 
+// DeleteUser deletes a ThunderID account, treating an already-deleted account (404) as success.
 func (c *Client) DeleteUser(ctx context.Context, userID string) error {
-	token, err := c.getAccessToken(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get ThunderID token: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
-		c.baseUrl+"/users/"+userID, nil)
+	status, body, err := c.doRequest(ctx, http.MethodDelete, "/users/"+userID, nil)
 	if err != nil {
 		return err
 	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
+	if status != http.StatusNoContent && status != http.StatusNotFound {
+		return idpError("DeleteUser", status, body)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
-		body, _ := io.ReadAll(resp.Body)
-		return idpError("DeleteUser", resp.StatusCode, body)
-	}
-
 	return nil
 }
 
+// AssignRole grants the given ThunderID role to a user.
 func (c *Client) AssignRole(ctx context.Context, roleID string, userID string) error {
-	token, err := c.getAccessToken(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get ThunderID token: %w", err)
-	}
-
-	body := map[string]interface{}{
-		"assignments": []map[string]interface{}{
-			{
-				"type": "user",
-				"id":   userID,
-			},
-		},
-	}
-
-	data, err := json.Marshal(body)
+	status, body, err := c.doRequest(ctx, http.MethodPost, "/roles/"+roleID+"/assignments/add", assignRoleRequest{
+		Assignments: []roleAssignment{{Type: "user", ID: userID}},
+	})
 	if err != nil {
 		return err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.baseUrl+"/roles/"+roleID+"/assignments/add", bytes.NewBuffer(data))
-	if err != nil {
-		return err
+	if status != http.StatusNoContent {
+		return idpError("AssignRole", status, body)
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		respBody, _ := io.ReadAll(resp.Body)
-		return idpError("AssignRole", resp.StatusCode, respBody)
-	}
-
 	return nil
 }
 
@@ -296,12 +249,14 @@ const thunderIDListPageSize = 100
 // thunderIDListMaxPages is a safety valve against an unexpected pagination-metadata bug looping forever; 500 pages at 100/page covers 50,000 users, far beyond any real deployment.
 const thunderIDListMaxPages = 500
 
+// thunderIDUserListResponse is the GET /users response envelope.
 type thunderIDUserListResponse struct {
 	TotalResults int                   `json:"totalResults"`
 	Count        int                   `json:"count"`
 	Users        []thunderIDListedUser `json:"users"`
 }
 
+// thunderIDListedUser is one entry in a GET /users page.
 type thunderIDListedUser struct {
 	ID         string          `json:"id"`
 	Attributes json.RawMessage `json:"attributes"`
@@ -309,33 +264,16 @@ type thunderIDListedUser struct {
 
 // ListUsers pages through GET /users and returns every account, best-effort extracting username/email from each user's attributes for display purposes only.
 func (c *Client) ListUsers(ctx context.Context) ([]identity.User, error) {
-	token, err := c.getAccessToken(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get ThunderID token: %w", err)
-	}
-
 	var out []identity.User
 	offset := 0
 	for pageNum := 0; pageNum < thunderIDListMaxPages; pageNum++ {
-		reqURL := fmt.Sprintf("%s/users?limit=%d&offset=%d", c.baseUrl, thunderIDListPageSize, offset)
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+		path := fmt.Sprintf("/users?limit=%d&offset=%d", thunderIDListPageSize, offset)
+		status, body, err := c.doRequest(ctx, http.MethodGet, path, nil)
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, idpError("ListUsers", resp.StatusCode, body)
+		if status != http.StatusOK {
+			return nil, idpError("ListUsers", status, body)
 		}
 
 		var parsed thunderIDUserListResponse

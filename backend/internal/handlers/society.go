@@ -10,14 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// SocietyHandler exposes HTTP endpoints for managing societies and their members.
 type SocietyHandler struct {
 	service *services.SocietyService
 }
 
+// NewSocietyHandler constructs a SocietyHandler with its service dependency.
 func NewSocietyHandler(service *services.SocietyService) *SocietyHandler {
 	return &SocietyHandler{service: service}
 }
 
+// societyServiceError maps a society-service error to the appropriate HTTP status code.
 func societyServiceError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, services.ErrSocietyNotFound), errors.Is(err, services.ErrSocietyMemberNotFound):
@@ -29,16 +32,7 @@ func societyServiceError(c *gin.Context, err error) {
 	}
 }
 
-// Create godoc
-// @Summary      Create a society
-// @Tags         societies
-// @Accept       json
-// @Produce      json
-// @Param        request body models.CreateSocietyRequest true "Society"
-// @Success      201 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies [post]
+// Create creates a society.
 func (h *SocietyHandler) Create(c *gin.Context) {
 	var req models.CreateSocietyRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -55,17 +49,7 @@ func (h *SocietyHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, society)
 }
 
-// Update godoc
-// @Summary      Rename a society or reassign its Teacher-in-Charge
-// @Tags         societies
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Society UUID"
-// @Param        request body models.UpdateSocietyRequest true "Society"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies/{id} [put]
+// Update renames a society or reassigns its Teacher-in-Charge.
 func (h *SocietyHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -88,15 +72,7 @@ func (h *SocietyHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, society)
 }
 
-// Delete godoc
-// @Summary      Delete a society
-// @Tags         societies
-// @Produce      json
-// @Param        id path string true "Society UUID"
-// @Success      200 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies/{id} [delete]
+// Delete deletes a society.
 func (h *SocietyHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -112,15 +88,7 @@ func (h *SocietyHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "society deleted"})
 }
 
-// List godoc
-// @Summary      List societies for an academic year
-// @Tags         societies
-// @Produce      json
-// @Param        academic_year_id query string true "Academic year UUID"
-// @Success      200 {array} map[string]string
-// @Failure      400 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies [get]
+// List lists societies for an academic year.
 func (h *SocietyHandler) List(c *gin.Context) {
 	yearID, err := uuid.Parse(c.Query("academic_year_id"))
 	if err != nil {
@@ -137,13 +105,7 @@ func (h *SocietyHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-// ListYears godoc
-// @Summary      List academic years that have at least one society
-// @Tags         societies
-// @Produce      json
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /societies/years [get]
+// ListYears lists academic years that have at least one society.
 func (h *SocietyHandler) ListYears(c *gin.Context) {
 	years, err := h.service.ListYears(c.Request.Context())
 	if err != nil {
@@ -154,14 +116,7 @@ func (h *SocietyHandler) ListYears(c *gin.Context) {
 	c.JSON(http.StatusOK, years)
 }
 
-// ListMembers godoc
-// @Summary      List a society's roster
-// @Tags         societies
-// @Produce      json
-// @Param        id path string true "Society UUID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /societies/{id}/members [get]
+// ListMembers lists a society's roster.
 func (h *SocietyHandler) ListMembers(c *gin.Context) {
 	societyID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -178,18 +133,7 @@ func (h *SocietyHandler) ListMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, members)
 }
 
-// AssignMember godoc
-// @Summary      Appoint (or re-appoint) a student to a society's roster
-// @Description  Only the society's Teacher-in-Charge, or an admin, may call this
-// @Tags         societies
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Society UUID"
-// @Param        request body models.AssignSocietyMemberRequest true "Membership"
-// @Success      200 {object} map[string]string
-// @Failure      403 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies/{id}/members [put]
+// AssignMember adds a student to the society roster (Teacher-in-Charge or admin only).
 func (h *SocietyHandler) AssignMember(c *gin.Context) {
 	societyID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -218,18 +162,7 @@ func (h *SocietyHandler) AssignMember(c *gin.Context) {
 	c.JSON(http.StatusOK, member)
 }
 
-// RemoveMember godoc
-// @Summary      Remove a student from a society's roster
-// @Description  Only the society's Teacher-in-Charge, or an admin, may call this
-// @Tags         societies
-// @Produce      json
-// @Param        id path string true "Society UUID"
-// @Param        memberId path string true "Society member UUID"
-// @Success      200 {object} map[string]string
-// @Failure      403 {object} map[string]string
-// @Failure      404 {object} map[string]string
-// @Security     BearerAuth
-// @Router       /societies/{id}/members/{memberId} [delete]
+// RemoveMember removes a student from the society roster (Teacher-in-Charge or admin only).
 func (h *SocietyHandler) RemoveMember(c *gin.Context) {
 	societyID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -257,14 +190,7 @@ func (h *SocietyHandler) RemoveMember(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "society member removed"})
 }
 
-// ListByStudent godoc
-// @Summary      List a student's society memberships across all years
-// @Tags         societies
-// @Produce      json
-// @Param        id path string true "Student ID"
-// @Success      200 {array} map[string]interface{}
-// @Security     BearerAuth
-// @Router       /students/{id}/society-memberships [get]
+// ListByStudent lists a student's society memberships across all years.
 func (h *SocietyHandler) ListByStudent(c *gin.Context) {
 	studentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

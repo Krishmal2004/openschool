@@ -10,25 +10,17 @@ import (
 	"github.com/openschool-org/openschool/internal/services"
 )
 
+// GradeHandler exposes HTTP endpoints for managing grades.
 type GradeHandler struct {
 	service *services.GradeService
 }
 
+// NewGradeHandler constructs a GradeHandler with its service dependency.
 func NewGradeHandler(service *services.GradeService) *GradeHandler {
 	return &GradeHandler{service: service}
 }
 
-// Create godoc
-// @Summary      Create grade
-// @Description  Create a new grade level
-// @Tags         grades
-// @Accept       json
-// @Produce      json
-// @Param        request  body      models.CreateGradeRequest  true  "Grade info"
-// @Success      201      {object}  models.GradeResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /grades [post]
+// Create creates a new grade level.
 func (h *GradeHandler) Create(c *gin.Context) {
 	var req models.CreateGradeRequest
 	if err := bindStrict(c, &req); err != nil {
@@ -45,17 +37,7 @@ func (h *GradeHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, grade)
 }
 
-// GetByID godoc
-// @Summary      Get grade
-// @Description  Retrieve a grade by ID
-// @Tags         grades
-// @Produce      json
-// @Param        id   path      string  true  "Grade UUID"
-// @Success      200  {object}  models.GradeResponse
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /grades/{id} [get]
+// GetByID retrieves a grade by ID.
 func (h *GradeHandler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -73,15 +55,7 @@ func (h *GradeHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, grade)
 }
 
-// List godoc
-// @Summary      List grades
-// @Description  Retrieve all grades ordered by sort_order then name
-// @Tags         grades
-// @Produce      json
-// @Success      200  {array}   models.GradeResponse
-// @Failure      500  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /grades [get]
+// List retrieves all grades ordered by sort_order then name.
 func (h *GradeHandler) List(c *gin.Context) {
 	grades, err := h.service.ListGrades(c.Request.Context())
 	if err != nil {
@@ -92,18 +66,7 @@ func (h *GradeHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, grades)
 }
 
-// Update godoc
-// @Summary      Update grade
-// @Description  Update a grade's name or sort order by ID
-// @Tags         grades
-// @Accept       json
-// @Produce      json
-// @Param        id       path      string                     true  "Grade UUID"
-// @Param        request  body      models.UpdateGradeRequest  true  "Grade info"
-// @Success      200      {object}  models.GradeResponse
-// @Failure      400      {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /grades/{id} [put]
+// Update updates a grade's name or sort order by ID.
 func (h *GradeHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -127,18 +90,7 @@ func (h *GradeHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, grade)
 }
 
-// Delete godoc
-// @Summary      Delete grade
-// @Description  Delete a grade by ID; blocked if the grade is assigned to any class
-// @Tags         grades
-// @Produce      json
-// @Param        id   path      string  true  "Grade UUID"
-// @Success      200  {object}  map[string]string
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      409  {object}  map[string]string
-// @Security     BearerAuth
-// @Router       /grades/{id} [delete]
+// Delete deletes a grade by ID; blocked if the grade is assigned to any class.
 func (h *GradeHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)

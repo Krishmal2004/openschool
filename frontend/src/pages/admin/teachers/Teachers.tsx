@@ -50,7 +50,7 @@ export default function Teachers() {
         </Button>
       </div>
 
-      <AgentFindingsBanner jobNames={["employment_status_consistency", "teacher_onboarding_watcher"]} />
+      <AgentFindingsBanner titles={["Inactive teachers still assigned to classes", "Teacher accounts stuck in first-login setup"]} />
 
       <div className="os-section">
         <div className="os-toolbar">
