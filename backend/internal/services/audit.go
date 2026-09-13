@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
@@ -45,12 +46,39 @@ func (s *AuditService) Record(ctx context.Context, entityType string, entityID u
 	return err
 }
 
-func (s *AuditService) List(ctx context.Context, entityType string, entityID *uuid.UUID) ([]db.ListAuditLogsRow, error) {
+func (s *AuditService) List(ctx context.Context, entityType string, entityID *uuid.UUID) ([]models.AuditLogResponse, error) {
 	params := db.ListAuditLogsParams{
 		EntityType: pgtype.Text{String: entityType, Valid: entityType != ""},
 	}
 	if entityID != nil {
 		params.EntityID = pgtype.UUID{Bytes: *entityID, Valid: true}
 	}
-	return s.repo.List(ctx, params)
+	rows, err := s.repo.List(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	resp := make([]models.AuditLogResponse, len(rows))
+	for i, row := range rows {
+		resp[i] = toAuditLogResponse(row)
+	}
+	return resp, nil
+}
+
+func toAuditLogResponse(row db.ListAuditLogsRow) models.AuditLogResponse {
+	resp := models.AuditLogResponse{
+		ID: row.ID, EntityType: row.EntityType, EntityID: row.EntityID, Action: row.Action,
+		Before: row.Before, After: row.After,
+		CreatedAt: row.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if row.ActorID.Valid {
+		id := uuid.UUID(row.ActorID.Bytes)
+		resp.ActorID = &id
+	}
+	if row.ActorName.Valid {
+		resp.ActorName = &row.ActorName.String
+	}
+	if row.Reason.Valid {
+		resp.Reason = &row.Reason.String
+	}
+	return resp
 }

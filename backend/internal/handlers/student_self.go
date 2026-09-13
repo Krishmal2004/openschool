@@ -8,21 +8,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
-	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/services"
 )
 
 // StudentSelfHandler serves a signed-in student's own profile/attendance/marks endpoints, resolved from their token.
 type StudentSelfHandler struct {
-	students    *repositories.StudentRepository
+	studentSelf *services.StudentSelfService
 	attendance  *services.AttendanceService
 	marks       *services.TermMarkService
 	enrollments *services.EnrollmentService
 }
 
 // NewStudentSelfHandler constructs a StudentSelfHandler with its service dependencies.
-func NewStudentSelfHandler(students *repositories.StudentRepository, attendance *services.AttendanceService, marks *services.TermMarkService, enrollments *services.EnrollmentService) *StudentSelfHandler {
-	return &StudentSelfHandler{students: students, attendance: attendance, marks: marks, enrollments: enrollments}
+func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance *services.AttendanceService, marks *services.TermMarkService, enrollments *services.EnrollmentService) *StudentSelfHandler {
+	return &StudentSelfHandler{studentSelf: studentSelf, attendance: attendance, marks: marks, enrollments: enrollments}
 }
 
 // resolveStudentID resolves the signed-in student's own profile ID from the request's JWT.
@@ -32,12 +31,12 @@ func (h *StudentSelfHandler) resolveStudentID(c *gin.Context) (uuid.UUID, bool) 
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid caller identity"})
 		return uuid.UUID{}, false
 	}
-	student, err := h.students.GetByUserID(c.Request.Context(), callerID)
+	studentID, err := h.studentSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no student profile linked to this account"})
 		return uuid.UUID{}, false
 	}
-	return student.ID, true
+	return studentID, true
 }
 
 // Profile returns the signed-in student's own profile.
@@ -47,7 +46,7 @@ func (h *StudentSelfHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	profile, err := h.students.GetWithClass(c.Request.Context(), studentID)
+	profile, err := h.studentSelf.Profile(c.Request.Context(), studentID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

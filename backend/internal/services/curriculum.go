@@ -28,16 +28,26 @@ func NewCurriculumService(repo *repositories.CurriculumRepository) *CurriculumSe
 	return &CurriculumService{repo: repo}
 }
 
-func (s *CurriculumService) CreateMedium(ctx context.Context, req models.CreateMediumRequest) (db.Medium, error) {
-	return s.repo.CreateMedium(ctx, req.Name)
+func (s *CurriculumService) CreateMedium(ctx context.Context, req models.CreateMediumRequest) (models.MediumResponse, error) {
+	medium, err := s.repo.CreateMedium(ctx, req.Name)
+	return toMediumResponse(medium), err
 }
 
-func (s *CurriculumService) ListMediums(ctx context.Context) ([]db.Medium, error) {
-	return s.repo.ListMediums(ctx)
+func (s *CurriculumService) ListMediums(ctx context.Context) ([]models.MediumResponse, error) {
+	mediums, err := s.repo.ListMediums(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp := make([]models.MediumResponse, len(mediums))
+	for i, medium := range mediums {
+		resp[i] = toMediumResponse(medium)
+	}
+	return resp, nil
 }
 
-func (s *CurriculumService) UpdateMedium(ctx context.Context, id uuid.UUID, req models.UpdateMediumRequest) (db.Medium, error) {
-	return s.repo.UpdateMedium(ctx, db.UpdateMediumParams{ID: id, Name: req.Name})
+func (s *CurriculumService) UpdateMedium(ctx context.Context, id uuid.UUID, req models.UpdateMediumRequest) (models.MediumResponse, error) {
+	medium, err := s.repo.UpdateMedium(ctx, db.UpdateMediumParams{ID: id, Name: req.Name})
+	return toMediumResponse(medium), err
 }
 
 func (s *CurriculumService) DeleteMedium(ctx context.Context, id uuid.UUID) error {
@@ -54,60 +64,66 @@ func (s *CurriculumService) DeleteMedium(ctx context.Context, id uuid.UUID) erro
 	return nil
 }
 
-func (s *CurriculumService) CreateLevel(ctx context.Context, req models.CreateLevelRequest) (db.Level, error) {
+func (s *CurriculumService) CreateLevel(ctx context.Context, req models.CreateLevelRequest) (models.LevelResponse, error) {
 	gradeID, err := parseOptionalUUID(req.GradeID)
 	if err != nil {
-		return db.Level{}, errors.New("invalid grade_id")
+		return models.LevelResponse{}, errors.New("invalid grade_id")
 	}
 
-	return s.repo.CreateLevel(ctx, db.CreateLevelParams{
+	level, err := s.repo.CreateLevel(ctx, db.CreateLevelParams{
 		Label:     req.Label,
 		GradeID:   gradeID,
 		SortOrder: req.SortOrder,
 	})
+	return ToLevelResponse(level), err
 }
 
-func (s *CurriculumService) GetLevel(ctx context.Context, id uuid.UUID) (db.Level, error) {
-	return s.repo.GetLevelByID(ctx, id)
+func (s *CurriculumService) GetLevel(ctx context.Context, id uuid.UUID) (models.LevelResponse, error) {
+	level, err := s.repo.GetLevelByID(ctx, id)
+	return ToLevelResponse(level), err
 }
 
-func (s *CurriculumService) ListLevels(ctx context.Context) ([]db.Level, error) {
-	return s.repo.ListLevels(ctx)
+func (s *CurriculumService) ListLevels(ctx context.Context) ([]models.LevelResponse, error) {
+	levels, err := s.repo.ListLevels(ctx)
+	return toLevelResponses(levels), err
 }
 
-func (s *CurriculumService) ListLevelsByGrade(ctx context.Context, gradeID uuid.UUID) ([]db.Level, error) {
-	return s.repo.ListLevelsByGrade(ctx, pgUUID(gradeID))
+func (s *CurriculumService) ListLevelsByGrade(ctx context.Context, gradeID uuid.UUID) ([]models.LevelResponse, error) {
+	levels, err := s.repo.ListLevelsByGrade(ctx, pgUUID(gradeID))
+	return toLevelResponses(levels), err
 }
 
-func (s *CurriculumService) UpdateLevel(ctx context.Context, id uuid.UUID, req models.UpdateLevelRequest) (db.Level, error) {
+func (s *CurriculumService) UpdateLevel(ctx context.Context, id uuid.UUID, req models.UpdateLevelRequest) (models.LevelResponse, error) {
 	gradeID, err := parseOptionalUUID(req.GradeID)
 	if err != nil {
-		return db.Level{}, errors.New("invalid grade_id")
+		return models.LevelResponse{}, errors.New("invalid grade_id")
 	}
 
-	return s.repo.UpdateLevel(ctx, db.UpdateLevelParams{
+	level, err := s.repo.UpdateLevel(ctx, db.UpdateLevelParams{
 		ID:        id,
 		Label:     req.Label,
 		GradeID:   gradeID,
 		SortOrder: req.SortOrder,
 	})
+	return ToLevelResponse(level), err
 }
 
-func (s *CurriculumService) DuplicateLevel(ctx context.Context, sourceID uuid.UUID, req models.DuplicateLevelRequest) (db.Level, error) {
+func (s *CurriculumService) DuplicateLevel(ctx context.Context, sourceID uuid.UUID, req models.DuplicateLevelRequest) (models.LevelResponse, error) {
 	if _, err := s.repo.GetLevelByID(ctx, sourceID); err != nil {
-		return db.Level{}, ErrLevelNotFound
+		return models.LevelResponse{}, ErrLevelNotFound
 	}
 
 	gradeID, err := parseOptionalUUID(req.GradeID)
 	if err != nil {
-		return db.Level{}, errors.New("invalid grade_id")
+		return models.LevelResponse{}, errors.New("invalid grade_id")
 	}
 
-	return s.repo.DuplicateLevel(ctx, sourceID, db.CreateLevelParams{
+	level, err := s.repo.DuplicateLevel(ctx, sourceID, db.CreateLevelParams{
 		Label:     req.Label,
 		GradeID:   gradeID,
 		SortOrder: req.SortOrder,
 	})
+	return ToLevelResponse(level), err
 }
 
 func (s *CurriculumService) DeleteLevel(ctx context.Context, id uuid.UUID) error {
@@ -124,39 +140,49 @@ func (s *CurriculumService) DeleteLevel(ctx context.Context, id uuid.UUID) error
 	return nil
 }
 
-func (s *CurriculumService) CreateSelectionGroup(ctx context.Context, levelID uuid.UUID, req models.CreateSelectionGroupRequest) (db.SelectionGroup, error) {
+func (s *CurriculumService) CreateSelectionGroup(ctx context.Context, levelID uuid.UUID, req models.CreateSelectionGroupRequest) (models.SelectionGroupResponse, error) {
 	if req.MaxSelect < req.MinSelect {
-		return db.SelectionGroup{}, ErrInvalidSelectRange
+		return models.SelectionGroupResponse{}, ErrInvalidSelectRange
 	}
 	if _, err := s.repo.GetLevelByID(ctx, levelID); err != nil {
-		return db.SelectionGroup{}, ErrLevelNotFound
+		return models.SelectionGroupResponse{}, ErrLevelNotFound
 	}
 
-	return s.repo.CreateSelectionGroup(ctx, db.CreateSelectionGroupParams{
+	group, err := s.repo.CreateSelectionGroup(ctx, db.CreateSelectionGroupParams{
 		LevelID:   levelID,
 		Label:     req.Label,
 		MinSelect: req.MinSelect,
 		MaxSelect: req.MaxSelect,
 		SortOrder: req.SortOrder,
 	})
+	return toSelectionGroupResponse(group), err
 }
 
-func (s *CurriculumService) ListSelectionGroupsByLevel(ctx context.Context, levelID uuid.UUID) ([]db.SelectionGroup, error) {
-	return s.repo.ListSelectionGroupsByLevel(ctx, levelID)
+func (s *CurriculumService) ListSelectionGroupsByLevel(ctx context.Context, levelID uuid.UUID) ([]models.SelectionGroupResponse, error) {
+	groups, err := s.repo.ListSelectionGroupsByLevel(ctx, levelID)
+	if err != nil {
+		return nil, err
+	}
+	resp := make([]models.SelectionGroupResponse, len(groups))
+	for i, group := range groups {
+		resp[i] = toSelectionGroupResponse(group)
+	}
+	return resp, nil
 }
 
-func (s *CurriculumService) UpdateSelectionGroup(ctx context.Context, id uuid.UUID, req models.UpdateSelectionGroupRequest) (db.SelectionGroup, error) {
+func (s *CurriculumService) UpdateSelectionGroup(ctx context.Context, id uuid.UUID, req models.UpdateSelectionGroupRequest) (models.SelectionGroupResponse, error) {
 	if req.MaxSelect < req.MinSelect {
-		return db.SelectionGroup{}, ErrInvalidSelectRange
+		return models.SelectionGroupResponse{}, ErrInvalidSelectRange
 	}
 
-	return s.repo.UpdateSelectionGroup(ctx, db.UpdateSelectionGroupParams{
+	group, err := s.repo.UpdateSelectionGroup(ctx, db.UpdateSelectionGroupParams{
 		ID:        id,
 		Label:     req.Label,
 		MinSelect: req.MinSelect,
 		MaxSelect: req.MaxSelect,
 		SortOrder: req.SortOrder,
 	})
+	return toSelectionGroupResponse(group), err
 }
 
 func (s *CurriculumService) DeleteSelectionGroup(ctx context.Context, id uuid.UUID) error {
@@ -173,28 +199,29 @@ func (s *CurriculumService) DeleteSelectionGroup(ctx context.Context, id uuid.UU
 	return nil
 }
 
-func (s *CurriculumService) AddGroupSubject(ctx context.Context, groupID uuid.UUID, req models.AddGroupSubjectRequest) (db.GroupSubject, error) {
+func (s *CurriculumService) AddGroupSubject(ctx context.Context, groupID uuid.UUID, req models.AddGroupSubjectRequest) error {
 	subjectID, err := uuid.Parse(req.SubjectID)
 	if err != nil {
-		return db.GroupSubject{}, errors.New("invalid subject_id")
+		return errors.New("invalid subject_id")
 	}
 
 	mediumID, err := parseOptionalUUID(req.MediumID)
 	if err != nil {
-		return db.GroupSubject{}, errors.New("invalid medium_id")
+		return errors.New("invalid medium_id")
 	}
 
 	if _, err := s.repo.GetSelectionGroupByID(ctx, groupID); err != nil {
-		return db.GroupSubject{}, ErrSelectionGroupNotFound
+		return ErrSelectionGroupNotFound
 	}
 
-	return s.repo.AddGroupSubject(ctx, db.AddGroupSubjectParams{
+	_, err = s.repo.AddGroupSubject(ctx, db.AddGroupSubjectParams{
 		GroupID:          groupID,
 		SubjectID:        subjectID,
 		MediumID:         mediumID,
 		PrerequisiteNote: optionalText(req.PrerequisiteNote),
 		SortOrder:        req.SortOrder,
 	})
+	return err
 }
 
 func (s *CurriculumService) ListGroupSubjects(ctx context.Context, groupID uuid.UUID) ([]models.GroupSubjectResponse, error) {
@@ -278,6 +305,14 @@ func (s *CurriculumService) GetCurriculumTree(ctx context.Context, levelID uuid.
 	}, nil
 }
 
+func toMediumResponse(m db.Medium) models.MediumResponse {
+	return models.MediumResponse{ID: m.ID.String(), Name: m.Name, CreatedAt: m.CreatedAt.Time.String()}
+}
+
+func toSelectionGroupResponse(g db.SelectionGroup) models.SelectionGroupResponse {
+	return models.SelectionGroupResponse{ID: g.ID.String(), LevelID: g.LevelID.String(), Label: g.Label, MinSelect: g.MinSelect, MaxSelect: g.MaxSelect, SortOrder: g.SortOrder, CreatedAt: g.CreatedAt.Time.String()}
+}
+
 func ToLevelResponse(l db.Level) models.LevelResponse {
 	return models.LevelResponse{
 		ID:        l.ID.String(),
@@ -286,4 +321,12 @@ func ToLevelResponse(l db.Level) models.LevelResponse {
 		SortOrder: l.SortOrder,
 		CreatedAt: l.CreatedAt.Time.String(),
 	}
+}
+
+func toLevelResponses(levels []db.Level) []models.LevelResponse {
+	resp := make([]models.LevelResponse, len(levels))
+	for i, level := range levels {
+		resp[i] = ToLevelResponse(level)
+	}
+	return resp
 }

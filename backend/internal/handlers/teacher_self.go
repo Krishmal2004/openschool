@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/repositories"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/services"
 	timetableservices "github.com/openschool-org/openschool/internal/services/timetable"
 )
 
 // TeacherSelfHandler resolves a signed-in teacher's own profile ID for the existing teacherOrAdmin routes to use.
 type TeacherSelfHandler struct {
-	teachers        *repositories.TeacherRepository
-	school          *repositories.SchoolRepository
+	teacherSelf     *services.TeacherSelfService
+	school          ports.CurrentAcademicYearReader
 	positions       *services.PositionService
 	societies       *services.SocietyService
 	dashboard       *services.DashboardService
@@ -26,8 +26,8 @@ type TeacherSelfHandler struct {
 
 // NewTeacherSelfHandler constructs a TeacherSelfHandler with its service dependencies.
 func NewTeacherSelfHandler(
-	teachers *repositories.TeacherRepository,
-	school *repositories.SchoolRepository,
+	teacherSelf *services.TeacherSelfService,
+	school ports.CurrentAcademicYearReader,
 	positions *services.PositionService,
 	societies *services.SocietyService,
 	dashboard *services.DashboardService,
@@ -35,7 +35,7 @@ func NewTeacherSelfHandler(
 	staffAttendance *services.StaffAttendanceService,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{
-		teachers:        teachers,
+		teacherSelf:     teacherSelf,
 		school:          school,
 		positions:       positions,
 		societies:       societies,
@@ -46,36 +46,36 @@ func NewTeacherSelfHandler(
 }
 
 // leadershipTeacher resolves the caller's teacher profile and 403s unless their rank is Principal or Vice Principal.
-func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (db.TeacherProfile, bool) {
+func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (uuid.UUID, bool) {
 	callerID, err := middleware.UserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid caller identity"})
-		return db.TeacherProfile{}, false
+		return uuid.Nil, false
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
-		return db.TeacherProfile{}, false
+		return uuid.Nil, false
 	}
 
-	year, err := h.school.GetCurrentAcademicYear(c.Request.Context())
+	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
-		return db.TeacherProfile{}, false
+		return uuid.Nil, false
 	}
 
-	rank, _, err := h.positions.RankForTeacher(c.Request.Context(), teacher.ID, year.ID)
+	rank, _, err := h.positions.RankForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return db.TeacherProfile{}, false
+		return uuid.Nil, false
 	}
 	if !rank.IsPrincipalOrVicePrincipal() {
 		c.JSON(http.StatusForbidden, gin.H{"error": "this action requires the Principal or Vice Principal position"})
-		return db.TeacherProfile{}, false
+		return uuid.Nil, false
 	}
 
-	return teacher, true
+	return teacherID, true
 }
 
 // Profile returns the signed-in teacher's own profile.
@@ -86,7 +86,7 @@ func (h *TeacherSelfHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacher, err := h.teacherSelf.Profile(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
 		return
@@ -103,19 +103,19 @@ func (h *TeacherSelfHandler) Position(c *gin.Context) {
 		return
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
 		return
 	}
 
-	year, err := h.school.GetCurrentAcademicYear(c.Request.Context())
+	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
 	}
 
-	summary, err := h.positions.SummaryForTeacher(c.Request.Context(), teacher.ID, year.ID)
+	summary, err := h.positions.SummaryForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -132,19 +132,19 @@ func (h *TeacherSelfHandler) Society(c *gin.Context) {
 		return
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
 		return
 	}
 
-	year, err := h.school.GetCurrentAcademicYear(c.Request.Context())
+	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
 	}
 
-	society, err := h.societies.GetForTeacher(c.Request.Context(), teacher.ID, year.ID)
+	society, err := h.societies.GetForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
 		if errors.Is(err, services.ErrSocietyNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "you are not the Teacher-in-Charge of any society this year"})
@@ -165,19 +165,19 @@ func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 		return
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
 		return
 	}
 
-	year, err := h.school.GetCurrentAcademicYear(c.Request.Context())
+	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
 	}
 
-	overview, err := h.positions.LeadershipOverview(c.Request.Context(), teacher.ID, year.ID)
+	overview, err := h.positions.LeadershipOverview(c.Request.Context(), teacherID, yearID)
 	if err != nil {
 		if errors.Is(err, services.ErrInsufficientRank) {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -211,13 +211,13 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 		return
 	}
 
-	year, err := h.school.GetCurrentAcademicYear(c.Request.Context())
+	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
 	}
 
-	list, err := h.timetables.ListByAcademicYear(c.Request.Context(), year.ID)
+	list, err := h.timetables.ListByAcademicYear(c.Request.Context(), yearID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -234,7 +234,7 @@ func (h *TeacherSelfHandler) Attendance(c *gin.Context) {
 		return
 	}
 
-	teacher, err := h.teachers.GetByUserID(c.Request.Context(), callerID)
+	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
 		return
@@ -248,7 +248,7 @@ func (h *TeacherSelfHandler) Attendance(c *gin.Context) {
 	from := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	to := from.AddDate(0, 1, -1)
 
-	records, err := h.staffAttendance.TeacherHistory(c.Request.Context(), teacher.ID, from, to)
+	records, err := h.staffAttendance.TeacherHistory(c.Request.Context(), teacherID, from, to)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

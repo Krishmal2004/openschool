@@ -13,6 +13,7 @@ import (
 	db "github.com/openschool-org/openschool/db/sqlc"
 	rootmodels "github.com/openschool-org/openschool/internal/models"
 	models "github.com/openschool-org/openschool/internal/models/notifications"
+	"github.com/openschool-org/openschool/internal/ports"
 	rootrepositories "github.com/openschool-org/openschool/internal/repositories"
 	repositories "github.com/openschool-org/openschool/internal/repositories/notifications"
 	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
@@ -32,7 +33,7 @@ type NotificationService struct {
 	teacherRepo      *rootrepositories.TeacherRepository
 	studentRepo      *rootrepositories.StudentRepository
 	guardianRepo     *rootrepositories.GuardianRepository
-	schoolRepo       *rootrepositories.SchoolRepository
+	schoolRepo       ports.CurrentAcademicYearReader
 	positionRepo     *rootrepositories.PositionRepository
 }
 
@@ -44,7 +45,7 @@ func NewNotificationService(
 	teacherRepo *rootrepositories.TeacherRepository,
 	studentRepo *rootrepositories.StudentRepository,
 	guardianRepo *rootrepositories.GuardianRepository,
-	schoolRepo *rootrepositories.SchoolRepository,
+	schoolRepo ports.CurrentAcademicYearReader,
 	positionRepo *rootrepositories.PositionRepository,
 ) *NotificationService {
 	return &NotificationService{
@@ -68,11 +69,11 @@ func addPgUUID(seen map[uuid.UUID]bool, out *[]uuid.UUID, id pgtype.UUID) {
 }
 
 func (s *NotificationService) currentAcademicYearID(ctx context.Context) (uuid.UUID, error) {
-	year, err := s.schoolRepo.GetCurrentAcademicYear(ctx)
+	yearID, err := s.schoolRepo.CurrentAcademicYearID(ctx)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("no current academic year configured")
 	}
-	return year.ID, nil
+	return yearID, nil
 }
 
 // gradesForRule expands a grade/grade_section rule into the concrete

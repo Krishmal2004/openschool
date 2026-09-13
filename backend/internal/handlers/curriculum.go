@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/services"
 )
@@ -22,27 +21,7 @@ func NewCurriculumHandler(service *services.CurriculumService) *CurriculumHandle
 }
 
 // toMediumResponse converts a generated medium row into its JSON response shape.
-func toMediumResponse(m db.Medium) models.MediumResponse {
-	return models.MediumResponse{
-		ID:        m.ID.String(),
-		Name:      m.Name,
-		CreatedAt: m.CreatedAt.Time.String(),
-	}
-}
-
 // toSelectionGroupResponse converts a generated selection-group row into its JSON response shape.
-func toSelectionGroupResponse(g db.SelectionGroup) models.SelectionGroupResponse {
-	return models.SelectionGroupResponse{
-		ID:        g.ID.String(),
-		LevelID:   g.LevelID.String(),
-		Label:     g.Label,
-		MinSelect: g.MinSelect,
-		MaxSelect: g.MaxSelect,
-		SortOrder: g.SortOrder,
-		CreatedAt: g.CreatedAt.Time.String(),
-	}
-}
-
 // ── mediums ─────────────────────────────────────────────────────────────────
 
 // CreateMedium creates a school-defined medium of instruction.
@@ -59,7 +38,7 @@ func (h *CurriculumHandler) CreateMedium(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toMediumResponse(medium))
+	c.JSON(http.StatusCreated, medium)
 }
 
 // ListMediums lists mediums.
@@ -70,12 +49,7 @@ func (h *CurriculumHandler) ListMediums(c *gin.Context) {
 		return
 	}
 
-	resp := make([]models.MediumResponse, len(mediums))
-	for i, m := range mediums {
-		resp[i] = toMediumResponse(m)
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, mediums)
 }
 
 // UpdateMedium updates a medium of instruction.
@@ -98,7 +72,7 @@ func (h *CurriculumHandler) UpdateMedium(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toMediumResponse(medium))
+	c.JSON(http.StatusOK, medium)
 }
 
 // DeleteMedium is blocked while the medium is referenced by a group subject or enrollment.
@@ -137,7 +111,7 @@ func (h *CurriculumHandler) CreateLevel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, services.ToLevelResponse(level))
+	c.JSON(http.StatusCreated, level)
 }
 
 // GetLevel returns a single curriculum level by ID.
@@ -154,13 +128,13 @@ func (h *CurriculumHandler) GetLevel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, services.ToLevelResponse(level))
+	c.JSON(http.StatusOK, level)
 }
 
 // ListLevels returns curriculum levels, optionally filtered by grade via ?grade_id=.
 func (h *CurriculumHandler) ListLevels(c *gin.Context) {
 	var (
-		levels []db.Level
+		levels []models.LevelResponse
 		err    error
 	)
 
@@ -180,12 +154,7 @@ func (h *CurriculumHandler) ListLevels(c *gin.Context) {
 		return
 	}
 
-	resp := make([]models.LevelResponse, len(levels))
-	for i, l := range levels {
-		resp[i] = services.ToLevelResponse(l)
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, levels)
 }
 
 // UpdateLevel updates a curriculum level.
@@ -208,7 +177,7 @@ func (h *CurriculumHandler) UpdateLevel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, services.ToLevelResponse(level))
+	c.JSON(http.StatusOK, level)
 }
 
 // DuplicateLevel copies a level with all its selection groups and their subjects, under a new label.
@@ -235,7 +204,7 @@ func (h *CurriculumHandler) DuplicateLevel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, services.ToLevelResponse(level))
+	c.JSON(http.StatusCreated, level)
 }
 
 // DeleteLevel is blocked while any of the level's groups still carry enrollments.
@@ -305,7 +274,7 @@ func (h *CurriculumHandler) CreateSelectionGroup(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toSelectionGroupResponse(group))
+	c.JSON(http.StatusCreated, group)
 }
 
 // ListSelectionGroups lists selection groups of a level.
@@ -322,12 +291,7 @@ func (h *CurriculumHandler) ListSelectionGroups(c *gin.Context) {
 		return
 	}
 
-	resp := make([]models.SelectionGroupResponse, len(groups))
-	for i, g := range groups {
-		resp[i] = toSelectionGroupResponse(g)
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, groups)
 }
 
 // UpdateSelectionGroup updates a subject-selection group.
@@ -350,7 +314,7 @@ func (h *CurriculumHandler) UpdateSelectionGroup(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toSelectionGroupResponse(group))
+	c.JSON(http.StatusOK, group)
 }
 
 // DeleteSelectionGroup is blocked while enrollments reference the group.
@@ -389,7 +353,7 @@ func (h *CurriculumHandler) AddGroupSubject(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.service.AddGroupSubject(c.Request.Context(), groupID, req); err != nil {
+	if err := h.service.AddGroupSubject(c.Request.Context(), groupID, req); err != nil {
 		if errors.Is(err, services.ErrSelectionGroupNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return

@@ -33,7 +33,7 @@ func RegisterStudentSelfRoutes(student *gin.RouterGroup, pool *pgxpool.Pool) {
 	marksService := services.NewTermMarkService(repositories.NewTermMarkRepository(pool), repositories.NewTeacherRepository(pool), repositories.NewClassRepository(pool))
 	enrollmentService := services.NewEnrollmentService(repositories.NewEnrollmentRepository(pool), repositories.NewCurriculumRepository(pool))
 
-	handler := handlers.NewStudentSelfHandler(studentsRepo, attendanceService, marksService, enrollmentService)
+	handler := handlers.NewStudentSelfHandler(services.NewStudentSelfService(studentsRepo), attendanceService, marksService, enrollmentService)
 
 	student.GET("/me/student", handler.Profile)
 	student.GET("/me/student/attendance", handler.Attendance)

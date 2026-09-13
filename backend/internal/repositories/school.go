@@ -36,6 +36,16 @@ func (r *SchoolRepository) GetCurrentAcademicYear(ctx context.Context) (db.Acade
 	return r.queries.GetCurrentAcademicYear(ctx)
 }
 
+// CurrentAcademicYearID returns the current academic-year identifier without
+// exposing the generated database row to callers in other modules.
+func (r *SchoolRepository) CurrentAcademicYearID(ctx context.Context) (uuid.UUID, error) {
+	year, err := r.queries.GetCurrentAcademicYear(ctx)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return year.ID, nil
+}
+
 func (r *SchoolRepository) GetAcademicYearByID(ctx context.Context, id uuid.UUID) (db.AcademicYear, error) {
 	return r.queries.GetAcademicYearByID(ctx, id)
 }

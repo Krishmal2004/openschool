@@ -6,11 +6,12 @@ import (
 	"github.com/openschool-org/openschool/internal/handlers"
 	"github.com/openschool-org/openschool/internal/jobs"
 	"github.com/openschool-org/openschool/internal/repositories"
+	"github.com/openschool-org/openschool/internal/services"
 )
 
 func RegisterJobRoutes(admin *gin.RouterGroup, pool *pgxpool.Pool, scheduler *jobs.Scheduler) {
 	settingsRepo := repositories.NewJobSchedulerRepository(pool)
-	handler := handlers.NewJobsHandler(scheduler, settingsRepo)
+	handler := handlers.NewJobsHandler(services.NewJobsService(scheduler, settingsRepo))
 
 	admin.GET("/jobs", handler.List)
 	admin.PUT("/jobs/:name/enabled", handler.SetEnabled)

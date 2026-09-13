@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 	notificationsservices "github.com/openschool-org/openschool/internal/services/notifications"
 )
@@ -34,7 +35,7 @@ type AttendanceService struct {
 	notifications *notificationsservices.NotificationService
 	audit         *AuditService
 	positions     *PositionService
-	schoolRepo    *repositories.SchoolRepository
+	schoolRepo    ports.CurrentAcademicYearReader
 }
 
 func NewAttendanceService(
@@ -47,7 +48,7 @@ func NewAttendanceService(
 	notifications *notificationsservices.NotificationService,
 	audit *AuditService,
 	positions *PositionService,
-	schoolRepo *repositories.SchoolRepository,
+	schoolRepo ports.CurrentAcademicYearReader,
 ) *AttendanceService {
 	return &AttendanceService{
 		repo: repo, userRepo: userRepo, teacherRepo: teacherRepo, classRepo: classRepo,
@@ -210,12 +211,12 @@ func (s *AttendanceService) ListSessionsByDate(ctx context.Context, actor Actor,
 		return nil, ErrInsufficientRank
 	}
 
-	year, err := s.schoolRepo.GetCurrentAcademicYear(ctx)
+	yearID, err := s.schoolRepo.CurrentAcademicYearID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("no current academic year configured")
 	}
 
-	wholeSchool, gradeIDs, err := s.positions.LeadershipScope(ctx, teacher.ID, year.ID)
+	wholeSchool, gradeIDs, err := s.positions.LeadershipScope(ctx, teacher.ID, yearID)
 	if err != nil {
 		return nil, err
 	}
