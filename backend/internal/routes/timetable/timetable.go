@@ -51,11 +51,6 @@ func RegisterTimetableRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterG
 	admin.DELETE("/timetables/:id", handler.Delete)
 	admin.POST("/timetables/:id/archive", handler.Archive)
 
-	teacherOrAdmin.GET("/timetables/:id/entries", handler.GetEntries)
-	admin.PUT("/timetables/:id/entries", handler.SaveEntries)
-	admin.DELETE("/timetables/:id/entries/:day/:period", handler.DeleteEntry)
-
-	teacherOrAdmin.GET("/timetables/:id/validate", handler.Validate)
 	teacherOrAdmin.GET("/timetables/:id/status-history", handler.StatusHistory)
 
 	admin.POST("/timetables/:id/submit", handler.Submit)

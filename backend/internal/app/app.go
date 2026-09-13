@@ -53,6 +53,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	timetablemodule.RegisterSubjectPeriodRequirementRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	timetablemodule.RegisterTeacherAvailabilityRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	timetablemodule.RegisterGradeSectionRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
+	timetablemodule.RegisterTimetableEntryRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
+	timetablemodule.RegisterTimetableValidationRoute(groups.TeacherOrAdmin, pool)
 	academicsmodule.RegisterSubjectRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	academicsmodule.RegisterStreamRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	routes.RegisterAcademicModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, pool)

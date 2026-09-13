@@ -47,3 +47,15 @@ func RegisterGradeSectionRoutes(admin, teacherOrAdmin *gin.RouterGroup, pool *pg
 	admin.PUT("/grade-sections/:id/periods", handler.savePeriods)
 	admin.POST("/grade-sections/:id/periods/generate", handler.regeneratePeriods)
 }
+
+func RegisterTimetableEntryRoutes(admin, teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
+	handler := newTimetableEntryHandler(newTimetableEntryRepository(pool))
+	teacherOrAdmin.GET("/timetables/:id/entries", handler.list)
+	admin.PUT("/timetables/:id/entries", handler.save)
+	admin.DELETE("/timetables/:id/entries/:day/:period", handler.delete)
+}
+
+func RegisterTimetableValidationRoute(teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
+	handler := newValidationHandler(newTimetableEntryRepository(pool))
+	teacherOrAdmin.GET("/timetables/:id/validate", handler.validate)
+}

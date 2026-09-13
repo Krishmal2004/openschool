@@ -75,6 +75,8 @@ cmd/api
 | DONE | Teacher availability | Migrated teacher availability create, list, and delete | `internal/modules/timetable` |
 | DONE | Grade sections | Migrated grade-section CRUD, grade assignment, section heads, and period grids | `internal/modules/timetable` |
 | DONE | Period generation | Migrated settings-based period generation, fallback generation, and regeneration | `internal/modules/timetable` |
+| DONE | Timetable entries | Migrated timetable entry listing, draft-only save, and entry clearing | `internal/modules/timetable` |
+| DONE | Timetable validation | Migrated conflict, availability, assignment, requirement, and reviewer validation | `internal/modules/timetable` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -117,7 +119,7 @@ sqlc. Twelve have now been migrated out of the legacy service layer.
 | TODO | Teacher self-service | Teacher-facing timetable and workload endpoints | Depends on timetable engine and teacher module |
 | TODO | Student attendance | Attendance sessions and student attendance records | Includes lock and correction rules |
 | TODO | Staff attendance | Staff attendance records and reporting | Includes date-based operations |
-| TODO | Timetable engine | Generation, review, conflict detection, assignment, and publication | Largest remaining timetable block |
+| TODO | Timetable engine | Timetable CRUD, automatic generation, review, conflict detection, assignment, and publication | Entry editing and validation are already migrated; this is the remaining engine and workflow |
 | TODO | Notifications | Notifications, unread counts, and delivery behavior | Includes timetable and people dependencies |
 | TODO | Positions | Teacher positions and scoped notifications | Check existing ADR before changing semantics |
 | TODO | Section heads | Section-head assignments and access rules | Related to grade sections and teacher roles |
@@ -134,6 +136,8 @@ sqlc. Twelve have now been migrated out of the legacy service layer.
 These are intentionally retained until their consumers are migrated:
 
 - Legacy repositories used by the timetable generation engine.
+- Legacy timetable service still used for timetable CRUD, validation, workflow,
+  portal views, and automatic generation.
 - Legacy grade-section repository used by attendance, notifications, parent and
   student views, teacher self-service, and jobs.
 - Legacy classroom repository used for subject-specific lab-room lookup.
