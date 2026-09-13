@@ -146,7 +146,7 @@ export default function TeacherProfileSections({
       <div className="os-section">
         <div className="os-section__header">
           <h2 className="os-section__title">Subjects</h2>
-          <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{subjects?.length ?? 0} assigned</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{subjects?.length ?? 0} assigned</span>
         </div>
         <div className="os-section__body">
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: editing ? "1rem" : 0 }}>
@@ -172,11 +172,11 @@ export default function TeacherProfileSections({
                       alignItems: "center",
                       gap: "0.5rem",
                       padding: "0.5rem 0.875rem",
-                      border: "1px solid #e0e0e0",
-                      background: "#f4f4f4",
+                      border: "1px solid var(--os-border-subtle)",
+                      background: "var(--os-layer-hover)",
                     }}
                   >
-                    <Book size={14} style={{ fill: "#406AAF" }} />
+                    <Book size={14} style={{ fill: "var(--os-accent)" }} />
                     <span style={{ fontSize: "0.875rem", fontWeight: 500 }}>{s.name}</span>
                     <Tag type="blue" size="sm">
                       {s.code}
@@ -185,11 +185,11 @@ export default function TeacherProfileSections({
                 )
               )
             ) : (
-              <span style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>No subjects assigned.</span>
+              <span style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>No subjects assigned.</span>
             )}
           </div>
           {editing && (
-            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", maxWidth: "28rem", borderTop: "1px solid #e0e0e0", paddingTop: "1rem" }}>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", maxWidth: "28rem", borderTop: "1px solid var(--os-border-subtle)", paddingTop: "1rem" }}>
               <div style={{ flex: 1 }}>
                 <Select
                   id="assign-subject-select"

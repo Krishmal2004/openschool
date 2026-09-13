@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { Button } from "@carbon/react";
 import { Search, EventSchedule } from "@carbon/icons-react";
 import { useMyClasses } from "../../queries/useTeachers";
 import { useClassStudents } from "../../queries/useClasses";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
-
-const ACCENT = "#406AAF";
+import InfoRow from "../../components/common/InfoRow";
 
 export default function TeacherClasses() {
   const { classes: myClasses, isLoading, isError, refetch } = useMyClasses();
@@ -65,9 +65,9 @@ export default function TeacherClasses() {
             onClick={() => { setActiveClassId(c.class_id); setQuery(""); }}
             style={{
               padding: "0.625rem 1.25rem", border: "1px solid", cursor: "pointer", fontSize: "0.875rem", fontWeight: 500, fontFamily: "inherit", transition: "all 0.15s",
-              background: activeClass.class_id === c.class_id ? ACCENT : "#ffffff",
-              borderColor: activeClass.class_id === c.class_id ? ACCENT : "#e0e0e0",
-              color: activeClass.class_id === c.class_id ? "#ffffff" : "#161616",
+              background: activeClass.class_id === c.class_id ? "var(--os-accent)" : "var(--os-layer)",
+              borderColor: activeClass.class_id === c.class_id ? "var(--os-accent)" : "var(--os-border-subtle)",
+              color: activeClass.class_id === c.class_id ? "var(--os-layer)" : "var(--os-text-primary)",
             }}
           >
             {c.grade_name} — {c.class_name}
@@ -81,7 +81,7 @@ export default function TeacherClasses() {
           <div className="os-section">
             <div className="os-section__header">
               <h2 className="os-section__title">Student Roster — {activeClass.class_name}</h2>
-              <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{roster?.length ?? 0} students</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{roster?.length ?? 0} students</span>
             </div>
             <div className="os-toolbar">
               <div className="os-search" style={{ maxWidth: "22rem" }}>
@@ -93,12 +93,9 @@ export default function TeacherClasses() {
                   onChange={e => setQuery(e.target.value)}
                 />
               </div>
-              <Link
-                to="/t/attendance"
-                style={{ marginLeft: "auto", padding: "0.5625rem 1rem", background: ACCENT, color: "#fff", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500, whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "0.4rem" }}
-              >
-                <EventSchedule size={16} /> Mark Attendance
-              </Link>
+              <Button as={Link} to="/t/attendance" renderIcon={EventSchedule} kind="primary" size="md" style={{ marginLeft: "auto" }}>
+                Mark Attendance
+              </Button>
             </div>
             {rosterLoading ? (
               <LoadingSpinner />
@@ -117,7 +114,7 @@ export default function TeacherClasses() {
                     </tr>
                   ))}
                   {filtered.length === 0 && (
-                    <tr><td colSpan={4} style={{ textAlign: "center", color: "#8d8d8d", padding: "2rem" }}>No students found</td></tr>
+                    <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--os-text-tertiary)", padding: "2rem" }}>No students found</td></tr>
                   )}
                 </tbody>
               </table>
@@ -130,18 +127,11 @@ export default function TeacherClasses() {
           <div className="os-section">
             <div className="os-section__header"><h2 className="os-section__title">Class Details</h2></div>
             <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-              {[
-                ["Grade", activeClass.grade_name],
-                ["Class", activeClass.class_name],
-                ["Your role", activeClass.isFormTeacher ? "Form Teacher" : "Subject Teacher"],
-                ["Subjects you teach", activeClass.subjects.length > 0 ? activeClass.subjects.join(", ") : "—"],
-                ["Students", roster?.length ?? 0],
-              ].map(([label, value]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.45rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem", gap: "1rem" }}>
-                  <span style={{ color: "#525252" }}>{label}</span>
-                  <span style={{ fontWeight: 500, color: "#161616", textAlign: "right" }}>{value}</span>
-                </div>
-              ))}
+              <InfoRow label="Grade" value={activeClass.grade_name} />
+              <InfoRow label="Class" value={activeClass.class_name} />
+              <InfoRow label="Your role" value={activeClass.isFormTeacher ? "Form Teacher" : "Subject Teacher"} />
+              <InfoRow label="Subjects you teach" value={activeClass.subjects.length > 0 ? activeClass.subjects.join(", ") : "—"} />
+              <InfoRow label="Students" value={roster?.length ?? 0} divider={false} />
             </div>
           </div>
 
@@ -149,13 +139,10 @@ export default function TeacherClasses() {
             <div className="os-section__header"><h2 className="os-section__title">Houses</h2></div>
             <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
               {houseCounts.size === 0 ? (
-                <p style={{ color: "#8d8d8d", fontSize: "0.8125rem" }}>No students yet.</p>
+                <p style={{ color: "var(--os-text-tertiary)", fontSize: "0.8125rem" }}>No students yet.</p>
               ) : (
-                [...houseCounts.entries()].map(([house, count]) => (
-                  <div key={house} style={{ display: "flex", justifyContent: "space-between", padding: "0.45rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem" }}>
-                    <span style={{ color: "#525252" }}>{house}</span>
-                    <span style={{ fontWeight: 600, color: ACCENT }}>{count}</span>
-                  </div>
+                [...houseCounts.entries()].map(([house, count], i, arr) => (
+                  <InfoRow key={house} label={house} value={count} bold accent divider={i < arr.length - 1} />
                 ))
               )}
             </div>

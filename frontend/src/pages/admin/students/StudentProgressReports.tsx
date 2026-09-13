@@ -75,14 +75,12 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         )}
 
         {reports?.map((r) => (
-          <div key={r.id} style={{ padding: "0.875rem 0", borderBottom: "1px solid #e0e0e0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{r.term_name}</span>
-                <p style={{ margin: "0.375rem 0 0", fontSize: "0.875rem", color: "#525252" }}>{r.narrative}</p>
-              </div>
-              <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
+          <div key={r.id} className="os-list-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{r.term_name}</span>
+              <p style={{ margin: "0.375rem 0 0", fontSize: "0.875rem", color: "var(--os-text-secondary)" }}>{r.narrative}</p>
             </div>
+            <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
           </div>
         ))}
       </div>

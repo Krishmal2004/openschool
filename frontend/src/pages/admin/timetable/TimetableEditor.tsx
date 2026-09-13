@@ -237,7 +237,7 @@ export default function TimetableEditor() {
               {periods.map((p) =>
                 p.slot_type === "interval" ? (
                   <tr key={p.id}>
-                    <td colSpan={DAYS.length + 1} style={{ background: "#fff8e1", textAlign: "center", fontWeight: 600 }}>
+                    <td colSpan={DAYS.length + 1} style={{ background: "var(--os-status-late-bg)", textAlign: "center", fontWeight: 600 }}>
                       Interval {p.start_time}–{p.end_time}
                     </td>
                   </tr>
@@ -245,7 +245,7 @@ export default function TimetableEditor() {
                   <tr key={p.id}>
                     <td>
                       <div style={{ fontWeight: 600 }}>P{p.period_number}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                         {p.start_time}–{p.end_time}
                       </div>
                     </td>
@@ -260,13 +260,13 @@ export default function TimetableEditor() {
                           {e?.subject_name ? (
                             <div>
                               <div style={{ fontWeight: 500 }}>{e.subject_name}</div>
-                              <div style={{ fontSize: "0.75rem", color: "#525252" }}>{e.teacher_name}</div>
+                              <div style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>{e.teacher_name}</div>
                               {e.classroom_name && (
-                                <div style={{ fontSize: "0.7rem", color: "#8d8d8d" }}>{e.classroom_name}</div>
+                                <div style={{ fontSize: "0.7rem", color: "var(--os-text-tertiary)" }}>{e.classroom_name}</div>
                               )}
                             </div>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", color: "#c6c6c6" }}>{isDraft ? "+ Add" : ""}</span>
+                            <span style={{ fontSize: "0.75rem", color: "var(--os-text-disabled)" }}>{isDraft ? "+ Add" : ""}</span>
                           )}
                         </td>
                       );
@@ -285,7 +285,7 @@ export default function TimetableEditor() {
             Status History
           </h2>
           {history.map((h) => (
-            <div key={h.id} style={{ fontSize: "0.8rem", color: "#525252", marginBottom: "0.375rem" }}>
+            <div key={h.id} style={{ fontSize: "0.8rem", color: "var(--os-text-secondary)", marginBottom: "0.375rem" }}>
               <strong>{STATUS_LABEL[h.to_status] ?? h.to_status}</strong> by {h.changed_by_name} on{" "}
               {new Date(h.changed_at).toLocaleString()}
               {h.comment && <> — {h.comment}</>}
@@ -365,7 +365,7 @@ export default function TimetableEditor() {
           {validating ? (
             <SkeletonText width="60%" />
           ) : !validation || validation.issues.length === 0 ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#24a148" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--os-success)" }}>
               <Checkmark size={20} />
               <span>No issues found. This timetable is ready to submit.</span>
             </div>
@@ -379,10 +379,10 @@ export default function TimetableEditor() {
                     gap: "0.5rem",
                     padding: "0.5rem",
                     borderRadius: "4px",
-                    background: issue.severity === "error" ? "#fff1f1" : "#fff8e1",
+                    background: issue.severity === "error" ? "var(--os-status-absent-bg)" : "var(--os-status-late-bg)",
                   }}
                 >
-                  <WarningAlt size={16} style={{ fill: issue.severity === "error" ? "#da1e28" : "#f1c21b", flexShrink: 0 }} />
+                  <WarningAlt size={16} style={{ fill: issue.severity === "error" ? "var(--os-danger)" : "var(--os-warning)", flexShrink: 0 }} />
                   <span style={{ fontSize: "0.875rem" }}>
                     {issue.day_of_week != null && (
                       <strong>

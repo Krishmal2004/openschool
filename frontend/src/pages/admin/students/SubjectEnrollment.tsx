@@ -196,7 +196,7 @@ export default function SubjectEnrollment({ studentId }: { studentId: string }) 
                             ? "Compulsory"
                             : pickRuleLabel(g.min_select, g.max_select)}
                         </Tag>
-                        <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                           {count} selected
                         </span>
                       </div>

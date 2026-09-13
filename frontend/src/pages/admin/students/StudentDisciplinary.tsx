@@ -81,18 +81,16 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         {!isLoading && (records?.length ?? 0) === 0 && <EmptyState title="No disciplinary records" description="Nothing on file for this student." />}
 
         {records?.map((r) => (
-          <div key={r.id} style={{ padding: "0.875rem 0", borderBottom: "1px solid #e0e0e0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-                  <Tag size="sm" type={SEVERITY_TAG[r.severity]}>{r.severity}</Tag>
-                  <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{r.incident_date}</span>
-                </div>
-                <p style={{ margin: 0, fontSize: "0.875rem" }}>{r.description}</p>
-                {r.action_taken && <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>Action: {r.action_taken}</p>}
+          <div key={r.id} className="os-list-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                <Tag size="sm" type={SEVERITY_TAG[r.severity]}>{r.severity}</Tag>
+                <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{r.incident_date}</span>
               </div>
-              <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
+              <p style={{ margin: 0, fontSize: "0.875rem" }}>{r.description}</p>
+              {r.action_taken && <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>Action: {r.action_taken}</p>}
             </div>
+            <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
           </div>
         ))}
       </div>

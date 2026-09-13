@@ -41,14 +41,14 @@ function StudentSocietyMemberships({ studentId }: { studentId: string }) {
 
   return (
     <div style={{ marginBottom: "1.5rem" }}>
-      <h3 style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", color: "#8d8d8d", margin: "0 0 0.5rem" }}>
+      <h3 style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", color: "var(--os-text-tertiary)", margin: "0 0 0.5rem" }}>
         Society Memberships
       </h3>
       {memberships?.map((m) => (
-        <div key={m.id} style={{ display: "flex", alignItems: "center", gap: "0.625rem", padding: "0.625rem 0", borderBottom: "1px solid #e0e0e0" }}>
+        <div key={m.id} className="os-list-row os-list-row--compact" style={{ gap: "0.625rem" }}>
           <Tag size="sm" type="purple">{SOCIETY_ROLE_LABELS[m.role] ?? m.role}</Tag>
           <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{m.society_name}</span>
-          <span style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>{m.academic_year_label}</span>
+          <span style={{ fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{m.academic_year_label}</span>
         </div>
       ))}
     </div>
@@ -83,7 +83,7 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
     <div className="os-section" style={{ marginTop: "1rem" }}>
       <div className="os-section__header">
         <h2 className="os-section__title">Activities</h2>
-        <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>Clubs, sports, societies &amp; competitions</span>
+        <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Clubs, sports, societies &amp; competitions</span>
       </div>
       <div className="os-section__body">
         <StudentSocietyMemberships studentId={studentId} />
@@ -114,11 +114,11 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
         )}
 
         {activities?.map((a) => (
-          <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.625rem 0", borderBottom: "1px solid #e0e0e0" }}>
+          <div key={a.id} className="os-list-row os-list-row--compact" style={{ justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
               <Tag size="sm" type="gray">{ACTIVITY_CATEGORIES.find((c) => c.value === a.category)?.label ?? a.category}</Tag>
               <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.name}</span>
-              {a.role && <span style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.role}</span>}
+              {a.role && <span style={{ fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{a.role}</span>}
             </div>
             <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(a.id)} />
           </div>

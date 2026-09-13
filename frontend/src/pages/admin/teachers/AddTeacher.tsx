@@ -17,9 +17,9 @@ import { getErrorMessage } from "../../../lib/errorMessage";
 import { toYmd } from "../../../lib/date";
 import { isValidSriLankanPhone, PHONE_INVALID_TEXT } from "../../../lib/phone";
 import type { TeacherTitle } from "../../../services/teacher";
+import { TITLES } from "./constants";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TITLES: TeacherTitle[] = ["Mr", "Miss", "Mrs", "Ms", "Dr", "Von", "Prof"];
 
 type Touched = Partial<
   Record<"givenName" | "familyName" | "email" | "phone" | "nicNumber" | "joinedDate", boolean>

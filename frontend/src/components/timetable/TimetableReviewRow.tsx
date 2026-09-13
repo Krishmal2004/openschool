@@ -20,7 +20,7 @@ export default function TimetableReviewRow({ timetable }: { timetable: Timetable
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.875rem 1.5rem", borderBottom: "1px solid #f4f4f4" }}>
+    <div className="os-list-row" style={{ gap: "1rem", padding: "0.875rem 1.5rem" }}>
       <div style={{ flex: 1 }}>
         <p style={{ margin: 0, fontWeight: 500, fontSize: "0.875rem" }}>
           {timetable.grade_name} - {timetable.class_name}{" "}
@@ -28,7 +28,7 @@ export default function TimetableReviewRow({ timetable }: { timetable: Timetable
             v{timetable.version}
           </Tag>
         </p>
-        <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d8d8d" }}>
+        <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
           Submitted {timetable.submitted_at ? new Date(timetable.submitted_at).toLocaleString() : ""}
         </p>
         <MutationErrorNotification

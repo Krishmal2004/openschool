@@ -185,10 +185,10 @@ export default function SchoolSetup() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.75rem" }}>
           <img src="/favicon.webp" alt="" width={44} height={44} style={{ display: "block", flexShrink: 0 }} />
           <div>
-            <p style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600, color: "#161616" }}>
+            <p style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
               Set Up Your School
             </p>
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d8d8d" }}>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
               A few steps to get OpenSchool ready - you can change any of this later.
             </p>
           </div>

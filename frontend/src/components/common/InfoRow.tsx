@@ -5,10 +5,12 @@ interface Props {
   value: ReactNode;
   bold?: boolean;
   divider?: boolean;
+  /** Color the value with the brand accent instead of the default text color — for a highlighted count/stat. */
+  accent?: boolean;
 }
 
 // One label/value line in a compact summary panel (e.g. a sidebar "Quick Info" card).
-export default function InfoRow({ label, value, bold, divider = true }: Props) {
+export default function InfoRow({ label, value, bold, divider = true, accent }: Props) {
   return (
     <div
       style={{
@@ -20,7 +22,7 @@ export default function InfoRow({ label, value, bold, divider = true }: Props) {
       }}
     >
       <span style={{ color: "var(--os-text-secondary)" }}>{label}</span>
-      <span style={{ fontWeight: bold ? 600 : 500, color: "var(--os-text-primary)" }}>{value}</span>
+      <span style={{ fontWeight: bold ? 600 : 500, color: accent ? "var(--os-accent)" : "var(--os-text-primary)" }}>{value}</span>
     </div>
   );
 }

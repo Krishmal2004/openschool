@@ -52,7 +52,7 @@ export default function HousesStep({ houses, setHouses }: Props) {
               onChange={(e) =>
                 setHouses((hs) => hs.map((row, idx) => (idx === i ? { ...row, color: e.target.value } : row)))
               }
-              style={{ width: "2.5rem", height: "2.5rem", padding: 0, border: "1px solid #8d8d8d", cursor: "pointer" }}
+              style={{ width: "2.5rem", height: "2.5rem", padding: 0, border: "1px solid var(--os-text-tertiary)", cursor: "pointer" }}
             />
           </div>
         </RepeatableRow>

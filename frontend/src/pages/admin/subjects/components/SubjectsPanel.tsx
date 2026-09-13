@@ -95,7 +95,7 @@ export default function SubjectsPanel() {
           margin: "1rem 0",
         }}
       >
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
           The school&apos;s subject catalogue. Offer a subject to students by
           adding it to a selection group under the Curriculum tab.
         </p>
@@ -150,7 +150,7 @@ export default function SubjectsPanel() {
           <>
             <div className="os-section__header">
               <h2 className="os-section__title">All Subjects</h2>
-              <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                 {filtered.length} records
               </span>
             </div>

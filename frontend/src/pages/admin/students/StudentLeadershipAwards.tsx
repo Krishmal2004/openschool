@@ -69,10 +69,10 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           </div>
           {!rolesLoading && (roles?.length ?? 0) === 0 && <EmptyState title="No leadership roles yet" description="Roles outside the prefect board (club president, sports captain, etc.)." />}
           {roles?.map((r) => (
-            <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.625rem 0", borderBottom: "1px solid #e0e0e0" }}>
+            <div key={r.id} className="os-list-row os-list-row--compact" style={{ justifyContent: "space-between" }}>
               <div>
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{r.title}</span>
-                {r.scope && <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{r.scope}</span>}
+                {r.scope && <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{r.scope}</span>}
               </div>
               <RemoveIconButton label="Delete" onClick={() => setPendingDeleteRoleId(r.id)} />
             </div>
@@ -114,10 +114,10 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           </div>
           {!awardsLoading && (awards?.length ?? 0) === 0 && <EmptyState title="No awards yet" description="Add awards and achievements for this student." />}
           {awards?.map((a) => (
-            <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.625rem 0", borderBottom: "1px solid #e0e0e0" }}>
+            <div key={a.id} className="os-list-row os-list-row--compact" style={{ justifyContent: "space-between" }}>
               <div>
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.title}</span>
-                <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.awarded_date}</span>
+                <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{a.awarded_date}</span>
               </div>
               <RemoveIconButton label="Delete" onClick={() => setPendingDeleteAwardId(a.id)} />
             </div>

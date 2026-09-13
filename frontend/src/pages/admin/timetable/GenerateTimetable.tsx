@@ -24,7 +24,7 @@ function ClassResultCard({ result }: { result: ClassGenerationResult }) {
             Skipped
           </Tag>
         </div>
-        <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#8d8d8d" }}>{result.skip_reason}</p>
+        <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{result.skip_reason}</p>
       </div>
     );
   }
@@ -47,7 +47,7 @@ function ClassResultCard({ result }: { result: ClassGenerationResult }) {
         </div>
       </div>
       {result.gaps.length > 0 && (
-        <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem", fontSize: "0.8125rem", color: "#8a6a00" }}>
+        <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem", fontSize: "0.8125rem", color: "var(--os-warning-text)" }}>
           {result.gaps.map((g, i) => (
             <li key={i}>
               {g.subject_name || "Unresolved subject"}

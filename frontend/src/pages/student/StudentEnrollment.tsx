@@ -1,5 +1,3 @@
-// This file renders the StudentEnrollment page, showing the list of academic subjects currently enrolled by the student.
-
 import { useMyStudentProfile } from "../../queries/useStudentSelf";
 import { useCurrentAcademicYear } from "../../queries/useAcademicYears";
 import { useStudentEnrollments } from "../../queries/useEnrollments";

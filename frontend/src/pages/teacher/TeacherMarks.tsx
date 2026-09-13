@@ -1,5 +1,3 @@
-// This file renders the TeacherMarks page: an overview of every subject/class a teacher teaches with a marks-entered status per term, and the entry grid for recording marks against a chosen class/subject/term.
-
 import { useState, useMemo } from "react";
 import { Select, SelectItem, NumberInput, Button, InlineNotification, Tag, ClickableTile, Checkbox } from "@carbon/react";
 import { Save, ArrowLeft, CheckmarkFilled } from "@carbon/icons-react";
@@ -34,14 +32,14 @@ function ClassSubjectCard({ classId, className, gradeName, subjectId, termId, on
         <div>
           <p style={{ margin: "0 0 0.25rem", fontWeight: 600, fontSize: "0.875rem" }}>{gradeName} — {className}</p>
           {isLoading ? (
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d8d8d" }}>Loading…</p>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Loading…</p>
           ) : (
-            <p style={{ margin: 0, fontSize: "0.75rem", color: complete ? "#24a148" : "#8d8d8d" }}>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: complete ? "var(--os-success)" : "var(--os-text-tertiary)" }}>
               {entered}/{total} marks entered
             </p>
           )}
         </div>
-        {complete && <CheckmarkFilled size={18} style={{ fill: "#24a148", flexShrink: 0 }} />}
+        {complete && <CheckmarkFilled size={18} style={{ fill: "var(--os-success)", flexShrink: 0 }} />}
       </div>
     </ClickableTile>
   );
@@ -290,7 +288,7 @@ export default function TeacherMarks() {
                   alignSelf: "flex-end",
                 }}
               >
-                <span style={{ fontSize: "0.8125rem", color: "#525252" }}>
+                <span style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
                   Max Marks: <strong>{defaultMaxMarks}</strong>
                 </span>
                 <Button

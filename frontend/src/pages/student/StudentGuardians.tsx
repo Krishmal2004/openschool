@@ -1,5 +1,3 @@
-// This file renders the StudentGuardians page, displaying the student's linked emergency contacts and guardians.
-
 import { useMyStudentProfile } from "../../queries/useStudentSelf";
 import { useGuardiansByStudent } from "../../queries/useGuardians";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -51,7 +49,7 @@ export default function StudentGuardians() {
                     <td className="os-table__mono">{g.phone || "—"}</td>
                     <td>
                       {g.is_primary_contact ? (
-                        <span style={{ color: "#24a148", fontWeight: 600 }}>Yes</span>
+                        <span style={{ color: "var(--os-success)", fontWeight: 600 }}>Yes</span>
                       ) : (
                         "No"
                       )}

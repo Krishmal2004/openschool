@@ -63,11 +63,11 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
           <div>
-            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "#8d8d8d" }}>Phone</p>
+            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Phone</p>
             <p style={{ margin: 0, fontSize: "0.875rem" }}>{staff.phone || "—"}</p>
           </div>
           <div>
-            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "#8d8d8d" }}>Joined</p>
+            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Joined</p>
             <p style={{ margin: 0, fontSize: "0.875rem" }}>{staff.joined_date ?? "—"}</p>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
                 backgroundColor: currentHouse.color,
               }}
             />
-            <span style={{ fontSize: "0.8125rem", color: "#525252" }}>{currentHouse.name}</span>
+            <span style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>{currentHouse.name}</span>
           </div>
         )}
       </div>

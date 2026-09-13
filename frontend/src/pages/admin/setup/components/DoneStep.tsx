@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { Button, InlineNotification, InlineLoading } from "@carbon/react";
 import { CheckmarkFilled, ArrowRight, Layers, Book, UserMultiple, EventSchedule, ChevronRight } from "@carbon/icons-react";
-import { ACCENT } from "../constants";
 
 const NEXT_STEPS = [
   {
@@ -72,18 +71,18 @@ export default function DoneStep({ submitting, submitError, submitted, onRetry, 
                 height: "3.5rem",
                 margin: "0 auto 1rem",
                 borderRadius: "50%",
-                background: "#defbe6",
+                background: "var(--os-status-present-bg)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <CheckmarkFilled size={28} style={{ fill: "#24a148" }} />
+              <CheckmarkFilled size={28} style={{ fill: "var(--os-success)" }} />
             </div>
-            <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.25rem", fontWeight: 600, color: "#161616" }}>
+            <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.25rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
               Your school is ready
             </h2>
-            <p style={{ margin: 0, fontSize: "0.875rem", color: "#525252" }}>
+            <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--os-text-secondary)" }}>
               Here's what OpenSchool helps you run day to day, and where to go next.
             </p>
           </div>
@@ -98,8 +97,8 @@ export default function DoneStep({ submitting, submitError, submitted, onRetry, 
                   alignItems: "center",
                   gap: "0.875rem",
                   padding: "0.875rem 1rem",
-                  border: "1px solid #e0e0e0",
-                  background: "#fafafa",
+                  border: "1px solid var(--os-border-subtle)",
+                  background: "var(--os-layer-hover)",
                   textDecoration: "none",
                   transition: "border-color 0.15s ease, background 0.15s ease",
                 }}
@@ -109,22 +108,22 @@ export default function DoneStep({ submitting, submitError, submitted, onRetry, 
                     width: "2.25rem",
                     height: "2.25rem",
                     borderRadius: "50%",
-                    background: "#edf2fa",
+                    background: "var(--os-accent-light)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
                 >
-                  <item.icon size={18} style={{ fill: ACCENT }} />
+                  <item.icon size={18} style={{ fill: "var(--os-accent)" }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: "0 0 0.25rem", fontSize: "0.875rem", fontWeight: 600, color: "#161616" }}>
+                  <p style={{ margin: "0 0 0.25rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
                     {item.title}
                   </p>
-                  <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>{item.body}</p>
+                  <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>{item.body}</p>
                 </div>
-                <ChevronRight size={16} style={{ fill: "#8d8d8d", flexShrink: 0 }} />
+                <ChevronRight size={16} style={{ fill: "var(--os-text-tertiary)", flexShrink: 0 }} />
               </Link>
             ))}
           </div>

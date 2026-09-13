@@ -31,7 +31,6 @@ export const AL_STREAM_DEFS: ALStreamDef[] = [
 
 export const AL_GRADE_NUMBERS = new Set([12, 13]);
 
-export const ACCENT = "#406AAF";
 export const GRADE_MIN = 1;
 export const GRADE_MAX = 13;
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

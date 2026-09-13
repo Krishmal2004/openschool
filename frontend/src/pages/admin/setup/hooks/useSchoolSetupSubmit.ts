@@ -40,6 +40,9 @@ interface Input {
   customRooms: string[];
 }
 
+// Grades here are always named "Grade N" (see the createGrade call below), so this recovers N.
+const gradeNumberOf = (grade: Grade) => Number(grade.name.replace(/\D/g, ""));
+
 export function useSchoolSetupSubmit(input: Input) {
   const createSchool = useCreateSchool();
   const createHouse = useCreateHouse();
@@ -150,8 +153,8 @@ export function useSchoolSetupSubmit(input: Input) {
 
       if (!progress.classes) {
         if (!skipClasses && yearLabel.trim() && createdGrades.length > 0) {
-          const regularGrades = createdGrades.filter((g) => !AL_GRADE_NUMBERS.has(Number(g.name.replace(/\D/g, ""))));
-          const alGrades = createdGrades.filter((g) => AL_GRADE_NUMBERS.has(Number(g.name.replace(/\D/g, ""))));
+          const regularGrades = createdGrades.filter((g) => !AL_GRADE_NUMBERS.has(gradeNumberOf(g)));
+          const alGrades = createdGrades.filter((g) => AL_GRADE_NUMBERS.has(gradeNumberOf(g)));
 
           // Year from the admin's typed label (e.g. "2025"), not the real-world current year, since the setup may target a past/upcoming year.
           const labelYear = Number(yearLabel.trim().match(/\d{4}/)?.[0] ?? now.getFullYear());
@@ -164,7 +167,7 @@ export function useSchoolSetupSubmit(input: Input) {
           });
 
           for (const grade of regularGrades) {
-            const gradeNumber = Number(grade.name.replace(/\D/g, ""));
+            const gradeNumber = gradeNumberOf(grade);
             const count = sectionsPerGrade[gradeNumber] ?? 1;
             for (let i = 0; i < count; i++) {
               const section = String.fromCharCode(65 + i);
@@ -198,7 +201,7 @@ export function useSchoolSetupSubmit(input: Input) {
             }
 
             for (const grade of alGrades) {
-              const gradeNumber = Number(grade.name.replace(/\D/g, ""));
+              const gradeNumber = gradeNumberOf(grade);
               for (const def of enabledDefs) {
                 const config = alStreams[def.key];
                 const code = config.code.trim() || def.defaultCode;

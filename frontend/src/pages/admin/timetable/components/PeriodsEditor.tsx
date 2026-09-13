@@ -80,7 +80,7 @@ export default function PeriodsEditor({ section, onClose }: { section: GradeSect
             </thead>
             <tbody>
               {active.map((p, i) => (
-                <tr key={i} style={p.slot_type === "interval" ? { background: "#fff8e1" } : undefined}>
+                <tr key={i} style={p.slot_type === "interval" ? { background: "var(--os-status-late-bg)" } : undefined}>
                   <td>{p.slot_type === "interval" ? "Interval" : "Period"}</td>
                   <td>{p.period_number ?? "-"}</td>
                   <td>

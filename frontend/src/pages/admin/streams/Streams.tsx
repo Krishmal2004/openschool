@@ -58,7 +58,7 @@ function StreamGroups({ stream }: { stream: Stream }) {
             </Tag>
           ))
         ) : (
-          <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>No sub-groups</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>No sub-groups</span>
         )}
       </div>
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
@@ -182,14 +182,11 @@ export default function Streams() {
 
         {!isLoading && streams && streams.length > 0 && (
           <div>
-            {streams.map((s, i) => (
-              <div
-                key={s.id}
-                style={{ padding: "1rem 1.5rem", borderBottom: i < streams.length - 1 ? "1px solid #e0e0e0" : "none" }}
-              >
+            {streams.map((s) => (
+              <div key={s.id} className="os-list-row" style={{ alignItems: "flex-start", flexDirection: "column", padding: "1rem 1.5rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                  <Layers size={16} style={{ fill: "#406AAF" }} />
-                  <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "#161616" }}>{s.name}</span>
+                  <Layers size={16} style={{ fill: "var(--os-accent)" }} />
+                  <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--os-text-primary)" }}>{s.name}</span>
                 </div>
                 <StreamGroups stream={s} />
               </div>
@@ -202,7 +199,7 @@ export default function Streams() {
         <div className="os-section__header">
           <h2 className="os-section__title">Section Heads (Teachers in Charge)</h2>
           {currentYear && (
-            <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{currentYear.label}</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{currentYear.label}</span>
           )}
         </div>
 
@@ -218,27 +215,18 @@ export default function Streams() {
           />
         ) : (
           <div>
-            {sectionHeadRows.map((row, i) => {
+            {sectionHeadRows.map((row) => {
               const head = currentHeadFor(row.gradeId, row.streamId);
               return (
-                <div
-                  key={row.key}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    padding: "0.75rem 1.5rem",
-                    borderBottom: i < sectionHeadRows.length - 1 ? "1px solid #f4f4f4" : "none",
-                  }}
-                >
-                  <UserFollow size={16} style={{ fill: "#8d8d8d", flexShrink: 0 }} />
+                <div key={row.key} className="os-list-row" style={{ padding: "0.75rem 1.5rem" }}>
+                  <UserFollow size={16} style={{ fill: "var(--os-text-tertiary)", flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "0.875rem", fontWeight: 500, color: "#161616" }}>
+                    <p style={{ margin: 0, fontSize: "0.875rem", fontWeight: 500, color: "var(--os-text-primary)" }}>
                       {row.gradeName}
                       {row.streamName ? ` - ${row.streamName}` : ""}
                     </p>
                     {head && (
-                      <p style={{ margin: 0, fontSize: "0.75rem", color: "#525252" }}>
+                      <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                         Current: {head.teacher_name}
                       </p>
                     )}

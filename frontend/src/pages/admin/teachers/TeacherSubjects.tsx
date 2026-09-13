@@ -36,9 +36,9 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
         {isLoading ? (
           <SkeletonText width="6rem" />
         ) : isError ? (
-          <span style={{ color: "#da1e28", fontSize: "0.875rem" }}>Error loading subjects</span>
+          <span style={{ color: "var(--os-danger)", fontSize: "0.875rem" }}>Error loading subjects</span>
         ) : !assignedSubjects || assignedSubjects.length === 0 ? (
-          <span style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>No subjects assigned</span>
+          <span style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>No subjects assigned</span>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
             {assignedSubjects.map((s) => (
@@ -68,12 +68,12 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
           placeholder="Assign subject…"
         />
         {assignMutation.isError && (
-          <div style={{ color: "#da1e28", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+          <div style={{ color: "var(--os-danger)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
             Failed to assign
           </div>
         )}
         {removeMutation.isError && (
-          <div style={{ color: "#da1e28", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+          <div style={{ color: "var(--os-danger)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
             Failed to remove
           </div>
         )}
@@ -155,7 +155,7 @@ export default function TeacherSubjects() {
             ))}
             {filteredTeachers.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ textAlign: "center", color: "#8d8d8d", padding: "2rem" }}>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--os-text-tertiary)", padding: "2rem" }}>
                   No teachers found matching your search.
                 </td>
               </tr>

@@ -126,7 +126,7 @@ export default function GradeSections({ inline = false }: { inline?: boolean }) 
 
       {inline && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
-          <p style={{ margin: 0, fontSize: "0.875rem", color: "#525252" }}>
+          <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--os-text-secondary)" }}>
             Set up different interval times for different grades by grouping them into sections.
           </p>
           <Button renderIcon={Add} kind="primary" size="sm" onClick={openCreate}>
@@ -164,17 +164,15 @@ export default function GradeSections({ inline = false }: { inline?: boolean }) 
 
         {!isLoading && sections && sections.length > 0 && (
           <div>
-            {sections.map((s, i) => (
+            {sections.map((s) => (
               <SectionRow
                 key={s.id}
                 section={s}
-                isLast={i === sections.length - 1}
                 gradeName={gradeName}
                 onPeriods={() => setPeriodsFor(s)}
                 onEdit={() => openEdit(s)}
                 onDelete={() => setToDelete(s)}
               />
-
             ))}
           </div>
         )}

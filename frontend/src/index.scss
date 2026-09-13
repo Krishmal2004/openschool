@@ -549,6 +549,21 @@ html, body, #root {
   @media (max-width: 640px)  { grid-template-columns: 1fr; }
 }
 
+// A bordered card link (e.g. a dashboard's "Quick Actions" list) whose border
+// highlights on hover — CSS instead of onMouseEnter/onMouseLeave JS.
+.os-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem;
+  border: 1px solid var(--os-border-subtle);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: var(--os-accent); }
+}
+
 // ─── Section card ────────────────────────────────────────────────────────────
 .os-section {
   background: var(--os-layer);
@@ -934,25 +949,25 @@ html, body, #root {
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;
-    background-color: #ffffff;
-    border: 2px solid #e0e0e0;
+    background-color: var(--os-layer);
+    border: 2px solid var(--os-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 0.875rem;
-    color: #8d8d8d;
+    color: var(--os-text-tertiary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 0.5rem;
     position: relative;
     z-index: 2;
-    box-shadow: 0 0 0 4px #ffffff;
+    box-shadow: 0 0 0 4px var(--os-layer);
   }
 
   .os-step-check {
     width: 1.125rem;
     height: 1.125rem;
-    stroke: #24a148;
+    stroke: var(--os-success);
   }
 
   .os-step-content {
@@ -965,14 +980,14 @@ html, body, #root {
   .os-step-label {
     font-size: 0.8125rem;
     font-weight: 500;
-    color: #525252;
+    color: var(--os-text-secondary);
     transition: all 0.3s ease;
     white-space: nowrap;
   }
 
   .os-step-description {
     font-size: 0.6875rem;
-    color: #8d8d8d;
+    color: var(--os-text-tertiary);
     margin-top: 0.125rem;
     white-space: nowrap;
   }
@@ -984,7 +999,7 @@ html, body, #root {
     left: calc(50% + 1.125rem);
     width: calc(100% - 2.25rem);
     height: 2px;
-    background-color: #e0e0e0;
+    background-color: var(--os-border-subtle);
     transition: background-color 0.4s ease;
     z-index: 1;
   }
@@ -993,8 +1008,8 @@ html, body, #root {
     .os-step-circle {
       border-color: $os-accent;
       background-color: $os-accent;
-      color: #ffffff;
-      box-shadow: 0 0 0 4px #ffffff, 0 0 10px rgba($os-accent, 0.3);
+      color: var(--os-layer);
+      box-shadow: 0 0 0 4px var(--os-layer), 0 0 10px rgba($os-accent, 0.3);
     }
     .os-step-label {
       color: $os-accent;
@@ -1004,28 +1019,28 @@ html, body, #root {
 
   &.completed {
     .os-step-circle {
-      border-color: #24a148;
-      background-color: #defbe6;
-      color: #24a148;
+      border-color: var(--os-success);
+      background-color: var(--os-status-present-bg);
+      color: var(--os-success);
     }
     .os-step-label {
-      color: #161616;
+      color: var(--os-text-primary);
       font-weight: 500;
     }
-    
+
     &:not(:last-child)::after {
-      background-color: #24a148;
+      background-color: var(--os-success);
     }
   }
 
   &.upcoming {
     .os-step-circle {
-      background-color: #ffffff;
-      border-color: #e0e0e0;
-      color: #8d8d8d;
+      background-color: var(--os-layer);
+      border-color: var(--os-border-subtle);
+      color: var(--os-text-tertiary);
     }
     .os-step-label {
-      color: #8d8d8d;
+      color: var(--os-text-tertiary);
     }
   }
 }

@@ -1,8 +1,6 @@
 import { UserRole } from "@carbon/icons-react";
 import type { PositionSummary } from "../../../services/position";
 
-const ACCENT = "#406AAF";
-
 function reachText(summary: PositionSummary): string {
   if (summary.rank_label === "Principal") return "You can notify the whole school.";
   if (summary.rank_label === "Vice Principal") {
@@ -22,11 +20,11 @@ export default function LeadershipPanel({ summary }: { summary: PositionSummary 
     <div className="os-section">
       <div className="os-section__header">
         <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <UserRole size={16} style={{ fill: ACCENT }} /> Leadership
+          <UserRole size={16} style={{ fill: "var(--os-accent)" }} /> Leadership
         </h2>
       </div>
       <div style={{ padding: "1rem 1.5rem" }}>
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252", lineHeight: 1.5 }}>{reachText(summary)}</p>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)", lineHeight: 1.5 }}>{reachText(summary)}</p>
       </div>
     </div>
   );

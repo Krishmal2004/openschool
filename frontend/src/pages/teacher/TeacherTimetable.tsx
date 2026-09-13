@@ -3,14 +3,7 @@ import { useCurrentAcademicYear } from "../../queries/useAcademicYears";
 import { useMyTeacherSchedule } from "../../queries/timetable/useTimetables";
 import EmptyState from "../../components/common/EmptyState";
 import ErrorMessage from "../../components/common/ErrorMessage";
-
-const DAYS = [
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-];
+import { WEEKDAYS } from "../../lib/timetable";
 
 export default function TeacherTimetable() {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -38,7 +31,7 @@ export default function TeacherTimetable() {
           <EmptyState title="No published classes yet" description="Your teaching schedule will appear here once a timetable is published." />
         </div>
       ) : (
-        DAYS.map((day) => {
+        WEEKDAYS.map((day) => {
           const entries = schedule
             .filter((e) => e.day_of_week === day.value)
             .sort((a, b) => a.period_number - b.period_number);

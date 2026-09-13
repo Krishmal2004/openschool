@@ -12,7 +12,8 @@ export default function SentHistoryRow({ notification }: { notification: Notific
       role="button"
       tabIndex={0}
       aria-expanded={expanded}
-      style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #f4f4f4", cursor: "pointer" }}
+      className="os-list-row"
+      style={{ flexDirection: "column", alignItems: "stretch", padding: "0.875rem 1.5rem", cursor: "pointer" }}
       onClick={() => setExpanded((e) => !e)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -26,7 +27,7 @@ export default function SentHistoryRow({ notification }: { notification: Notific
           {notification.category}
         </Tag>
         <span style={{ fontWeight: 500, fontSize: "0.8125rem" }}>{notification.title}</span>
-        <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "#8d8d8d" }}>
+        <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
           {notification.sent_at ? new Date(notification.sent_at).toLocaleString() : ""}
         </span>
       </div>
@@ -34,7 +35,7 @@ export default function SentHistoryRow({ notification }: { notification: Notific
         style={{
           margin: 0,
           fontSize: "0.75rem",
-          color: "#525252",
+          color: "var(--os-text-secondary)",
           lineHeight: 1.5,
           display: "-webkit-box",
           WebkitLineClamp: 2,
@@ -45,7 +46,7 @@ export default function SentHistoryRow({ notification }: { notification: Notific
         {notification.message}
       </p>
       {expanded && (
-        <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#161616" }}>
+        <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--os-text-primary)" }}>
           {stats ? (
             <span>
               Recipients: <strong>{stats.total}</strong> &middot; Read: <strong>{stats.read}</strong> &middot; Unread: <strong>{stats.unread}</strong>

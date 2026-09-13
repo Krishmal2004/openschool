@@ -60,7 +60,7 @@ export default function StudentGuardians({ studentId }: { studentId: string }) {
           style={{ marginBottom: "1rem" }}
         />
         {atMax && (
-          <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "#8d8d8d" }}>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
             A student can have at most {MAX_GUARDIANS} guardians on file. Remove one to add another.
           </p>
         )}

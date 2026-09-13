@@ -197,7 +197,7 @@ export default function Timetables() {
             fallback="Failed to copy timetable"
             style={{ marginBottom: "1rem" }}
           />
-          <p style={{ fontSize: "0.8125rem", color: "#525252", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)", marginBottom: "1rem" }}>
             Copies {copySource?.grade_name} — {copySource?.class_name}'s periods into a new draft for another class —
             a new academic year is exactly when this is useful (e.g. carrying 6A's timetable over to 7A).
           </p>

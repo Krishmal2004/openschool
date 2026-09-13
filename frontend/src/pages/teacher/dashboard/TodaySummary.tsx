@@ -1,4 +1,4 @@
-const ACCENT = "#406AAF";
+import InfoRow from "../../../components/common/InfoRow";
 
 export default function TodaySummary({
   markedCount,
@@ -12,10 +12,10 @@ export default function TodaySummary({
   totalStudents: number;
 }) {
   const rows = [
-    { label: "Sessions Marked", value: String(markedCount), color: "#24a148" },
-    { label: "Sessions Pending", value: String(pendingCount), color: pendingCount > 0 ? "#f1c21b" : "#8d8d8d" },
-    { label: "My Classes", value: String(myClassCount), color: "#161616" },
-    { label: "Total Students", value: String(totalStudents), color: ACCENT },
+    { label: "Sessions Marked", value: markedCount, color: "var(--os-success)" },
+    { label: "Sessions Pending", value: pendingCount, color: pendingCount > 0 ? "var(--os-warning)" : "var(--os-text-tertiary)" },
+    { label: "My Classes", value: myClassCount, color: "var(--os-text-primary)" },
+    { label: "Total Students", value: totalStudents, color: "var(--os-accent)" },
   ];
 
   return (
@@ -24,11 +24,8 @@ export default function TodaySummary({
         <h2 className="os-section__title">Today</h2>
       </div>
       <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-        {rows.map(({ label, value, color }) => (
-          <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.45rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem" }}>
-            <span style={{ color: "#525252" }}>{label}</span>
-            <span style={{ fontWeight: 600, color }}>{value}</span>
-          </div>
+        {rows.map(({ label, value, color }, i) => (
+          <InfoRow key={label} label={label} value={<span style={{ color }}>{value}</span>} bold divider={i < rows.length - 1} />
         ))}
       </div>
     </div>

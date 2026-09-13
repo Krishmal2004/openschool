@@ -4,6 +4,7 @@ import { useMyChildren } from "../../queries/useParent";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
+import { getInitials } from "../../lib/name";
 
 export default function ParentDashboard() {
   const { data: children, isLoading, isError, refetch } = useMyChildren();
@@ -46,8 +47,8 @@ export default function ParentDashboard() {
                 alignItems: "center",
                 gap: "0.875rem",
                 padding: "1.25rem",
-                background: "#ffffff",
-                border: "1px solid #e0e0e0",
+                background: "var(--os-layer)",
+                border: "1px solid var(--os-border-subtle)",
                 textDecoration: "none",
                 transition: "border-color 0.15s ease",
               }}
@@ -56,24 +57,19 @@ export default function ParentDashboard() {
                 className="os-profile__avatar"
                 style={{ width: "2.75rem", height: "2.75rem", fontSize: "0.9rem" }}
               >
-                {c.full_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
+                {getInitials(c.full_name)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: "0 0 0.2rem", fontWeight: 600, fontSize: "0.9375rem", color: "#161616" }}>
+                <p style={{ margin: "0 0 0.2rem", fontWeight: 600, fontSize: "0.9375rem", color: "var(--os-text-primary)" }}>
                   {c.full_name}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+                <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
                   {c.index_number}
                   {c.class_name ? ` · ${c.class_name}` : ""}
                   {c.grade_name ? ` · ${c.grade_name}` : ""}
                 </p>
               </div>
-              <ChevronRight size={18} style={{ fill: "#8d8d8d", flexShrink: 0 }} />
+              <ChevronRight size={18} style={{ fill: "var(--os-text-tertiary)", flexShrink: 0 }} />
             </Link>
           ))}
         </div>

@@ -11,11 +11,19 @@ import { todayISODate, toYmd } from "../../../lib/date";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 
+// "Leave" reuses the "excused" attendance-status colors — same palette, different label for the staff-attendance domain.
 const STATUS_STYLES: Record<StaffAttendanceStatus, { bg: string; border: string; color: string; label: string }> = {
-  present: { bg: "#defbe6", border: "#24a148", color: "#0e6027", label: "Present" },
-  absent: { bg: "#fff1f1", border: "#da1e28", color: "#a2191f", label: "Absent" },
-  late: { bg: "#fdf6dd", border: "#f1c21b", color: "#7d5a00", label: "Late" },
-  leave: { bg: "#f6f2ff", border: "#8a3ffc", color: "#6929c4", label: "Leave" },
+  present: { bg: "var(--os-status-present-bg)", border: "var(--os-status-present-border)", color: "var(--os-status-present-text)", label: "Present" },
+  absent: { bg: "var(--os-status-absent-bg)", border: "var(--os-status-absent-border)", color: "var(--os-status-absent-text)", label: "Absent" },
+  late: { bg: "var(--os-status-late-bg)", border: "var(--os-status-late-border)", color: "var(--os-status-late-text)", label: "Late" },
+  leave: { bg: "var(--os-status-excused-bg)", border: "var(--os-status-excused-border)", color: "var(--os-status-excused-text)", label: "Leave" },
+};
+
+const STATUS_ICONS: Record<StaffAttendanceStatus, typeof CheckmarkFilled> = {
+  present: CheckmarkFilled,
+  absent: CloseFilled,
+  late: Time,
+  leave: Renew,
 };
 
 function StatusButton({
@@ -28,6 +36,7 @@ function StatusButton({
   onClick: () => void;
 }) {
   const cfg = STATUS_STYLES[value];
+  const Icon = STATUS_ICONS[value];
   return (
     <button
       onClick={onClick}
@@ -37,17 +46,14 @@ function StatusButton({
         fontWeight: selected ? 600 : 400,
         fontFamily: "inherit",
         cursor: "pointer",
-        border: `1px solid ${selected ? cfg.border : "#e0e0e0"}`,
+        border: `1px solid ${selected ? cfg.border : "var(--os-border-subtle)"}`,
         borderRadius: "2px",
-        background: selected ? cfg.bg : "#ffffff",
-        color: selected ? cfg.color : "#525252",
+        background: selected ? cfg.bg : "var(--os-layer)",
+        color: selected ? cfg.color : "var(--os-text-secondary)",
         whiteSpace: "nowrap",
       }}
     >
-      {value === "present" && <CheckmarkFilled size={12} style={{ marginRight: "4px", fill: selected ? cfg.color : "#8d8d8d", verticalAlign: "middle" }} />}
-      {value === "absent" && <CloseFilled size={12} style={{ marginRight: "4px", fill: selected ? cfg.color : "#8d8d8d", verticalAlign: "middle" }} />}
-      {value === "late" && <Time size={12} style={{ marginRight: "4px", fill: selected ? cfg.color : "#8d8d8d", verticalAlign: "middle" }} />}
-      {value === "leave" && <Renew size={12} style={{ marginRight: "4px", fill: selected ? cfg.color : "#8d8d8d", verticalAlign: "middle" }} />}
+      <Icon size={12} style={{ marginRight: "4px", fill: selected ? cfg.color : "var(--os-text-tertiary)", verticalAlign: "middle" }} />
       {cfg.label}
     </button>
   );
@@ -68,7 +74,7 @@ function AttendanceTable({
     <div className="os-section">
       <div className="os-section__header">
         <h2 className="os-section__title">{title}</h2>
-        <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{rows.length} staff</span>
+        <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{rows.length} staff</span>
       </div>
       <table className="os-table">
         <thead>

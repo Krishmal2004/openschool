@@ -16,6 +16,17 @@ const DEFAULTS = {
   interval_duration_minutes: 30,
 };
 
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>
+        {label}
+      </p>
+      <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "var(--os-text-primary)", margin: 0 }}>{value}</p>
+    </div>
+  );
+}
+
 function SettingsForm({
   academicYearId,
   initial,
@@ -60,30 +71,18 @@ function SettingsForm({
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: "1.25rem",
-            background: "#f4f4f4",
+            background: "var(--os-layer-hover)",
             padding: "1rem 1.5rem",
             marginBottom: "1.5rem",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--os-border-subtle)",
           }}
         >
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>School Hours</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.school_start_time} – {initial.school_end_time}
-            </p>
-          </div>
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>Periods & Duration</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.number_of_periods} periods ({initial.period_duration_minutes} mins)
-            </p>
-          </div>
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>Default Interval</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.interval_duration_minutes} minutes
-            </p>
-          </div>
+          <SummaryStat label="School Hours" value={`${initial.school_start_time} – ${initial.school_end_time}`} />
+          <SummaryStat
+            label="Periods & Duration"
+            value={`${initial.number_of_periods} periods (${initial.period_duration_minutes} mins)`}
+          />
+          <SummaryStat label="Default Interval" value={`${initial.interval_duration_minutes} minutes`} />
         </div>
       )}
 
