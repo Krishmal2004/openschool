@@ -5,11 +5,11 @@ import { useTerms, useCurrentTerm } from "../../../queries/useTerms";
 import { useSubjects } from "../../../queries/useSubjects";
 import { useClassSubjectTeachers } from "../../../queries/useClasses";
 import { useClassMarks, useSaveClassMarks } from "../../../queries/useTermMarks";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
 import EntityCombobox from "../../../components/common/EntityCombobox";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function ClassMarks({
   classId,
@@ -112,16 +112,14 @@ export default function ClassMarks({
         <LoadingSpinner />
       ) : rows && rows.length > 0 ? (
         <>
-          {saveMarks.isError && (
-            <InlineNotification
-              kind="error"
-              title="Could not save marks"
-              subtitle={getErrorMessage(saveMarks.error, "Please try again.")}
-              lowContrast
-              onClose={() => saveMarks.reset()}
-              style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={saveMarks.isError}
+            error={saveMarks.error}
+            title="Could not save marks"
+            fallback="Please try again."
+            onClose={() => saveMarks.reset()}
+            style={{ margin: "0 1.5rem 1rem" }}
+          />
           {saveMarks.isSuccess && (
             <InlineNotification
               kind="success"

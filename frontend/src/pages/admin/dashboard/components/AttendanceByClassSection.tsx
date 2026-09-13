@@ -1,7 +1,3 @@
-// This file renders the Dashboard's attendance section: a per-class box grid
-// showing today's marked/pending status, plus a scalable Teachers attendance
-// summary (counts, not per-teacher boxes) below it.
-
 import { Link } from "react-router";
 import { WarningFilled, CheckmarkFilled, EventSchedule } from "@carbon/icons-react";
 import { SkeletonText } from "@carbon/react";

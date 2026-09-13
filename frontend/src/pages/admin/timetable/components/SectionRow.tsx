@@ -1,7 +1,6 @@
-// This component renders a single grade section row displaying its name, interval time, and assigned grades.
-
-import { Time, TrashCan } from "@carbon/icons-react";
+import { Time } from "@carbon/icons-react";
 import { Button, Tag } from "@carbon/react";
+import RemoveIconButton from "../../../../components/common/RemoveIconButton";
 import type { GradeSection } from "../../../../services/timetable/gradeSection";
 
 export default function SectionRow({
@@ -37,7 +36,7 @@ export default function SectionRow({
           <Button kind="ghost" size="sm" onClick={onEdit}>
             Edit
           </Button>
-          <Button kind="ghost" size="sm" renderIcon={TrashCan} iconDescription="Delete" hasIconOnly onClick={onDelete} />
+          <RemoveIconButton label="Delete" onClick={onDelete} />
         </div>
       </div>
 

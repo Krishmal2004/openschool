@@ -1,5 +1,3 @@
-// This file defines the CustomStepper component, a highly polished, responsive horizontal progress indicator used to guide users through multi-step setup wizards in the application.
-
 export interface StepItem {
   label: string;
   description?: string;

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Select, SelectItem, TextInput, InlineNotification, Tag } from "@carbon/react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Button, Select, SelectItem, TextInput, Tag } from "@carbon/react";
+import { Add } from "@carbon/icons-react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import {
   useStudentActivities,
@@ -10,10 +10,11 @@ import {
 import { useStudentSocietyMemberships } from "../../../queries/useSocieties";
 import { ACTIVITY_CATEGORIES } from "../../../services/studentPortfolio";
 import type { ActivityCategory } from "../../../services/studentPortfolio";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const SOCIETY_ROLE_LABELS: Record<string, string> = {
   leader: "Leader",
@@ -87,16 +88,12 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
       <div className="os-section__body">
         <StudentSocietyMemberships studentId={studentId} />
 
-        {createActivity.isError && (
-          <InlineNotification
-            kind="error"
-            title="Error"
-            subtitle={getErrorMessage(createActivity.error, "Failed to add activity")}
-            lowContrast
-            hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={createActivity.isError}
+          error={createActivity.error}
+          fallback="Failed to add activity"
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "10rem 1fr 10rem auto", gap: "0.75rem", alignItems: "end", marginBottom: "1.5rem" }}>
           <Select id="activity-category" labelText="Category" value={category} onChange={(e) => setCategory(e.target.value as ActivityCategory)}>
@@ -123,7 +120,7 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
               <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.name}</span>
               {a.role && <span style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.role}</span>}
             </div>
-            <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteId(a.id)} />
+            <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(a.id)} />
           </div>
         ))}
       </div>

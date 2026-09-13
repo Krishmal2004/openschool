@@ -6,9 +6,9 @@ import { useAcademicYears } from "../../../queries/useAcademicYears";
 import { useTerms } from "../../../queries/useTerms";
 import { useClassesByAcademicYear } from "../../../queries/useClasses";
 import { usePromotionPreview, useCommitAssignments } from "../../../queries/usePromotion";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 import type { PromotionPreviewRow } from "../../../services/promotion";
 import PromotionGroup from "./components/PromotionGroup";
 
@@ -23,9 +23,7 @@ export default function Promotion() {
   const [rankByMarks, setRankByMarks] = useState(false);
 
   const effectiveSourceYearId = sourceYearId || currentYear?.id || "";
-  // Excludes both the current year and whichever year is currently chosen
-  // as the source — promoting a year's students into that same year (an
-  // in-place reassignment, not a promotion) isn't a valid target.
+  // Excludes the current year and the chosen source year — promoting into the same year isn't a valid target.
   const otherYears = (years ?? []).filter((y) => !y.is_current && y.id !== effectiveSourceYearId);
 
   const { data: terms } = useTerms(effectiveSourceYearId);
@@ -39,9 +37,7 @@ export default function Promotion() {
 
   const commit = useCommitAssignments();
 
-  // student_id -> chosen target class_id; seeded from the preview's
-  // suggested_class_id whenever the preview data changes, but always
-  // overridable per student (never re-seeded once the admin has touched it).
+  // student_id -> chosen target class_id; seeded from suggested_class_id per preview, then freely overridable.
   const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [seededFor, setSeededFor] = useState<string | null>(null);
   const previewKey = `${effectiveSourceYearId}|${targetYearId}`;
@@ -66,10 +62,7 @@ export default function Promotion() {
   const groups = useMemo(() => {
     const byGrade = new Map<string, { gradeName: string; rows: PromotionPreviewRow[] }>();
     for (const row of preview ?? []) {
-      // Use the same `graduating` signal `unassignedCount` below reads,
-      // rather than inferring it from `next_grade_id` being null — two
-      // different signals for one concept is fragile if the backend's
-      // next_grade_id === null ⟺ graduating === true invariant ever loosens.
+      // Reads the same `graduating` flag `unassignedCount` uses, rather than inferring it from a null next_grade_id.
       const key = row.graduating ? "graduating" : row.next_grade_id!;
       const label = row.graduating ? "Graduating (no next grade)" : row.next_grade_name!;
       if (!byGrade.has(key)) byGrade.set(key, { gradeName: label, rows: [] });
@@ -139,10 +132,7 @@ export default function Promotion() {
             onChange={(e) => {
               const nextSourceYearId = e.target.value;
               setSourceYearId(nextSourceYearId);
-              // A target year that now matches the newly chosen source isn't
-              // a valid selection anymore (see otherYears above) — clearing
-              // it here keeps usePromotionPreview from ever being called
-              // with identical source and target years.
+              // Clear a target year that now matches the new source, so preview never runs with identical source/target.
               if (targetYearId && targetYearId === (nextSourceYearId || currentYear?.id)) {
                 setTargetYearId("");
               }
@@ -185,16 +175,14 @@ export default function Promotion() {
           <ErrorMessage message="Could not load the promotion preview." onRetry={refetch} />
         </div>
       )}
-      {commit.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not save assignments"
-          subtitle={getErrorMessage(commit.error, "Please try again.")}
-          onClose={() => commit.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={commit.isError}
+        error={commit.error}
+        title="Could not save assignments"
+        fallback="Please try again."
+        onClose={() => commit.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
       {commit.isSuccess && (
         <InlineNotification
           kind="success"

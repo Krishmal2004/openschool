@@ -1,12 +1,4 @@
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+import { getInitials } from "../../lib/name";
 
 const SIZE = { sm: "2.25rem", md: "3.25rem" };
 const FONT_SIZE = { sm: "0.75rem", md: "1.1rem" };
@@ -18,7 +10,7 @@ interface Props {
 
 export default function Avatar({ name, size = "md" }: Props) {
   if (size === "md") {
-    return <div className="os-profile__avatar">{initials(name)}</div>;
+    return <div className="os-profile__avatar">{getInitials(name)}</div>;
   }
   return (
     <div
@@ -36,7 +28,7 @@ export default function Avatar({ name, size = "md" }: Props) {
         flexShrink: 0,
       }}
     >
-      {initials(name)}
+      {getInitials(name)}
     </div>
   );
 }

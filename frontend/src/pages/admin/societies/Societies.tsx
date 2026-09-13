@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { Idea, Add, Edit, TrashCan } from "@carbon/icons-react";
+import { Idea, Add, Edit } from "@carbon/icons-react";
 import { Button, Select, SelectItem, InlineNotification, SkeletonText } from "@carbon/react";
 import { useCurrentAcademicYear, useAcademicYears } from "../../../queries/useAcademicYears";
 import { useSocieties, useSocietyYears, useDeleteSociety } from "../../../queries/useSocieties";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
 import SocietyFormModal from "../../../components/societies/SocietyFormModal";
 import SocietyRoster from "../../../components/societies/SocietyRoster";
 import type { Society } from "../../../services/society";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function Societies() {
   const { data: currentYear, isLoading: yearLoading } = useCurrentAcademicYear();
@@ -120,16 +121,14 @@ export default function Societies() {
         </div>
       )}
 
-      {deleteSociety.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not delete society"
-          subtitle={getErrorMessage(deleteSociety.error, "Please try again.")}
-          onClose={() => deleteSociety.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteSociety.isError}
+        error={deleteSociety.error}
+        title="Could not delete society"
+        fallback="Please try again."
+        onClose={() => deleteSociety.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <div style={{ display: "grid", gridTemplateColumns: "20rem 1fr", gap: "1.5rem", alignItems: "start" }}>
         <div className="os-section" style={{ marginTop: 0 }}>
@@ -184,14 +183,7 @@ export default function Societies() {
                     renderIcon={Edit}
                     onClick={() => setFormSociety(selected)}
                   />
-                  <Button
-                    hasIconOnly
-                    kind="ghost"
-                    size="sm"
-                    iconDescription="Delete"
-                    renderIcon={TrashCan}
-                    onClick={() => setDeleting(selected)}
-                  />
+                  <RemoveIconButton label="Delete" onClick={() => setDeleting(selected)} />
                 </div>
               )}
             </div>

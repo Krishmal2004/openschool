@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Trophy, Add, TrashCan } from "@carbon/icons-react";
+import { Trophy, Add } from "@carbon/icons-react";
 import {
   Button,
   Select,
@@ -15,10 +15,12 @@ import {
 import { useCurrentAcademicYear, useAcademicYears } from "../../../queries/useAcademicYears";
 import { useStudents } from "../../../queries/useStudents";
 import { usePrefects, useAssignPrefect, useRemovePrefect, usePrefectYears } from "../../../queries/usePrefects";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EntityCombobox from "../../../components/common/EntityCombobox";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
 import type { Prefect, PrefectRank } from "../../../services/prefect";
 
 const RANKS: { value: PrefectRank; label: string }[] = [
@@ -47,6 +49,7 @@ export default function Prefects() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [studentChoice, setStudentChoice] = useState("");
   const [rankChoice, setRankChoice] = useState<PrefectRank>("junior");
+  const [prefectToRemove, setPrefectToRemove] = useState<Prefect | null>(null);
 
   const openAssign = () => {
     assignPrefect.reset();
@@ -63,9 +66,12 @@ export default function Prefects() {
     );
   };
 
-  const handleRemove = (p: Prefect) => {
-    if (!currentYear) return;
-    removePrefect.mutate({ id: p.id, academicYearId: currentYear.id });
+  const confirmRemove = () => {
+    if (!currentYear || !prefectToRemove) return;
+    removePrefect.mutate(
+      { id: prefectToRemove.id, academicYearId: currentYear.id },
+      { onSettled: () => setPrefectToRemove(null) },
+    );
   };
 
   const byRank = (rank: PrefectRank) => (prefects ?? []).filter((p) => p.rank === rank);
@@ -143,16 +149,14 @@ export default function Prefects() {
         </div>
       )}
 
-      {removePrefect.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not remove appointment"
-          subtitle={getErrorMessage(removePrefect.error, "Please try again.")}
-          onClose={() => removePrefect.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={removePrefect.isError}
+        error={removePrefect.error}
+        title="Could not remove appointment"
+        fallback="Please try again."
+        onClose={() => removePrefect.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       {RANKS.map(({ value, label }) => (
         <div className="os-section" key={value}>
@@ -191,15 +195,7 @@ export default function Prefects() {
                     </p>
                   </div>
                   {!isArchive && (
-                    <Button
-                      hasIconOnly
-                      kind="ghost"
-                      size="sm"
-                      iconDescription="Remove"
-                      renderIcon={TrashCan}
-                      disabled={removePrefect.isPending}
-                      onClick={() => handleRemove(p)}
-                    />
+                    <RemoveIconButton disabled={removePrefect.isPending} onClick={() => setPrefectToRemove(p)} />
                   )}
                 </div>
               ))}
@@ -211,16 +207,11 @@ export default function Prefects() {
       <ComposedModal open={assignOpen} size="sm" onClose={() => setAssignOpen(false)}>
         <ModalHeader title="Appoint prefect" />
         <ModalBody>
-          {assignPrefect.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(assignPrefect.error, "Failed to appoint prefect")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={assignPrefect.isError}
+            error={assignPrefect.error}
+            fallback="Failed to appoint prefect"
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <EntityCombobox
               id="prefect-student"
@@ -253,6 +244,21 @@ export default function Prefects() {
           </Button>
         </ModalFooter>
       </ComposedModal>
+
+      <ConfirmDeleteModal
+        open={!!prefectToRemove}
+        title="Remove prefect"
+        description={
+          <>
+            Remove <strong>{prefectToRemove?.student_name}</strong> from this board?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removePrefect.isPending}
+        onClose={() => setPrefectToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

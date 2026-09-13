@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Checkmark, TrashCan, Edit, Add } from "@carbon/icons-react";
+import { Checkmark, Edit, Add } from "@carbon/icons-react";
 import {
   Button,
   Tag,
   TextInput,
   DatePicker,
   DatePickerInput,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -16,8 +15,9 @@ import {
 import { useTerms, useCreateTerm, useUpdateTerm, useSetCurrentTerm, useDeleteTerm } from "../../../../queries/useTerms";
 import type { AcademicYear } from "../../../../services/academicYear";
 import type { Term } from "../../../../services/term";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
+import RemoveIconButton from "../../../../components/common/RemoveIconButton";
 import { toYmd } from "../../../../lib/date";
 
 function formatTermDate(iso: string | null) {
@@ -110,36 +110,9 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
       <ComposedModal open size="sm" onClose={onClose}>
         <ModalHeader title={`Terms — ${year.label}`} />
         <ModalBody>
-          {createTerm.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(createTerm.error, "Failed to create term")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
-          {updateTerm.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(updateTerm.error, "Failed to update term")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
-          {deleteTerm.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(deleteTerm.error, "Failed to delete term")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} fallback="Failed to create term" />
+          <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} fallback="Failed to update term" />
+          <MutationErrorNotification isError={deleteTerm.isError} error={deleteTerm.error} fallback="Failed to delete term" />
 
           {isLoading && <SkeletonText paragraph lineCount={3} />}
 
@@ -191,14 +164,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
                     renderIcon={Edit}
                     onClick={() => startEdit(t)}
                   />
-                  <Button
-                    hasIconOnly
-                    kind="ghost"
-                    size="sm"
-                    iconDescription="Delete term"
-                    renderIcon={TrashCan}
-                    onClick={() => setToDelete(t)}
-                  />
+                  <RemoveIconButton label="Delete term" onClick={() => setToDelete(t)} />
                 </div>
               ))}
             </div>

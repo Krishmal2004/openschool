@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Button, Tag } from "@carbon/react";
-import { Book, TrashCan, Warning } from "@carbon/icons-react";
+import { Tag } from "@carbon/react";
+import { Book, Warning } from "@carbon/icons-react";
+import RemoveIconButton from "../../../../components/common/RemoveIconButton";
 import type { GroupSubject } from "../../../../services/curriculum";
 
 // Owns its own hover state so the page does not have to track a hovered id.
@@ -55,14 +56,7 @@ export default function SubjectCard({
             {subject.subject_code}
           </div>
         </div>
-        <Button
-          hasIconOnly
-          kind="ghost"
-          size="sm"
-          iconDescription="Remove"
-          renderIcon={TrashCan}
-          onClick={onRemove}
-        />
+        <RemoveIconButton onClick={onRemove} />
       </div>
 
       {extras && (

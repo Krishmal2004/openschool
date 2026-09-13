@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tag, Select, SelectItem, InlineNotification, Button } from "@carbon/react";
+import { Tag, Select, SelectItem, Button } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
 import {
   useUpdateNonAcademicStaffEmploymentStatus,
@@ -8,10 +8,10 @@ import {
 } from "../../../../queries/useNonAcademicStaff";
 import { useHouses } from "../../../../queries/useHouses";
 import type { NonAcademicStaff as StaffRow, NonAcademicEmploymentStatus } from "../../../../services/nonAcademicStaff";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
 import { EMPLOYMENT_STATUSES, designationLabel } from "../constants";
 import StaffFormModal from "./StaffFormModal";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onDeleted: () => void }) {
   const { data: houses } = useHouses();
@@ -52,16 +52,14 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
         </div>
       </div>
       <div className="os-section__body">
-        {deleteStaff.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete staff member"
-            subtitle={getErrorMessage(deleteStaff.error, "Something went wrong.")}
-            lowContrast
-            onClose={() => deleteStaff.reset()}
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteStaff.isError}
+          error={deleteStaff.error}
+          title="Could not delete staff member"
+          fallback="Something went wrong."
+          onClose={() => deleteStaff.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
           <div>

@@ -1,7 +1,3 @@
-// This file renders the admin Overview/Dashboard page: header with the
-// current academic year, stat cards, attendance-by-class (with a teacher
-// attendance summary) and recent activity.
-
 import { useMemo } from "react";
 import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons-react";
 import { useSchool } from "../../../queries/useSchool";

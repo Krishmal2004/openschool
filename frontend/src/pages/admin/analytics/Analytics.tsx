@@ -1,7 +1,3 @@
-// This file renders the full Analytics admin page: Students, Academics,
-// Staff and School tabs built from the /dashboard/analytics response, using
-// the shared StatTile/BarList/Sparkline/TrendSummary/DonutChart primitives.
-
 import { SkeletonText, Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { useDashboardAnalytics, useLeadershipAnalytics } from "../../../queries/useDashboardAnalytics";
 import ErrorMessage from "../../../components/common/ErrorMessage";

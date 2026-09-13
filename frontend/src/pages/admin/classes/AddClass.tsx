@@ -1,7 +1,4 @@
-// This file renders the Add Class form page: picks grade, name, stream/sub-
-// stream, medium and form teacher, then creates the class for an academic
-// year. Supports preselecting the grade via a `?grade_id=` query param.
-
+// Supports preselecting the grade via a `?grade_id=` query param.
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {

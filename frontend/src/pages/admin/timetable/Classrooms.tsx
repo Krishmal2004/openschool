@@ -8,7 +8,6 @@ import {
   NumberInput,
   Select,
   SelectItem,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -22,11 +21,11 @@ import {
 } from "../../../queries/timetable/useClassrooms";
 import { useSubjects } from "../../../queries/useSubjects";
 import type { Classroom, ClassroomType } from "../../../services/timetable/classroom";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import TableSkeleton from "../../../components/common/TableSkeleton";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const HEADERS = ["Name", "Code", "Capacity", "Type", "Actions"];
 
@@ -109,16 +108,14 @@ export default function Classrooms() {
       </div>
 
       <div className="os-section">
-        {deleteClassroom.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete classroom"
-            subtitle={getErrorMessage(deleteClassroom.error, "It may still be used by a timetable.")}
-            lowContrast
-            onClose={() => deleteClassroom.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteClassroom.isError}
+          error={deleteClassroom.error}
+          title="Could not delete classroom"
+          fallback="It may still be used by a timetable."
+          onClose={() => deleteClassroom.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {isLoading ? (
           <TableSkeleton headers={HEADERS} />
@@ -177,16 +174,12 @@ export default function Classrooms() {
       <ComposedModal open={modalOpen} size="sm" onClose={() => setModalOpen(false)}>
         <ModalHeader title={editing ? "Edit classroom" : "New classroom"} />
         <ModalBody>
-          {pending.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(pending.error, "Failed to save classroom")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={pending.isError}
+            error={pending.error}
+            fallback="Failed to save classroom"
+            style={{ marginBottom: "1rem" }}
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <TextInput
               id="classroom-name"

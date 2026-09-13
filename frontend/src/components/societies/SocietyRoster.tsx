@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Add } from "@carbon/icons-react";
 import {
   Button,
   Select,
   SelectItem,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -14,10 +13,12 @@ import {
 import { Link } from "react-router";
 import { useStudents } from "../../queries/useStudents";
 import { useSocietyMembers, useAssignSocietyMember, useRemoveSocietyMember } from "../../queries/useSocieties";
-import { getErrorMessage } from "../../lib/errorMessage";
 import EmptyState from "../common/EmptyState";
 import ErrorMessage from "../common/ErrorMessage";
 import EntityCombobox from "../common/EntityCombobox";
+import ConfirmDeleteModal from "../common/ConfirmDeleteModal";
+import MutationErrorNotification from "../common/MutationErrorNotification";
+import RemoveIconButton from "../common/RemoveIconButton";
 import type { SocietyMember, SocietyRole } from "../../services/society";
 
 const ROLES: { value: SocietyRole; label: string }[] = [
@@ -46,6 +47,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
   const [assignOpen, setAssignOpen] = useState(false);
   const [studentChoice, setStudentChoice] = useState("");
   const [roleChoice, setRoleChoice] = useState<SocietyRole>("member");
+  const [memberToRemove, setMemberToRemove] = useState<SocietyMember | null>(null);
 
   const openAssign = () => {
     assignMember.reset();
@@ -62,8 +64,12 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
     );
   };
 
-  const handleRemove = (m: SocietyMember) => {
-    removeMember.mutate({ memberId: m.id, studentId: m.student_id });
+  const confirmRemove = () => {
+    if (!memberToRemove) return;
+    removeMember.mutate(
+      { memberId: memberToRemove.id, studentId: memberToRemove.student_id },
+      { onSettled: () => setMemberToRemove(null) },
+    );
   };
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
@@ -84,16 +90,13 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
         )}
       </div>
 
-      {removeMember.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not remove member"
-          subtitle={getErrorMessage(removeMember.error, "Please try again.")}
-          onClose={() => removeMember.reset()}
-          style={{ marginBottom: "1rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={removeMember.isError}
+        error={removeMember.error}
+        title="Could not remove member"
+        fallback="Please try again."
+        onClose={() => removeMember.reset()}
+      />
 
       {isLoading ? (
         <SkeletonText width="40%" />
@@ -129,15 +132,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
                     </p>
                   </div>
                   {!readOnly && (
-                    <Button
-                      hasIconOnly
-                      kind="ghost"
-                      size="sm"
-                      iconDescription="Remove"
-                      renderIcon={TrashCan}
-                      disabled={removeMember.isPending}
-                      onClick={() => handleRemove(m)}
-                    />
+                    <RemoveIconButton disabled={removeMember.isPending} onClick={() => setMemberToRemove(m)} />
                   )}
                 </div>
               ))}
@@ -149,16 +144,11 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
       <ComposedModal open={assignOpen} size="sm" onClose={() => setAssignOpen(false)}>
         <ModalHeader title="Add society member" />
         <ModalBody>
-          {assignMember.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(assignMember.error, "Failed to add member")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={assignMember.isError}
+            error={assignMember.error}
+            fallback="Failed to add member"
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <EntityCombobox
               id="society-member-student"
@@ -191,6 +181,21 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
           </Button>
         </ModalFooter>
       </ComposedModal>
+
+      <ConfirmDeleteModal
+        open={!!memberToRemove}
+        title="Remove member"
+        description={
+          <>
+            Remove <strong>{memberToRemove?.student_name}</strong> from this society?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removeMember.isPending}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

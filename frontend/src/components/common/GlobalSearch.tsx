@@ -1,5 +1,3 @@
-// This file defines the GlobalSearch component, which provides a searchable input overlay to query students, teachers, guardians, and staff across the application.
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useNavigate } from "react-router";

@@ -2,9 +2,9 @@ import { Add } from "@carbon/icons-react";
 import { Button, Tag, InlineNotification } from "@carbon/react";
 import type { useLevelTree, useDeleteSelectionGroup, useRemoveGroupSubject } from "../../../../queries/useCurriculum";
 import type { CurriculumTreeGroup, GroupSubject } from "../../../../services/curriculum";
-import { getErrorMessage as apiError } from "../../../../lib/errorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
 import SubjectCard from "./SubjectCard";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 // Describes a group's pick rule in plain words. An all-mandatory pool is just
 // min = max = pool size, so it needs no special flag anywhere.
@@ -48,27 +48,23 @@ export default function GroupsList({
 }: Props) {
   return (
     <>
-      {deleteGroup.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete group"
-          subtitle={apiError(deleteGroup.error, "The group may have students enrolled through it.")}
-          lowContrast
-          onClose={() => deleteGroup.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteGroup.isError}
+        error={deleteGroup.error}
+        title="Could not delete group"
+        fallback="The group may have students enrolled through it."
+        onClose={() => deleteGroup.reset()}
+        style={{ marginBottom: "1rem" }}
+      />
 
-      {removeSubject.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not remove subject"
-          subtitle={apiError(removeSubject.error, "Please try again.")}
-          lowContrast
-          onClose={() => removeSubject.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={removeSubject.isError}
+        error={removeSubject.error}
+        title="Could not remove subject"
+        fallback="Please try again."
+        onClose={() => removeSubject.reset()}
+        style={{ marginBottom: "1rem" }}
+      />
 
       {tree.groups.length === 0 ? (
         <div className="os-section">

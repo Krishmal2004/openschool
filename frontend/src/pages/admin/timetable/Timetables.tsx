@@ -4,7 +4,6 @@ import { Add } from "@carbon/icons-react";
 import {
   Button,
   Tag,
-  InlineNotification,
   SkeletonText,
   OverflowMenu,
   OverflowMenuItem,
@@ -22,12 +21,12 @@ import {
   useReviseTimetable,
   useDeleteTimetable,
 } from "../../../queries/timetable/useTimetables";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EntityCombobox from "../../../components/common/EntityCombobox";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import type { TimetableWithClass } from "../../../services/timetable/timetable";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const STATUS_TAG: Record<string, { type: "gray" | "blue" | "green" | "teal" | "red" | "magenta"; label: string }> = {
   draft: { type: "gray", label: "Draft" },
@@ -112,36 +111,27 @@ export default function Timetables() {
           </Button>
         </div>
 
-        {createTimetable.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not create timetable"
-            subtitle={getErrorMessage(createTimetable.error)}
-            lowContrast
-            onClose={() => createTimetable.reset()}
-            style={{ maxWidth: "100%", marginBottom: "1rem" }}
-          />
-        )}
-        {reviseTimetable.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not revise timetable"
-            subtitle={getErrorMessage(reviseTimetable.error)}
-            lowContrast
-            onClose={() => reviseTimetable.reset()}
-            style={{ maxWidth: "100%", marginBottom: "1rem" }}
-          />
-        )}
-        {deleteTimetable.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete timetable"
-            subtitle={getErrorMessage(deleteTimetable.error)}
-            lowContrast
-            onClose={() => deleteTimetable.reset()}
-            style={{ maxWidth: "100%", marginBottom: "1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={createTimetable.isError}
+          error={createTimetable.error}
+          title="Could not create timetable"
+          onClose={() => createTimetable.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
+        <MutationErrorNotification
+          isError={reviseTimetable.isError}
+          error={reviseTimetable.error}
+          title="Could not revise timetable"
+          onClose={() => reviseTimetable.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
+        <MutationErrorNotification
+          isError={deleteTimetable.isError}
+          error={deleteTimetable.error}
+          title="Could not delete timetable"
+          onClose={() => deleteTimetable.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         {!currentYear ? (
           <EmptyState title="No current academic year" description="Set an academic year as current first." />
@@ -201,16 +191,12 @@ export default function Timetables() {
       <ComposedModal open={!!copySource} size="sm" onClose={() => setCopySource(null)}>
         <ModalHeader title="Copy timetable" />
         <ModalBody>
-          {copyTimetable.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(copyTimetable.error, "Failed to copy timetable")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={copyTimetable.isError}
+            error={copyTimetable.error}
+            fallback="Failed to copy timetable"
+            style={{ marginBottom: "1rem" }}
+          />
           <p style={{ fontSize: "0.8125rem", color: "#525252", marginBottom: "1rem" }}>
             Copies {copySource?.grade_name} — {copySource?.class_name}'s periods into a new draft for another class —
             a new academic year is exactly when this is useful (e.g. carrying 6A's timetable over to 7A).

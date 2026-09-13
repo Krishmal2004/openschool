@@ -1,27 +1,28 @@
-// This file renders the TeacherSubjects page, allowing administrators to manage global teacher-subject assignments.
-
 import { useState } from "react";
 import { Search, Tag, SkeletonText } from "@carbon/react";
 import { useTeachers, useTeacherSubjects, useAssignTeacherSubject, useRemoveTeacherSubject } from "../../../queries/useTeachers";
 import { useSubjects } from "../../../queries/useSubjects";
 import EntityCombobox from "../../../components/common/EntityCombobox";
-import type { Teacher } from "../../../services/teacher";
+import type { Teacher, TeacherSubject } from "../../../services/teacher";
 import type { Subject } from "../../../services/subject";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubjects: Subject[] }) {
   const { data: assignedSubjects, isLoading, isError } = useTeacherSubjects(teacher.id);
   const assignMutation = useAssignTeacherSubject(teacher.id);
   const removeMutation = useRemoveTeacherSubject(teacher.id);
+  const [subjectToRemove, setSubjectToRemove] = useState<TeacherSubject | null>(null);
 
   const handleAssign = (subjectId: string) => {
     if (!subjectId) return;
     assignMutation.mutate(subjectId);
   };
 
-  const handleRemove = (subjectId: string) => {
-    removeMutation.mutate(subjectId);
+  const confirmRemove = () => {
+    if (!subjectToRemove) return;
+    removeMutation.mutate(subjectToRemove.id, { onSettled: () => setSubjectToRemove(null) });
   };
 
   const assignedIds = new Set(assignedSubjects?.map((s) => s.id) ?? []);
@@ -46,7 +47,7 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
                 type="blue"
                 size="sm"
                 title="Click to remove"
-                onClick={() => handleRemove(s.id)}
+                onClick={() => setSubjectToRemove(s)}
                 style={{ cursor: "pointer" }}
               >
                 {s.name} &times;
@@ -77,6 +78,20 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
           </div>
         )}
       </td>
+      <ConfirmDeleteModal
+        open={!!subjectToRemove}
+        title="Remove subject"
+        description={
+          <>
+            Remove <strong>{subjectToRemove?.name}</strong> from {teacher.full_name}&apos;s assigned subjects?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removeMutation.isPending}
+        onClose={() => setSubjectToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </tr>
   );
 }

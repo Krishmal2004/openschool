@@ -1,7 +1,3 @@
-// This file renders the Curriculum tab content of the Subjects & Curriculum
-// page: the levels list with create/edit/duplicate/delete, and the curriculum
-// preset loader.
-
 import { useState } from "react";
 import { Add, Rocket } from "@carbon/icons-react";
 import { Button, InlineNotification } from "@carbon/react";
@@ -15,7 +11,6 @@ import {
 import { useRunCurriculumPreset } from "../../../../queries/useCurriculumPreset";
 import { useGrades } from "../../../../queries/useGrades";
 import type { Level } from "../../../../services/curriculum";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
 import LevelsList from "./LevelsList";
 import CreateLevelModal from "./CreateLevelModal";
@@ -23,6 +18,7 @@ import EditLevelModal from "./EditLevelModal";
 import DuplicateLevelModal from "./DuplicateLevelModal";
 import PresetConfirmModal from "./PresetConfirmModal";
 import { EMPTY_LEVEL_FORM } from "../constants";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function CurriculumPanel() {
   const { data: levels, isLoading, isError, refetch } = useLevels();
@@ -173,16 +169,14 @@ export default function CurriculumPanel() {
           style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
         />
       )}
-      {runPreset.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not load preset"
-          subtitle={getErrorMessage(runPreset.error, "Please try again.")}
-          lowContrast
-          onClose={() => runPreset.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={runPreset.isError}
+        error={runPreset.error}
+        title="Could not load preset"
+        fallback="Please try again."
+        onClose={() => runPreset.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <LevelsList
         levels={levels}

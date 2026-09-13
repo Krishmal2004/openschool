@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, TextInput, DatePicker, DatePickerInput, InlineNotification } from "@carbon/react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Button, TextInput, DatePicker, DatePickerInput } from "@carbon/react";
+import { Add } from "@carbon/icons-react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import {
   useLeadershipRoles,
@@ -10,10 +10,11 @@ import {
   useCreateStudentAward,
   useDeleteStudentAward,
 } from "../../../queries/useStudentPortfolio";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import { todayISODate, toYmd } from "../../../lib/date";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function StudentLeadershipAwards({ studentId }: { studentId: string }) {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -55,9 +56,12 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           <h2 className="os-section__title">Leadership Roles</h2>
         </div>
         <div className="os-section__body">
-          {createRole.isError && (
-            <InlineNotification kind="error" title="Error" subtitle={getErrorMessage(createRole.error, "Failed to add role")} lowContrast hideCloseButton style={{ marginBottom: "1rem", maxWidth: "100%" }} />
-          )}
+          <MutationErrorNotification
+            isError={createRole.isError}
+            error={createRole.error}
+            fallback="Failed to add role"
+            style={{ marginBottom: "1rem" }}
+          />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.75rem", alignItems: "end", marginBottom: "1.5rem" }}>
             <TextInput id="leadership-title" labelText="Title" placeholder="e.g. Debate Club President" value={title} onChange={(e) => setTitle(e.target.value)} />
             <TextInput id="leadership-scope" labelText="Scope (optional)" value={scope} onChange={(e) => setScope(e.target.value)} />
@@ -70,7 +74,7 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{r.title}</span>
                 {r.scope && <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{r.scope}</span>}
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteRoleId(r.id)} />
+              <RemoveIconButton label="Delete" onClick={() => setPendingDeleteRoleId(r.id)} />
             </div>
           ))}
         </div>
@@ -92,9 +96,12 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           <h2 className="os-section__title">Awards &amp; Achievements</h2>
         </div>
         <div className="os-section__body">
-          {createAward.isError && (
-            <InlineNotification kind="error" title="Error" subtitle={getErrorMessage(createAward.error, "Failed to add award")} lowContrast hideCloseButton style={{ marginBottom: "1rem", maxWidth: "100%" }} />
-          )}
+          <MutationErrorNotification
+            isError={createAward.isError}
+            error={createAward.error}
+            fallback="Failed to add award"
+            style={{ marginBottom: "1rem" }}
+          />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 12rem auto", gap: "0.75rem", alignItems: "end", marginBottom: "1.5rem" }}>
             <TextInput id="award-title" labelText="Title" value={awardTitle} onChange={(e) => setAwardTitle(e.target.value)} />
             <DatePicker datePickerType="single" dateFormat="Y-m-d" value={awardDate} onChange={(dates) => {
@@ -112,7 +119,7 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
                 <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{a.title}</span>
                 <span style={{ marginLeft: "0.5rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>{a.awarded_date}</span>
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteAwardId(a.id)} />
+              <RemoveIconButton label="Delete" onClick={() => setPendingDeleteAwardId(a.id)} />
             </div>
           ))}
         </div>

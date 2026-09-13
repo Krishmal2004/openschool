@@ -11,15 +11,12 @@ import type { Grade } from "../../../../services/grade";
 import { AL_STREAM_DEFS, AL_GRADE_NUMBERS, SUGGESTED_MEDIUMS, SUGGESTED_ROOMS, type ALStreamKey, type AlStreamsState, type SchoolFormState } from "../constants";
 import type { HouseRow } from "../components/HousesStep";
 
-// Tracks which phases of the final submission have already succeeded, so
-// clicking Retry after a mid-sequence failure resumes instead of
-// re-creating (and duplicating) whatever already went through.
+// Tracks which submission phases already succeeded, so Retry after a mid-sequence failure resumes instead of duplicating them.
 interface SubmitProgress {
   school: boolean;
   houses: boolean;
   grades: Grade[] | null;
-  // created medium ids keyed by name, so a retry after a partial failure
-  // reuses them instead of creating duplicates
+  // Created medium ids keyed by name, reused on retry instead of recreated.
   mediums: Map<string, string> | null;
   classes: boolean;
   rooms: boolean;
@@ -66,10 +63,7 @@ export function useSchoolSetupSubmit(input: Input) {
     rooms: false,
   });
 
-  // skipRoomsOverride is passed by the Rooms step, whose setState hasn't
-  // applied yet when it kicks off the submit — reading roomsSkipped state
-  // here would see the previous value and create rooms the admin chose to
-  // skip.
+  // skipRoomsOverride bypasses the Rooms step's stale roomsSkipped state, whose setState hasn't applied yet when it triggers submit.
   const submitAll = async (skipRoomsOverride?: boolean) => {
     const {
       school,
@@ -137,8 +131,7 @@ export function useSchoolSetupSubmit(input: Input) {
       }
       const createdGrades = progress.grades;
 
-      // Mediums are written before classes so each generated section can be
-      // tagged with its language of instruction in the same pass.
+      // Mediums are created before classes so each section can be tagged with its language of instruction.
       if (!progress.mediums) {
         const byName = new Map<string, string>();
         if (!mediumsSkipped) {
@@ -160,18 +153,11 @@ export function useSchoolSetupSubmit(input: Input) {
           const regularGrades = createdGrades.filter((g) => !AL_GRADE_NUMBERS.has(Number(g.name.replace(/\D/g, ""))));
           const alGrades = createdGrades.filter((g) => AL_GRADE_NUMBERS.has(Number(g.name.replace(/\D/g, ""))));
 
-          // Derived from the label the admin actually typed (e.g. "2025"),
-          // not the real-world current year — those two can differ when
-          // setting the system up for a past or upcoming academic year.
-          // Falls back to the current year only if the label has no
-          // 4-digit year in it (e.g. a fully custom label).
+          // Year from the admin's typed label (e.g. "2025"), not the real-world current year, since the setup may target a past/upcoming year.
           const labelYear = Number(yearLabel.trim().match(/\d{4}/)?.[0] ?? now.getFullYear());
           const year = await createAcademicYear.mutateAsync({
             label: yearLabel.trim(),
-            // Built at UTC midnight directly (Date.UTC), not via the local-
-            // timezone Date constructor — for any timezone ahead of UTC
-            // (Sri Lanka included, UTC+5:30), `new Date(y, 0, 1).toISOString()`
-            // shifts to December 31 of the previous year once converted to UTC.
+            // Date.UTC avoids the local Date constructor shifting Jan 1 to Dec 31 once converted to UTC in timezones ahead of it (e.g. Sri Lanka, UTC+5:30).
             start_date: new Date(Date.UTC(labelYear, 0, 1)).toISOString(),
             end_date: new Date(Date.UTC(labelYear, 11, 31)).toISOString(),
             is_current: true,

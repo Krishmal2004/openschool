@@ -10,12 +10,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// A top-level guard against any single unguarded render-time exception
-// blanking the entire page — the app previously had no ErrorBoundary
-// anywhere (audit.md, "Systemic risks" #1), so a bug like M-12's unguarded
-// `label[0]` could take down the whole admin dashboard with nothing but a
-// blank screen. React error boundaries must be class components — there is
-// no hook equivalent.
+// Top-level guard against an unhandled render-time exception blanking the whole page. Must be a class component — no hook equivalent exists.
 export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { error: null };
 

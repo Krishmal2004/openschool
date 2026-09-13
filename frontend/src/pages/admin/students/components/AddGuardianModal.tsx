@@ -4,9 +4,9 @@ import { Search } from "@carbon/icons-react";
 import { useAddGuardian, useSearchGuardians, useLinkGuardian } from "../../../../queries/useGuardians";
 import { GUARDIAN_RELATIONSHIPS } from "../../../../services/guardian";
 import type { GuardianRelationship } from "../../../../services/guardian";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import { useDebounced } from "../../../../hooks/useDebounced";
 import { isValidSriLankanPhone, PHONE_INVALID_TEXT } from "../../../../lib/phone";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 const RELATIONSHIPS = GUARDIAN_RELATIONSHIPS;
 
@@ -143,31 +143,23 @@ export default function AddGuardianModal({
               </div>
             )}
 
-            {linkGuardian.isError && (
-              <InlineNotification
-                kind="error"
-                title="Error"
-                subtitle={getErrorMessage(linkGuardian.error, "Failed to link guardian")}
-                lowContrast
-                hideCloseButton
-                style={{ marginBottom: "1rem", maxWidth: "100%" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={linkGuardian.isError}
+              error={linkGuardian.error}
+              fallback="Failed to link guardian"
+              style={{ marginBottom: "1rem" }}
+            />
           </>
         )}
 
         {step === "create" && !created && (
           <>
-            {addGuardian.isError && (
-              <InlineNotification
-                kind="error"
-                title="Error"
-                subtitle={getErrorMessage(addGuardian.error, "Failed to add guardian")}
-                lowContrast
-                hideCloseButton
-                style={{ marginBottom: "1rem", maxWidth: "100%" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={addGuardian.isError}
+              error={addGuardian.error}
+              fallback="Failed to add guardian"
+              style={{ marginBottom: "1rem" }}
+            />
             <div style={{ display: "grid", gap: "1rem" }}>
               <TextInput
                 id="guardian-name"

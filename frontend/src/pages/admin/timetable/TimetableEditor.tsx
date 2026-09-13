@@ -4,7 +4,6 @@ import { Checkmark, WarningAlt } from "@carbon/icons-react";
 import {
   Button,
   Tag,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -28,9 +27,10 @@ import {
   usePublishTimetable,
 } from "../../../queries/timetable/useTimetables";
 import type { TimetableEntry } from "../../../services/timetable/timetable";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import EntityCombobox from "../../../components/common/EntityCombobox";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const DAYS = [
   { value: 1, label: "Monday" },
@@ -75,6 +75,7 @@ export default function TimetableEditor() {
   const publish = usePublishTimetable(id);
 
   const [validationOpen, setValidationOpen] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
   const { data: validation, refetch: runValidation, isFetching: validating } = useTimetableValidation(id);
   const { data: history } = useTimetableStatusHistory(id);
 
@@ -131,7 +132,13 @@ export default function TimetableEditor() {
 
   const handleClearCell = () => {
     if (!cell) return;
-    deleteEntry.mutate({ day: cell.day, period: cell.period }, { onSuccess: () => setCell(null) });
+    deleteEntry.mutate(
+      { day: cell.day, period: cell.period },
+      {
+        onSuccess: () => { setConfirmingClear(false); setCell(null); },
+        onError: () => setConfirmingClear(false),
+      },
+    );
   };
 
   const handleValidate = () => {
@@ -191,26 +198,19 @@ export default function TimetableEditor() {
         </div>
       </div>
 
-      {submit.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not submit"
-          subtitle={getErrorMessage(submit.error, "Fix the validation issues shown by Validate, then try again.")}
-          lowContrast
-          onClose={() => submit.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
-      {publish.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not publish"
-          subtitle={getErrorMessage(publish.error)}
-          lowContrast
-          onClose={() => publish.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={submit.isError}
+        error={submit.error}
+        title="Could not submit"
+        fallback="Fix the validation issues shown by Validate, then try again."
+        onClose={() => submit.reset()}
+      />
+      <MutationErrorNotification
+        isError={publish.isError}
+        error={publish.error}
+        title="Could not publish"
+        onClose={() => publish.reset()}
+      />
 
       <div className="os-section" style={{ overflowX: "auto" }}>
         {!gradeSection ? (
@@ -298,15 +298,8 @@ export default function TimetableEditor() {
       <ComposedModal open={!!cell} size="sm" onClose={() => setCell(null)}>
         <ModalHeader title={cell ? `${DAYS.find((d) => d.value === cell.day)?.label} — Period ${cell.period}` : ""} />
         <ModalBody>
-          {saveEntries.isError && (
-            <InlineNotification
-              kind="error"
-              title="Could not save"
-              subtitle={getErrorMessage(saveEntries.error)}
-              lowContrast
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification isError={saveEntries.isError} error={saveEntries.error} title="Could not save" />
+          <MutationErrorNotification isError={deleteEntry.isError} error={deleteEntry.error} title="Could not clear" />
           <div style={{ display: "grid", gap: "1rem" }}>
             <EntityCombobox
               id="cell-subject"
@@ -342,7 +335,7 @@ export default function TimetableEditor() {
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button kind="danger--ghost" onClick={handleClearCell} disabled={deleteEntry.isPending}>
+          <Button kind="danger--ghost" onClick={() => setConfirmingClear(true)} disabled={deleteEntry.isPending || !entryAt(cell?.day ?? -1, cell?.period ?? -1)}>
             Clear
           </Button>
           <Button kind="secondary" onClick={() => setCell(null)}>
@@ -353,6 +346,17 @@ export default function TimetableEditor() {
           </Button>
         </ModalFooter>
       </ComposedModal>
+
+      <ConfirmDeleteModal
+        open={confirmingClear}
+        title="Clear cell"
+        description="Clear this period's assignment? You can reassign it afterwards."
+        confirmLabel="Clear"
+        pendingLabel="Clearing…"
+        isPending={deleteEntry.isPending}
+        onClose={() => setConfirmingClear(false)}
+        onConfirm={handleClearCell}
+      />
 
       {/* Validation results */}
       <ComposedModal open={validationOpen} size="md" onClose={() => setValidationOpen(false)}>

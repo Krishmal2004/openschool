@@ -1,13 +1,13 @@
 import { Link } from "react-router";
 import { Add, ChevronRight, Copy, Edit, Layers } from "@carbon/icons-react";
-import { Button, Tag, InlineNotification } from "@carbon/react";
+import { Button, Tag } from "@carbon/react";
 import type { useLevels, useDeleteLevel } from "../../../../queries/useCurriculum";
 import type { useGrades } from "../../../../queries/useGrades";
 import type { Level } from "../../../../services/curriculum";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ErrorMessage from "../../../../components/common/ErrorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
 import LevelRowSkeleton from "./LevelRowSkeleton";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 interface Props {
   levels: ReturnType<typeof useLevels>["data"];
@@ -52,16 +52,14 @@ export default function LevelsList({
       )}
       {isError && <ErrorMessage message="Could not load levels." onRetry={refetch} />}
 
-      {deleteLevel.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete level"
-          subtitle={getErrorMessage(deleteLevel.error, "The level may have students enrolled through its groups.")}
-          lowContrast
-          onClose={() => deleteLevel.reset()}
-          style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteLevel.isError}
+        error={deleteLevel.error}
+        title="Could not delete level"
+        fallback="The level may have students enrolled through its groups."
+        onClose={() => deleteLevel.reset()}
+        style={{ margin: "0 1.5rem 1rem" }}
+      />
 
       {!isLoading && !isError && levels?.length === 0 && (
         <EmptyState

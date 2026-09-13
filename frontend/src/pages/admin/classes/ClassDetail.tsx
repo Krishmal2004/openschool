@@ -1,5 +1,3 @@
-// This file renders the ClassDetail page, displaying classroom details, enrolled students, attendance sessions, term marks, and assigned subject teachers.
-
 import { useMemo, useState } from "react";
 import { Link, useParams, useLocation } from "react-router";
 import { Button, Tag, Tabs, Tab, TabList, TabPanels, TabPanel } from "@carbon/react";

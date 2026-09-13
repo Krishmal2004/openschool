@@ -1,5 +1,3 @@
-// This file renders the header brand and actions toolbar components (AppHeaderBrand and AppHeaderActions) used in the application's global layout.
-
 import { useState } from "react";
 import { Link } from "react-router";
 import { HeaderName, HeaderGlobalBar, HeaderGlobalAction, OverflowMenu, OverflowMenuItem } from "@carbon/react";

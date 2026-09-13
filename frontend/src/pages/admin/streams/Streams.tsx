@@ -4,7 +4,6 @@ import {
   Button,
   TextInput,
   Tag,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -25,7 +24,6 @@ import {
   useAssignSectionHead,
   useRemoveSectionHead,
 } from "../../../queries/useSectionHeads";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
@@ -33,6 +31,7 @@ import EntityCombobox from "../../../components/common/EntityCombobox";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import type { Stream } from "../../../services/stream";
 import type { SectionHead } from "../../../services/sectionHead";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 function StreamGroups({ stream }: { stream: Stream }) {
   const { data: groups, isLoading } = useStreamGroups(stream.id);
@@ -271,27 +270,23 @@ export default function Streams() {
           </div>
         )}
 
-        {assignSectionHead.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not assign section head"
-            subtitle={getErrorMessage(assignSectionHead.error, "Please try again.")}
-            lowContrast
-            onClose={() => assignSectionHead.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={assignSectionHead.isError}
+          error={assignSectionHead.error}
+          title="Could not assign section head"
+          fallback="Please try again."
+          onClose={() => assignSectionHead.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
-        {removeSectionHead.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not remove section head"
-            subtitle={getErrorMessage(removeSectionHead.error, "Please try again.")}
-            lowContrast
-            onClose={() => removeSectionHead.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={removeSectionHead.isError}
+          error={removeSectionHead.error}
+          title="Could not remove section head"
+          fallback="Please try again."
+          onClose={() => removeSectionHead.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
       </div>
 
       <ConfirmDeleteModal
@@ -319,16 +314,12 @@ export default function Streams() {
       <ComposedModal open={createOpen} size="sm" onClose={() => setCreateOpen(false)}>
         <ModalHeader title="New stream" />
         <ModalBody>
-          {createStream.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(createStream.error, "Failed to create stream")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={createStream.isError}
+            error={createStream.error}
+            fallback="Failed to create stream"
+            style={{ marginBottom: "1rem" }}
+          />
           <TextInput
             id="new-stream-name"
             labelText="Stream name"

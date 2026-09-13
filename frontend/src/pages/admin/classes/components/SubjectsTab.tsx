@@ -1,5 +1,4 @@
-// This file defines the SubjectsTab component, which lists all subjects and their assigned teachers for a given class, and shows whether each pairing is actually covered by the class's published timetable.
-
+// Flags whether each teacher-subject pairing is actually covered by the class's published timetable.
 import { useState } from "react";
 import { Button, Tag } from "@carbon/react";
 import { UserFollow } from "@carbon/icons-react";

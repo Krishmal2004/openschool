@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Search, Add, Edit, TrashCan } from "@carbon/icons-react";
-import { Button, IconButton, InlineNotification, Pagination, Tag } from "@carbon/react";
+import { Button, IconButton, Pagination, Tag } from "@carbon/react";
 import { useTeachers, useDeleteTeacher } from "../../../queries/useTeachers";
 import type { Teacher } from "../../../services/teacher";
 import { usePagination } from "../../../hooks/usePagination";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import TableSkeleton from "../../../components/common/TableSkeleton";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const TEACHER_TABLE_HEADERS = ["Employee No.", "Full Name", "Phone", "Joined Date", "Status", "Actions"];
 
@@ -65,19 +65,14 @@ export default function Teachers() {
           </div>
         </div>
 
-        {deleteTeacher.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete teacher"
-            subtitle={getErrorMessage(
-              deleteTeacher.error,
-              "The teacher may be assigned to a class or have attendance records.",
-            )}
-            lowContrast
-            onClose={() => deleteTeacher.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteTeacher.isError}
+          error={deleteTeacher.error}
+          title="Could not delete teacher"
+          fallback="The teacher may be assigned to a class or have attendance records."
+          onClose={() => deleteTeacher.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {isLoading ? (
           <TableSkeleton headers={TEACHER_TABLE_HEADERS} />

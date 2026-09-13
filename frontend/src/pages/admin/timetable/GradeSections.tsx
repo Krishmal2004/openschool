@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Add } from "@carbon/icons-react";
-import { Button, InlineNotification, SkeletonText } from "@carbon/react";
+import { Button, SkeletonText } from "@carbon/react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useGrades } from "../../../queries/useGrades";
 import {
@@ -11,7 +11,6 @@ import {
   useAssignGradesToSection,
 } from "../../../queries/timetable/useGradeSections";
 import type { GradeSection } from "../../../services/timetable/gradeSection";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
@@ -19,6 +18,7 @@ import { EMPTY_GRADE_SECTION_FORM, type GradeSectionForm } from "./constants";
 import PeriodsEditor from "./components/PeriodsEditor";
 import SectionRow from "./components/SectionRow";
 import SectionFormModal from "./components/SectionFormModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function GradeSections({ inline = false }: { inline?: boolean }) {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -142,16 +142,13 @@ export default function GradeSections({ inline = false }: { inline?: boolean }) 
           </div>
         )}
         {isError && <ErrorMessage message="Could not load grade sections." onRetry={refetch} />}
-        {deleteSection.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete section"
-            subtitle={getErrorMessage(deleteSection.error)}
-            lowContrast
-            onClose={() => deleteSection.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteSection.isError}
+          error={deleteSection.error}
+          title="Could not delete section"
+          onClose={() => deleteSection.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {!isLoading && !isError && (!sections || sections.length === 0) && (
           <EmptyState

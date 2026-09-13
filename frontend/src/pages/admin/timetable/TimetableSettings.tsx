@@ -1,14 +1,12 @@
-// This file renders the TimetableSettings page, allowing administrators to configure default templates and custom intervals for different grades.
-
 import { useState } from "react";
 import { Save } from "@carbon/icons-react";
 import { Button, TextInput, NumberInput, InlineNotification, SkeletonText, Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useTimetableSettings, useUpsertTimetableSettings } from "../../../queries/timetable/useTimetableSettings";
 import type { TimetableSettings as TimetableSettingsData } from "../../../services/timetable/timetableSettings";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import GradeSections from "./GradeSections";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const DEFAULTS = {
   school_start_time: "08:00",
@@ -94,16 +92,13 @@ function SettingsForm({
           {upsert.isPending ? "Saving…" : "Save"}
         </Button>
       </div>
-      {upsert.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not save settings"
-          subtitle={getErrorMessage(upsert.error)}
-          lowContrast
-          onClose={() => upsert.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={upsert.isError}
+        error={upsert.error}
+        title="Could not save settings"
+        onClose={() => upsert.reset()}
+        style={{ marginBottom: "1rem" }}
+      />
       {upsert.isSuccess && (
         <InlineNotification
           kind="success"

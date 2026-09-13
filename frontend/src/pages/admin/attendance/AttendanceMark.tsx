@@ -1,5 +1,3 @@
-// This file renders the AttendanceMark page, allowing teachers and administrators to view, mark, and update student attendance records for a specific session.
-
 import { useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { Button, Tag, InlineNotification, TextInput } from "@carbon/react";

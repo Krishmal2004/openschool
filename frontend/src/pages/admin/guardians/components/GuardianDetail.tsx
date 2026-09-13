@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Locked, UserMultiple, Edit, TrashCan } from "@carbon/icons-react";
-import { Tag, SkeletonText, Button, InlineNotification } from "@carbon/react";
+import { Tag, SkeletonText, Button } from "@carbon/react";
 import { useGuardianStudents, useGuardianNotifications, useDeleteGuardian } from "../../../../queries/useGuardians";
 import type { Guardian } from "../../../../services/guardian";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
 import { relationshipLabel } from "../constants";
 import EditGuardianModal from "./EditGuardianModal";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function GuardianDetail({ guardian, onDeleted }: { guardian: Guardian; onDeleted: () => void }) {
   const { data: students, isLoading: studentsLoading } = useGuardianStudents(guardian.id);
@@ -58,19 +58,14 @@ export default function GuardianDetail({ guardian, onDeleted }: { guardian: Guar
         </div>
       </div>
       <div className="os-section__body">
-        {deleteGuardian.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete guardian"
-            subtitle={getErrorMessage(
-              deleteGuardian.error,
-              "This guardian may still be linked to a student.",
-            )}
-            lowContrast
-            onClose={() => deleteGuardian.reset()}
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteGuardian.isError}
+          error={deleteGuardian.error}
+          title="Could not delete guardian"
+          fallback="This guardian may still be linked to a student."
+          onClose={() => deleteGuardian.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
           <div>

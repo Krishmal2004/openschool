@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { UserRole, Add, TrashCan } from "@carbon/icons-react";
+import { UserRole, Add } from "@carbon/icons-react";
 import {
   Button,
   Tag,
   Checkbox,
   MultiSelect,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -16,10 +15,12 @@ import {
 import { useTeachers } from "../../../queries/useTeachers";
 import { useGrades } from "../../../queries/useGrades";
 import { usePositions, useAssignPrincipal, useAssignVicePrincipal, useRemovePosition } from "../../../queries/usePositions";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EntityCombobox from "../../../components/common/EntityCombobox";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
 import type { TeacherPosition } from "../../../services/position";
 
 export default function Positions() {
@@ -37,6 +38,7 @@ export default function Positions() {
   const [vpTeacherChoice, setVpTeacherChoice] = useState("");
   const [vpWholeSchool, setVpWholeSchool] = useState(false);
   const [vpGradeIds, setVpGradeIds] = useState<string[]>([]);
+  const [vpToRemove, setVpToRemove] = useState<TeacherPosition | null>(null);
 
   const principal = (positions ?? []).find((p) => p.position === "principal");
   const vicePrincipals = (positions ?? []).filter((p) => p.position === "vice_principal");
@@ -72,8 +74,9 @@ export default function Positions() {
     );
   };
 
-  const handleRemove = (p: TeacherPosition) => {
-    removePosition.mutate(p.id);
+  const confirmRemove = () => {
+    if (!vpToRemove) return;
+    removePosition.mutate(vpToRemove.id, { onSettled: () => setVpToRemove(null) });
   };
 
   return (
@@ -97,16 +100,14 @@ export default function Positions() {
         </div>
       )}
 
-      {removePosition.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not remove position"
-          subtitle={getErrorMessage(removePosition.error, "Please try again.")}
-          onClose={() => removePosition.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={removePosition.isError}
+        error={removePosition.error}
+        title="Could not remove position"
+        fallback="Please try again."
+        onClose={() => removePosition.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <div className="os-section">
         <div className="os-section__header">
@@ -179,15 +180,7 @@ export default function Positions() {
                 <Tag type={vp.notify_whole_school ? "blue" : "gray"} size="sm">
                   {vp.notify_whole_school ? "Whole school" : "Scoped to assigned grades"}
                 </Tag>
-                <Button
-                  hasIconOnly
-                  kind="ghost"
-                  size="sm"
-                  iconDescription="Remove"
-                  renderIcon={TrashCan}
-                  disabled={removePosition.isPending}
-                  onClick={() => handleRemove(vp)}
-                />
+                <RemoveIconButton disabled={removePosition.isPending} onClick={() => setVpToRemove(vp)} />
               </div>
             ))}
           </div>
@@ -197,16 +190,11 @@ export default function Positions() {
       <ComposedModal open={principalOpen} size="sm" onClose={() => setPrincipalOpen(false)}>
         <ModalHeader title={principal ? "Change Principal" : "Assign Principal"} />
         <ModalBody>
-          {assignPrincipal.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(assignPrincipal.error, "Failed to assign Principal")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={assignPrincipal.isError}
+            error={assignPrincipal.error}
+            fallback="Failed to assign Principal"
+          />
           <EntityCombobox
             id="principal-teacher"
             labelText="Teacher"
@@ -231,16 +219,11 @@ export default function Positions() {
       <ComposedModal open={vpOpen} size="sm" onClose={() => setVpOpen(false)}>
         <ModalHeader title="Add Vice Principal" />
         <ModalBody>
-          {assignVicePrincipal.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(assignVicePrincipal.error, "Failed to add Vice Principal")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={assignVicePrincipal.isError}
+            error={assignVicePrincipal.error}
+            fallback="Failed to add Vice Principal"
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <EntityCombobox
               id="vp-teacher"
@@ -280,6 +263,21 @@ export default function Positions() {
           </Button>
         </ModalFooter>
       </ComposedModal>
+
+      <ConfirmDeleteModal
+        open={!!vpToRemove}
+        title="Remove Vice Principal"
+        description={
+          <>
+            Remove <strong>{vpToRemove?.teacher_name}</strong> as Vice Principal? They will stop receiving notifications for their assigned scope.
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removePosition.isPending}
+        onClose={() => setVpToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

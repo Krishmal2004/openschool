@@ -1,7 +1,3 @@
-// This file renders the merged Grades & Classes admin page: an accordion of
-// grades (create/edit/delete/reorder), each expanding to the classes in it
-// for the current academic year (view/delete, add a class into that grade).
-
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Add, ArrowDown, ArrowUp, TrashCan, Warning } from "@carbon/icons-react";
@@ -31,12 +27,12 @@ import { useTeachers } from "../../../queries/useTeachers";
 import { useSchool } from "../../../queries/useSchool";
 import type { Grade } from "../../../services/grade";
 import type { ClassWithDetails } from "../../../services/class";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
 import GradeFormModal from "../grades/components/GradeFormModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 function gradeNumber(name: string): number | null {
   const m = name.match(/\d+/);
@@ -431,44 +427,32 @@ export default function Classes() {
 
         {(deleteGrade.isError || deleteClass.isError || reorder.isError) && (
           <div style={{ padding: "1rem 1.5rem 0" }}>
-            {deleteGrade.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not delete grade"
-                subtitle={getErrorMessage(
-                  deleteGrade.error,
-                  "The grade may be used by a class or curriculum level.",
-                )}
-                lowContrast
-                onClose={() => deleteGrade.reset()}
-                style={{ maxWidth: "100%", marginBottom: "1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={deleteGrade.isError}
+              error={deleteGrade.error}
+              title="Could not delete grade"
+              fallback="The grade may be used by a class or curriculum level."
+              onClose={() => deleteGrade.reset()}
+              style={{ marginBottom: "1rem" }}
+            />
 
-            {deleteClass.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not delete class"
-                subtitle={getErrorMessage(
-                  deleteClass.error,
-                  "The class may still have students enrolled.",
-                )}
-                lowContrast
-                onClose={() => deleteClass.reset()}
-                style={{ maxWidth: "100%", marginBottom: "1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={deleteClass.isError}
+              error={deleteClass.error}
+              title="Could not delete class"
+              fallback="The class may still have students enrolled."
+              onClose={() => deleteClass.reset()}
+              style={{ marginBottom: "1rem" }}
+            />
 
-            {reorder.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not reorder"
-                subtitle={getErrorMessage(reorder.error, "Please try again.")}
-                lowContrast
-                onClose={() => reorder.reset()}
-                style={{ maxWidth: "100%", marginBottom: "1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={reorder.isError}
+              error={reorder.error}
+              title="Could not reorder"
+              fallback="Please try again."
+              onClose={() => reorder.reset()}
+              style={{ marginBottom: "1rem" }}
+            />
           </div>
         )}
 

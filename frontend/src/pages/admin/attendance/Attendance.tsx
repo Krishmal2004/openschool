@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { EventSchedule, CheckmarkFilled, WarningFilled } from "@carbon/icons-react";
-import { Button, Tag, DatePicker, DatePickerInput, InlineNotification, SkeletonText } from "@carbon/react";
+import { Button, Tag, DatePicker, DatePickerInput, SkeletonText } from "@carbon/react";
 import { useDailySessions, useDeleteSession } from "../../../queries/useAttendance";
 import { useRole } from "../../../hooks/useRole";
 import type { DailySession } from "../../../services/attendance";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import { toYmd, todayISODate } from "../../../lib/date";
 import TableSkeleton from "../../../components/common/TableSkeleton";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const ATTENDANCE_TABLE_HEADERS = ["Class", "Grade", "Teacher", "Records", "Status", "Actions"];
 
@@ -138,16 +138,14 @@ export default function Attendance() {
               <h2 className="os-section__title">Sessions</h2>
             </div>
 
-            {deleteSession.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not delete session"
-                subtitle={getErrorMessage(deleteSession.error, "Please try again.")}
-                lowContrast
-                onClose={() => deleteSession.reset()}
-                style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={deleteSession.isError}
+              error={deleteSession.error}
+              title="Could not delete session"
+              fallback="Please try again."
+              onClose={() => deleteSession.reset()}
+              style={{ margin: "0 1.5rem 1rem" }}
+            />
 
             {!sessions || sessions.length === 0 ? (
               <EmptyState

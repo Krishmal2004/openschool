@@ -1,5 +1,3 @@
-// This file renders the wizard interface for the initial school setup, allowing administrators to configure basic school details, houses, grades, mediums, and classes.
-
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router";
 import { Button, InlineNotification } from "@carbon/react";

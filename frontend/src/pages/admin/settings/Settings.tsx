@@ -12,7 +12,7 @@ import {
   InlineNotification,
 } from "@carbon/react";
 import { Save, Edit, Settings as SettingsIcon } from "@carbon/icons-react";
-import { getErrorMessage, isNotFoundError } from "../../../lib/errorMessage";
+import { isNotFoundError } from "../../../lib/errorMessage";
 import SchoolInfoCard, { type SchoolFormValues } from "../../../components/school/SchoolInfoCard";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
@@ -21,6 +21,7 @@ import type { School } from "../../../services/school";
 import Houses from "./Houses";
 import AuditLog from "./AuditLog";
 import OrphanedAccounts from "./OrphanedAccounts";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 type SettingsForm = SchoolFormValues & {
   grade_from: number | "";
@@ -190,16 +191,12 @@ export default function SettingsPage() {
           style={{ marginBottom: "1rem", maxWidth: "100%" }}
         />
       )}
-      {createSchool.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          hideCloseButton
-          title="Could not create school"
-          subtitle={getErrorMessage(createSchool.error)}
-          style={{ marginBottom: "1rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={createSchool.isError}
+        error={createSchool.error}
+        title="Could not create school"
+        style={{ marginBottom: "1rem" }}
+      />
 
       {!isLoading && (!isError || noSchoolYet) && (
         <SchoolInfoCard values={form} editing={isEditable} onChange={handleChange} />

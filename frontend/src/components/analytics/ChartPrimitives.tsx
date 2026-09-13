@@ -1,7 +1,4 @@
-// This file defines shared, dependency-free chart components (Section,
-// StatTile, BarList, Sparkline, TrendSummary, DonutChart) used by the
-// dashboard and Analytics page — hand-rolled SVG/CSS, no charting library.
-
+// Dependency-free chart primitives (hand-rolled SVG/CSS) shared by the dashboard and Analytics page.
 import type { GrowthPoint } from "../../services/dashboardAnalytics";
 import { ACCENT } from "./chartColors";
 

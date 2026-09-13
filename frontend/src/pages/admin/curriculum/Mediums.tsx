@@ -3,7 +3,6 @@ import { Add, Language } from "@carbon/icons-react";
 import {
   Button,
   TextInput,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -17,10 +16,10 @@ import {
   useDeleteMedium,
 } from "../../../queries/useCurriculum";
 import type { Medium } from "../../../services/curriculum";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 function MediumRowSkeleton() {
   return (
@@ -128,19 +127,14 @@ export default function Mediums() {
           <ErrorMessage message="Could not load mediums." onRetry={refetch} />
         )}
 
-        {deleteMedium.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete medium"
-            subtitle={getErrorMessage(
-              deleteMedium.error,
-              "The medium may be in use by a group subject or enrollment.",
-            )}
-            lowContrast
-            onClose={() => deleteMedium.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteMedium.isError}
+          error={deleteMedium.error}
+          title="Could not delete medium"
+          fallback="The medium may be in use by a group subject or enrollment."
+          onClose={() => deleteMedium.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {!isLoading && !isError && mediums?.length === 0 && (
           <EmptyState
@@ -198,19 +192,12 @@ export default function Mediums() {
       <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)}>
         <ModalHeader title={modal === "create" ? "New medium" : "Edit medium"} />
         <ModalBody>
-          {(createMedium.isError || updateMedium.isError) && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(
-                createMedium.error ?? updateMedium.error,
-                "Failed to save medium",
-              )}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={createMedium.isError || updateMedium.isError}
+            error={createMedium.error ?? updateMedium.error}
+            fallback="Failed to save medium"
+            style={{ marginBottom: "1rem" }}
+          />
           <TextInput
             id="medium-name"
             labelText="Name"

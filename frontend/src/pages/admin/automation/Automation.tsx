@@ -1,8 +1,8 @@
-import { Toggle, Tag, Button, SkeletonText, InlineNotification } from "@carbon/react";
+import { Toggle, Tag, Button, SkeletonText } from "@carbon/react";
 import { Play } from "@carbon/icons-react";
 import { useJobs, useSetJobEnabled, useRunJobNow } from "../../../queries/useJobs";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 import type { JobRunStatus } from "../../../services/jobs";
 
 function humanizeJobName(name: string) {
@@ -68,19 +68,17 @@ export default function Automation() {
         </div>
       )}
 
-      {(setEnabled.isError || runNow.isError) && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Action failed"
-          subtitle={getErrorMessage(setEnabled.error ?? runNow.error, "Please try again.")}
-          onClose={() => {
-            setEnabled.reset();
-            runNow.reset();
-          }}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={setEnabled.isError || runNow.isError}
+        error={setEnabled.error ?? runNow.error}
+        title="Action failed"
+        fallback="Please try again."
+        onClose={() => {
+          setEnabled.reset();
+          runNow.reset();
+        }}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <div className="os-section" style={{ marginTop: 0 }}>
         {isLoading && (

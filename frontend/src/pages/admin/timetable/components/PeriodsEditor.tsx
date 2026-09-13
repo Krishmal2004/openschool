@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Button, TextInput, InlineNotification, ComposedModal, ModalHeader, ModalBody, ModalFooter, SkeletonText } from "@carbon/react";
+import { Button, TextInput, ComposedModal, ModalHeader, ModalBody, ModalFooter, SkeletonText } from "@carbon/react";
 import {
   useGradeSectionPeriods,
   useSaveGradeSectionPeriods,
   useRegenerateGradeSectionPeriods,
 } from "../../../../queries/timetable/useGradeSections";
 import type { GradeSection, TimetablePeriod } from "../../../../services/timetable/gradeSection";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 const formatTimeForInput = (t: string) => {
   if (!t) return "";
@@ -39,24 +39,18 @@ export default function PeriodsEditor({ section, onClose }: { section: GradeSect
     <ComposedModal open size="md" onClose={onClose}>
       <ModalHeader title={`${section.name} — period grid`} />
       <ModalBody>
-        {save.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not save periods"
-            subtitle={getErrorMessage(save.error)}
-            lowContrast
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
-        {regenerate.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not regenerate periods"
-            subtitle={getErrorMessage(regenerate.error)}
-            lowContrast
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={save.isError}
+          error={save.error}
+          title="Could not save periods"
+          style={{ marginBottom: "1rem" }}
+        />
+        <MutationErrorNotification
+          isError={regenerate.isError}
+          error={regenerate.error}
+          title="Could not regenerate periods"
+          style={{ marginBottom: "1rem" }}
+        />
         <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "flex-end" }}>
           <Button
             kind="ghost"
