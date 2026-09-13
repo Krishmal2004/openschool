@@ -20,10 +20,10 @@ import {
   useReassignMissingStaffHouses,
 } from "../../../queries/useHouses";
 import type { House } from "../../../services/house";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const DEFAULT_COLOR = "#0f62fe";
 
@@ -138,19 +138,14 @@ export default function Houses() {
         <ErrorMessage message="Could not load houses." onRetry={refetch} />
       )}
 
-      {deleteHouse.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete house"
-          subtitle={getErrorMessage(
-            deleteHouse.error,
-            "The house may be assigned to a student or teacher.",
-          )}
-          lowContrast
-          onClose={() => deleteHouse.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteHouse.isError}
+        error={deleteHouse.error}
+        title="Could not delete house"
+        fallback="The house may be assigned to a student or teacher."
+        onClose={() => deleteHouse.reset()}
+        style={{ marginBottom: "1rem" }}
+      />
 
       {(reassign.isSuccess || reassignStaff.isSuccess) && (
         <InlineNotification
@@ -171,19 +166,17 @@ export default function Houses() {
         />
       )}
 
-      {(reassign.isError || reassignStaff.isError) && (
-        <InlineNotification
-          kind="error"
-          title="Could not re-assign"
-          subtitle={getErrorMessage(reassign.error ?? reassignStaff.error, "Please try again.")}
-          lowContrast
-          onClose={() => {
-            reassign.reset();
-            reassignStaff.reset();
-          }}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={reassign.isError || reassignStaff.isError}
+        error={reassign.error ?? reassignStaff.error}
+        title="Could not re-assign"
+        fallback="Please try again."
+        onClose={() => {
+          reassign.reset();
+          reassignStaff.reset();
+        }}
+        style={{ marginBottom: "1rem" }}
+      />
 
       <div className="os-section">
         <div className="os-section__header">
@@ -310,19 +303,12 @@ export default function Houses() {
       <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)}>
         <ModalHeader title={modal === "create" ? "Add house" : "Edit house"} />
         <ModalBody>
-          {(createHouse.isError || updateHouse.isError) && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(
-                createHouse.error ?? updateHouse.error,
-                "Failed to save house",
-              )}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={createHouse.isError || updateHouse.isError}
+            error={createHouse.error ?? updateHouse.error}
+            fallback="Failed to save house"
+            style={{ marginBottom: "1rem" }}
+          />
           <TextInput
             id="house-name"
             labelText="Name"

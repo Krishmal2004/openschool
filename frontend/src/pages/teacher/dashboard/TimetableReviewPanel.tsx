@@ -6,7 +6,6 @@ import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import TimetableReviewRow from "../../../components/timetable/TimetableReviewRow";
 
-const ACCENT = "#406AAF";
 const MAX_ROWS = 3;
 
 // Only rendered for Section Head — timetable review authorization is tied
@@ -20,7 +19,7 @@ export default function TimetableReviewPanel({ academicYearId }: { academicYearI
     <div className="os-section">
       <div className="os-section__header">
         <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Renew size={16} style={{ fill: ACCENT }} /> Timetable Review
+          <Renew size={16} style={{ fill: "var(--os-accent)" }} /> Timetable Review
         </h2>
       </div>
 

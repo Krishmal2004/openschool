@@ -1,7 +1,3 @@
-// This file renders the merged Subjects & Curriculum admin page: a Tabs
-// shell (Subjects / Curriculum) around SubjectsPanel and CurriculumPanel,
-// serving both the /subjects and /curriculum routes.
-
 import { useLocation } from "react-router";
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import SubjectsPanel from "./components/SubjectsPanel";

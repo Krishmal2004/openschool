@@ -33,15 +33,15 @@ export default function LogoUpload({ value, editing, onChange }: LogoUploadProps
 
   return (
     <div>
-      <p style={{ fontSize: "0.75rem", color: "#525252", marginBottom: "0.5rem" }}>School Logo (optional)</p>
+      <p style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)", marginBottom: "0.5rem" }}>School Logo (optional)</p>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <div
           style={{
             width: "4rem",
             height: "4rem",
             borderRadius: "8px",
-            border: "1px solid #e0e0e0",
-            background: "#fafafa",
+            border: "1px solid var(--os-border-subtle)",
+            background: "var(--os-layer-hover)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -52,7 +52,7 @@ export default function LogoUpload({ value, editing, onChange }: LogoUploadProps
           {value ? (
             <img src={value} alt="School logo" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
           ) : (
-            <Building size={24} style={{ fill: "#c6c6c6" }} />
+            <Building size={24} style={{ fill: "var(--os-text-disabled)" }} />
           )}
         </div>
         {editing && (
@@ -75,7 +75,7 @@ export default function LogoUpload({ value, editing, onChange }: LogoUploadProps
           </div>
         )}
       </div>
-      {error && <p style={{ fontSize: "0.75rem", color: "#da1e28", marginTop: "0.5rem" }}>{error}</p>}
+      {error && <p style={{ fontSize: "0.75rem", color: "var(--os-danger)", marginTop: "0.5rem" }}>{error}</p>}
     </div>
   );
 }

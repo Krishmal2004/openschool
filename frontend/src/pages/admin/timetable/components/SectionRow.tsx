@@ -1,19 +1,16 @@
-// This component renders a single grade section row displaying its name, interval time, and assigned grades.
-
-import { Time, TrashCan } from "@carbon/icons-react";
+import { Time } from "@carbon/icons-react";
 import { Button, Tag } from "@carbon/react";
+import RemoveIconButton from "../../../../components/common/RemoveIconButton";
 import type { GradeSection } from "../../../../services/timetable/gradeSection";
 
 export default function SectionRow({
   section,
-  isLast,
   gradeName,
   onPeriods,
   onEdit,
   onDelete,
 }: {
   section: GradeSection;
-  isLast: boolean;
   gradeName: (id: string) => string;
   onPeriods: () => void;
   onEdit: () => void;
@@ -21,12 +18,12 @@ export default function SectionRow({
 }) {
   const s = section;
   return (
-    <div style={{ padding: "1rem 1.5rem", borderBottom: isLast ? "none" : "1px solid #e0e0e0" }}>
+    <div className="os-list-row" style={{ flexDirection: "column", alignItems: "stretch", padding: "1rem 1.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Time size={16} style={{ fill: "#406AAF" }} />
+          <Time size={16} style={{ fill: "var(--os-accent)" }} />
           <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>{s.name}</span>
-          <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
             Interval {s.interval_start_time}–{s.interval_end_time}
           </span>
         </div>
@@ -37,13 +34,13 @@ export default function SectionRow({
           <Button kind="ghost" size="sm" onClick={onEdit}>
             Edit
           </Button>
-          <Button kind="ghost" size="sm" renderIcon={TrashCan} iconDescription="Delete" hasIconOnly onClick={onDelete} />
+          <RemoveIconButton label="Delete" onClick={onDelete} />
         </div>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
         {s.grade_ids.length === 0 ? (
-          <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>No grades assigned</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>No grades assigned</span>
         ) : (
           s.grade_ids.map((gid) => (
             <Tag key={gid} type="teal" size="sm">

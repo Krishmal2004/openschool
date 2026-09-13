@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { Idea, Add, Edit, TrashCan } from "@carbon/icons-react";
+import { Idea, Add, Edit } from "@carbon/icons-react";
 import { Button, Select, SelectItem, InlineNotification, SkeletonText } from "@carbon/react";
 import { useCurrentAcademicYear, useAcademicYears } from "../../../queries/useAcademicYears";
 import { useSocieties, useSocietyYears, useDeleteSociety } from "../../../queries/useSocieties";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
 import SocietyFormModal from "../../../components/societies/SocietyFormModal";
 import SocietyRoster from "../../../components/societies/SocietyRoster";
 import type { Society } from "../../../services/society";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function Societies() {
   const { data: currentYear, isLoading: yearLoading } = useCurrentAcademicYear();
@@ -120,16 +121,14 @@ export default function Societies() {
         </div>
       )}
 
-      {deleteSociety.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not delete society"
-          subtitle={getErrorMessage(deleteSociety.error, "Please try again.")}
-          onClose={() => deleteSociety.reset()}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteSociety.isError}
+        error={deleteSociety.error}
+        title="Could not delete society"
+        fallback="Please try again."
+        onClose={() => deleteSociety.reset()}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <div style={{ display: "grid", gridTemplateColumns: "20rem 1fr", gap: "1.5rem", alignItems: "start" }}>
         <div className="os-section" style={{ marginTop: 0 }}>
@@ -144,24 +143,15 @@ export default function Societies() {
           )}
 
           {!loading &&
-            (societies ?? []).map((s, i) => (
+            (societies ?? []).map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedId(s.id)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.875rem 1.5rem",
-                  border: "none",
-                  borderBottom: i < (societies ?? []).length - 1 ? "1px solid #e0e0e0" : "none",
-                  background: selected?.id === s.id ? "#edf5ff" : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
+                className={`os-list-row os-list-row--button${selected?.id === s.id ? " is-selected" : ""}`}
+                style={{ display: "block", padding: "0.875rem 1.5rem" }}
               >
-                <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#161616" }}>{s.name}</div>
-                <div style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--os-text-primary)" }}>{s.name}</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                   TIC: {s.teacher_name} · {s.member_count} member{s.member_count === 1 ? "" : "s"}
                 </div>
               </button>
@@ -172,7 +162,7 @@ export default function Societies() {
           <div className="os-section" style={{ marginTop: 0 }}>
             <div className="os-section__header">
               <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Idea size={16} style={{ fill: "#406AAF" }} /> {selected.name}
+                <Idea size={16} style={{ fill: "var(--os-accent)" }} /> {selected.name}
               </h2>
               {!isArchive && (
                 <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -184,19 +174,12 @@ export default function Societies() {
                     renderIcon={Edit}
                     onClick={() => setFormSociety(selected)}
                   />
-                  <Button
-                    hasIconOnly
-                    kind="ghost"
-                    size="sm"
-                    iconDescription="Delete"
-                    renderIcon={TrashCan}
-                    onClick={() => setDeleting(selected)}
-                  />
+                  <RemoveIconButton label="Delete" onClick={() => setDeleting(selected)} />
                 </div>
               )}
             </div>
             <div className="os-section__body">
-              <p style={{ margin: "0 0 1.25rem", fontSize: "0.8125rem", color: "#525252" }}>
+              <p style={{ margin: "0 0 1.25rem", fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
                 Teacher-in-Charge: {selected.teacher_name}
               </p>
               <SocietyRoster societyId={selected.id} readOnly={isArchive} />

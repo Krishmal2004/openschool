@@ -4,11 +4,7 @@ import { ArrowRight } from "@carbon/icons-react";
 import EntityCombobox from "../../../../components/common/EntityCombobox";
 import type { PromotionPreviewRow } from "../../../../services/promotion";
 
-// Deals a list of rows out across targetClasses in round-robin order
-// (row i -> targetClasses[i % targetClasses.length]) — class sizes end up
-// equal or differing by at most 1 (e.g. 30/30/29), never lopsided, since
-// every class gets exactly one more student per pass through the list
-// before any class gets a second.
+// Deals rows across targetClasses round-robin, so class sizes differ by at most 1 instead of being lopsided.
 function roundRobinAssign(orderedRows: PromotionPreviewRow[], targetClasses: { id: string }[]): Record<string, string> {
   const map: Record<string, string> = {};
   orderedRows.forEach((r, i) => {
@@ -56,8 +52,6 @@ export default function PromotionGroup({
   const selectedInGroup = rows.filter((r) => selected.has(r.student_id));
   const hasMarks = rankByMarks && rows.some((r) => r.total_marks != null);
 
-  // Same one-map-then-onBulkAssign-once shape as distributeByMarks/
-  // distributeRandomly below, rather than calling onAssign once per student.
   const applyBulk = () => {
     if (!bulkClassId) return;
     const map: Record<string, string> = {};
@@ -65,28 +59,19 @@ export default function PromotionGroup({
     onBulkAssign(map);
   };
 
-  // Students in a medium-designated class carry straight over to the same
-  // medium in the next grade, so they sit out both distributions — and the
-  // medium-designated classes sit out as targets, otherwise a shuffle would
-  // refill an English section with students who don't belong in it. Their
-  // rows stay visible and their pick stays overridable either way.
+  // Medium-locked students carry straight to the same medium next grade, so both they and medium-designated classes sit out shuffling.
   const shufflePool = rows.filter((r) => !r.medium_locked);
   const shuffleTargets = targetClasses.filter((c) => !c.medium_id);
   const lockedCount = rows.length - shufflePool.length;
   const canShuffle = shuffleTargets.length > 0 && shufflePool.length > 0;
 
-  // Highest marks to lowest, dealt round-robin across the grade's target
-  // classes — so every class ends up with a similar spread of high-to-low
-  // performers (and a similar average) instead of one class getting all
-  // the top scorers.
+  // Highest-to-lowest marks dealt round-robin, so each class gets a similar spread of performers instead of one getting all the top scorers.
   const distributeByMarks = () => {
     if (!canShuffle) return;
     const sorted = [...shufflePool].sort((a, b) => (b.total_marks ?? -1) - (a.total_marks ?? -1));
     onBulkAssign(roundRobinAssign(sorted, shuffleTargets));
   };
 
-  // Same equal-class-size round-robin dealing, but in random order —
-  // unrelated to marks.
   const distributeRandomly = () => {
     if (!canShuffle) return;
     onBulkAssign(roundRobinAssign(shuffled(shufflePool), shuffleTargets));

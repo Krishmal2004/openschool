@@ -30,17 +30,12 @@ function NotificationRow({ n }: { n: MyNotification }) {
 
   return (
     <div
-      style={{
-        display: "flex",
-        gap: "1rem",
-        padding: "0.875rem 1.5rem",
-        borderBottom: "1px solid #f4f4f4",
-        background: n.is_read ? "transparent" : "#edf5ff",
-      }}
+      className={`os-list-row${!n.is_read ? " is-selected" : ""}`}
+      style={{ gap: "1rem", padding: "0.875rem 1.5rem" }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#161616" }}>{n.title}</span>
+          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--os-text-primary)" }}>{n.title}</span>
           {n.priority !== "normal" && (
             <Tag type={PRIORITY_TAG[n.priority]} size="sm">
               {n.priority}
@@ -50,11 +45,11 @@ function NotificationRow({ n }: { n: MyNotification }) {
             {CATEGORY_LABEL[n.category] ?? n.category}
           </Tag>
           {!n.is_read && !n.is_archived && (
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#0f62fe", display: "inline-block" }} />
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--os-accent)", display: "inline-block" }} />
           )}
         </div>
-        <p style={{ margin: "0 0 0.375rem", fontSize: "0.8125rem", color: "#525252", lineHeight: 1.5 }}>{n.message}</p>
-        <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d8d8d" }}>
+        <p style={{ margin: "0 0 0.375rem", fontSize: "0.8125rem", color: "var(--os-text-secondary)", lineHeight: 1.5 }}>{n.message}</p>
+        <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
           {n.sender_name} &middot; {new Date(n.sent_at).toLocaleString()}
         </p>
       </div>
@@ -120,9 +115,9 @@ export default function NotificationCenter() {
               onClick={() => setTab(t)}
               style={{
                 padding: "0.5rem 1rem",
-                border: `1.5px solid ${tab === t ? "#406AAF" : "#e0e0e0"}`,
-                background: tab === t ? "#eef2f9" : "#ffffff",
-                color: tab === t ? "#406AAF" : "#525252",
+                border: `1.5px solid ${tab === t ? "var(--os-accent)" : "var(--os-border-subtle)"}`,
+                background: tab === t ? "var(--os-accent-light)" : "var(--os-layer)",
+                color: tab === t ? "var(--os-accent)" : "var(--os-text-secondary)",
                 fontWeight: tab === t ? 600 : 400,
                 fontSize: "0.8125rem",
                 cursor: "pointer",

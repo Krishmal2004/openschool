@@ -122,7 +122,7 @@ export default function StudentDetail() {
     );
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <ProfileBanner
         name={student.full_name}
         meta={

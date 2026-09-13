@@ -37,7 +37,7 @@ export default function MySociety() {
         <div className="os-section">
           <div className="os-section__header">
             <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Idea size={16} style={{ fill: "#406AAF" }} /> {society.name}
+              <Idea size={16} style={{ fill: "var(--os-accent)" }} /> {society.name}
             </h2>
           </div>
           <div className="os-section__body">

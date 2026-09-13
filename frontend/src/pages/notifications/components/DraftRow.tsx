@@ -15,11 +15,11 @@ export default function DraftRow({ draft }: { draft: Notification }) {
   const busy = send.isPending || remove.isPending;
 
   return (
-    <div style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #f4f4f4" }}>
+    <div className="os-list-row" style={{ flexDirection: "column", alignItems: "stretch", padding: "0.875rem 1.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: "0 0 0.125rem", fontWeight: 500, fontSize: "0.8125rem" }}>{draft.title}</p>
-          <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d8d8d" }}>{draft.recipient_rules.length} recipient rule(s)</p>
+          <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{draft.recipient_rules.length} recipient rule(s)</p>
         </div>
         <Button kind="ghost" size="sm" renderIcon={Send} onClick={() => send.mutate(draft.id)} disabled={busy}>
           Send

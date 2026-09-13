@@ -9,12 +9,12 @@ import { useHouses } from "../../../queries/useHouses";
 import { useCurrentClasses } from "../../../queries/useClasses";
 import type { Student } from "../../../services/student";
 import { usePagination } from "../../../hooks/usePagination";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import TableSkeleton from "../../../components/common/TableSkeleton";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const STUDENT_TABLE_HEADERS = [
   "Index No.",
@@ -158,13 +158,14 @@ export default function Students() {
           </div>
         </div>
 
-        {deleteStudent.isError && (
-          <div style={{ padding: "0 1.5rem 1rem" }}>
-            <ErrorMessage
-              message={getErrorMessage(deleteStudent.error, "Failed to delete student.")}
-            />
-          </div>
-        )}
+        <MutationErrorNotification
+          isError={deleteStudent.isError}
+          error={deleteStudent.error}
+          title="Could not delete student"
+          fallback="Failed to delete student."
+          onClose={() => deleteStudent.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {isLoading ? (
           <TableSkeleton headers={STUDENT_TABLE_HEADERS} />
@@ -179,7 +180,7 @@ export default function Students() {
           <>
             <div className="os-section__header">
               <h2 className="os-section__title">All Students</h2>
-              <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                 {filtered.length} records
               </span>
             </div>

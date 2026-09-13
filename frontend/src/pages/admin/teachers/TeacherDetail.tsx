@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router";
-import { Button, InlineNotification } from "@carbon/react";
+import { Button } from "@carbon/react";
 import { ArrowLeft, TrashCan, Edit, Save } from "@carbon/icons-react";
 import {
   useTeacher,
@@ -23,6 +23,7 @@ import type { Teacher, TeacherTitle } from "../../../services/teacher";
 import { splitFullName } from "../../../lib/name";
 import { EMPLOYMENT_STATUSES } from "./constants";
 import TeacherProfileSections from "./components/TeacherProfileSections";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 function teacherToForm(t: Teacher) {
   return {
@@ -117,7 +118,7 @@ export default function TeacherDetail() {
     );
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <ProfileBanner
         name={teacher.full_name}
         meta={
@@ -182,19 +183,14 @@ export default function TeacherDetail() {
       />
 
       <div style={{ padding: "1.5rem 2rem" }}>
-        {deleteTeacher.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete teacher"
-            subtitle={getErrorMessage(
-              deleteTeacher.error,
-              "The teacher may be assigned to a class or have attendance records.",
-            )}
-            lowContrast
-            onClose={() => deleteTeacher.reset()}
-            style={{ maxWidth: "100%", marginBottom: "1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteTeacher.isError}
+          error={deleteTeacher.error}
+          title="Could not delete teacher"
+          fallback="The teacher may be assigned to a class or have attendance records."
+          onClose={() => deleteTeacher.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         <TeacherProfileSections
           teacher={teacher}

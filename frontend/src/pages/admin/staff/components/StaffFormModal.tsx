@@ -6,7 +6,6 @@ import {
   SelectItem,
   RadioButtonGroup,
   RadioButton,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -17,8 +16,8 @@ import {
 import { useCreateNonAcademicStaff, useUpdateNonAcademicStaff } from "../../../../queries/useNonAcademicStaff";
 import { NON_ACADEMIC_DESIGNATIONS } from "../../../../services/nonAcademicStaff";
 import type { NonAcademicStaff as StaffRow, NonAcademicDesignation } from "../../../../services/nonAcademicStaff";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import { todayISODate, toYmd } from "../../../../lib/date";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function StaffFormModal({ staff, onClose }: { staff: StaffRow | null; onClose: () => void }) {
   const isEdit = !!staff;
@@ -73,16 +72,12 @@ export default function StaffFormModal({ staff, onClose }: { staff: StaffRow | n
     <ComposedModal open size="sm" onClose={onClose}>
       <ModalHeader title={isEdit ? "Edit staff member" : "Add staff member"} />
       <ModalBody>
-        {error && (
-          <InlineNotification
-            kind="error"
-            title="Error"
-            subtitle={getErrorMessage(error, "Failed to save staff member")}
-            lowContrast
-            hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={!!error}
+          error={error}
+          fallback="Failed to save staff member"
+          style={{ marginBottom: "1rem" }}
+        />
         <div style={{ display: "grid", gap: "1rem" }}>
           <TextInput
             id="staff-name"

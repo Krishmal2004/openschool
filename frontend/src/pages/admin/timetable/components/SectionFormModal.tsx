@@ -1,7 +1,7 @@
-import { Button, TextInput, MultiSelect, InlineNotification, ComposedModal, ModalHeader, ModalBody, ModalFooter } from "@carbon/react";
-import { getErrorMessage } from "../../../../lib/errorMessage";
+import { Button, TextInput, MultiSelect, ComposedModal, ModalHeader, ModalBody, ModalFooter } from "@carbon/react";
 import type { Grade } from "../../../../services/grade";
 import type { GradeSectionForm } from "../constants";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function SectionFormModal({
   open,
@@ -34,15 +34,11 @@ export default function SectionFormModal({
     <ComposedModal open={open} size="md" onClose={onClose}>
       <ModalHeader title={isEdit ? "Edit grade section" : "New grade section"} />
       <ModalBody>
-        {isError && (
-          <InlineNotification
-            kind="error"
-            title="Error"
-            subtitle={getErrorMessage(error)}
-            lowContrast
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={isError}
+          error={error}
+          style={{ marginBottom: "1rem" }}
+        />
         <div style={{ display: "grid", gap: "1rem" }}>
           <TextInput
             id="section-name"

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Select, SelectItem, TextArea, InlineNotification } from "@carbon/react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Button, Select, SelectItem, TextArea } from "@carbon/react";
+import { Add } from "@carbon/icons-react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useTerms } from "../../../queries/useTerms";
 import {
@@ -8,9 +8,10 @@ import {
   useCreateProgressReport,
   useDeleteProgressReport,
 } from "../../../queries/useStudentPortfolio";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function StudentProgressReports({ studentId }: { studentId: string }) {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -37,16 +38,12 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         <h2 className="os-section__title">Progress Reports</h2>
       </div>
       <div className="os-section__body">
-        {createReport.isError && (
-          <InlineNotification
-            kind="error"
-            title="Error"
-            subtitle={getErrorMessage(createReport.error, "Failed to add report")}
-            lowContrast
-            hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={createReport.isError}
+          error={createReport.error}
+          fallback="Failed to add report"
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "12rem 1fr auto", gap: "0.75rem", alignItems: "end", marginBottom: "1.5rem" }}>
           <Select id="progress-report-term" labelText="Term" value={termId} onChange={(e) => setTermId(e.target.value)}>
@@ -78,21 +75,12 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         )}
 
         {reports?.map((r) => (
-          <div key={r.id} style={{ padding: "0.875rem 0", borderBottom: "1px solid #e0e0e0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{r.term_name}</span>
-                <p style={{ margin: "0.375rem 0 0", fontSize: "0.875rem", color: "#525252" }}>{r.narrative}</p>
-              </div>
-              <Button
-                hasIconOnly
-                iconDescription="Delete"
-                renderIcon={TrashCan}
-                kind="ghost"
-                size="sm"
-                onClick={() => setPendingDeleteId(r.id)}
-              />
+          <div key={r.id} className="os-list-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{r.term_name}</span>
+              <p style={{ margin: "0.375rem 0 0", fontSize: "0.875rem", color: "var(--os-text-secondary)" }}>{r.narrative}</p>
             </div>
+            <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
           </div>
         ))}
       </div>

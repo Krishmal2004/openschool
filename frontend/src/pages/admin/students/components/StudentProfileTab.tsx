@@ -152,7 +152,7 @@ export default function StudentProfileTab({
               )}
             </div>
           ) : (
-            <span style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>Not enrolled in a class.</span>
+            <span style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>Not enrolled in a class.</span>
           )}
         </div>
       </div>

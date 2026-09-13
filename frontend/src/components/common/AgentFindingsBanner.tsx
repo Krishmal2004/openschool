@@ -5,27 +5,11 @@ import { useMyNotifications } from "../../queries/notifications/useNotifications
 import type { MyNotification } from "../../services/notifications/notification";
 
 interface Props {
-  /**
-   * Exact notification titles this page cares about — must match the
-   * literal title string a backend agent's `notifyAdmins(...)` call uses
-   * (see backend/internal/jobs/agent_*.go). Titles, not job/agent names:
-   * five backend agents each run several concurrent checks and would
-   * otherwise all report through one shared job_runs summary, which is too
-   * coarse to show a page-relevant finding. Each check's notification
-   * title stays stable and page-specific even though the checks were
-   * consolidated, so matching on it here preserves the original "only show
-   * this finding on the page it's actionable from" behavior.
-   */
+  /** Notification titles this page cares about; must match a backend agent's `notifyAdmins(...)` title exactly. */
   titles: string[];
 }
 
-// A lightweight, dismissible nudge surfacing a background agent's most
-// recent finding directly on the page it's actionable from (e.g. the
-// no-guardian finding on the Students list) instead of only in the
-// Notification Center. Built on the same admin notifications every agent
-// check already sends — no separate backend surface — and clears itself
-// once the admin reads the notification anywhere (bell icon, Notification
-// Center, or dismissing it here).
+// Dismissible nudge surfacing a background agent's latest finding on the page it's actionable from.
 export default function AgentFindingsBanner({ titles }: Props) {
   const { data: notifications } = useMyNotifications();
   const navigate = useNavigate();

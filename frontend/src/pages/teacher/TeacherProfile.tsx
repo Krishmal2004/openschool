@@ -8,8 +8,8 @@ import { attendanceApi } from "../../services/attendance";
 import { studentApi } from "../../services/student";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
-
-const ACCENT = "#406AAF";
+import InfoRow from "../../components/common/InfoRow";
+import { getInitials } from "../../lib/name";
 
 export default function TeacherProfile() {
   const { data: profile, isLoading, isError, refetch } = useMyTeacherProfile();
@@ -43,12 +43,10 @@ export default function TeacherProfile() {
     );
   }
 
-  const initials = profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <div className="os-profile__banner">
-        <div className="os-profile__avatar">{initials}</div>
+        <div className="os-profile__avatar">{getInitials(profile.full_name)}</div>
         <div style={{ flex: 1 }}>
           <p className="os-profile__name">{profile.title ? `${profile.title} ` : ""}{profile.full_name}</p>
           <p className="os-profile__meta">{profile.employee_number}</p>
@@ -85,11 +83,11 @@ export default function TeacherProfile() {
               <div className="os-section__header"><h2 className="os-section__title">Subjects</h2></div>
               <div className="os-section__body" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                 {!subjects || subjects.length === 0 ? (
-                  <p style={{ color: "#8d8d8d", fontSize: "0.8125rem" }}>No subjects assigned yet.</p>
+                  <p style={{ color: "var(--os-text-tertiary)", fontSize: "0.8125rem" }}>No subjects assigned yet.</p>
                 ) : (
                   subjects.map((s) => (
-                    <div key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.875rem", border: "1px solid #e0e0e0", background: "#f4f4f4" }}>
-                      <Book size={14} style={{ fill: ACCENT }} />
+                    <div key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.875rem", border: "1px solid var(--os-border-subtle)", background: "var(--os-layer-hover)" }}>
+                      <Book size={14} style={{ fill: "var(--os-accent)" }} />
                       <span style={{ fontSize: "0.875rem", fontWeight: 500 }}>{s.name}</span>
                     </div>
                   ))
@@ -103,33 +101,19 @@ export default function TeacherProfile() {
             <div className="os-section">
               <div className="os-section__header"><h2 className="os-section__title">Quick Info</h2></div>
               <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-                {[
-                  ["Employee ID", profile.employee_number],
-                  ["Status", profile.is_active ? "Active" : "Inactive"],
-                  ["Subjects", subjects?.length ?? 0],
-                  ["Classes", myClasses.length],
-                  ["Joined", profile.joined_date ?? "—"],
-                ].map(([label, value]) => (
-                  <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem" }}>
-                    <span style={{ color: "#525252" }}>{label}</span>
-                    <span style={{ fontWeight: 500, color: "#161616" }}>{value}</span>
-                  </div>
-                ))}
+                <InfoRow label="Employee ID" value={profile.employee_number} />
+                <InfoRow label="Status" value={profile.is_active ? "Active" : "Inactive"} />
+                <InfoRow label="Subjects" value={subjects?.length ?? 0} />
+                <InfoRow label="Classes" value={myClasses.length} />
+                <InfoRow label="Joined" value={profile.joined_date ?? "—"} divider={false} />
               </div>
             </div>
 
             <div className="os-section">
               <div className="os-section__header"><h2 className="os-section__title">This Year</h2></div>
               <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-                {[
-                  ["Sessions Taken", sessionsTaken],
-                  ["Students Taught", studentsTaught],
-                ].map(([label, value]) => (
-                  <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid #f4f4f4", fontSize: "0.8125rem" }}>
-                    <span style={{ color: "#525252" }}>{label}</span>
-                    <span style={{ fontWeight: 600, color: ACCENT }}>{value}</span>
-                  </div>
-                ))}
+                <InfoRow label="Sessions Taken" value={sessionsTaken} bold accent />
+                <InfoRow label="Students Taught" value={studentsTaught} bold accent divider={false} />
               </div>
             </div>
           </div>

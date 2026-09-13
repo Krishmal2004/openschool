@@ -1,27 +1,28 @@
-// This file renders the TeacherSubjects page, allowing administrators to manage global teacher-subject assignments.
-
 import { useState } from "react";
 import { Search, Tag, SkeletonText } from "@carbon/react";
 import { useTeachers, useTeacherSubjects, useAssignTeacherSubject, useRemoveTeacherSubject } from "../../../queries/useTeachers";
 import { useSubjects } from "../../../queries/useSubjects";
 import EntityCombobox from "../../../components/common/EntityCombobox";
-import type { Teacher } from "../../../services/teacher";
+import type { Teacher, TeacherSubject } from "../../../services/teacher";
 import type { Subject } from "../../../services/subject";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 
 function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubjects: Subject[] }) {
   const { data: assignedSubjects, isLoading, isError } = useTeacherSubjects(teacher.id);
   const assignMutation = useAssignTeacherSubject(teacher.id);
   const removeMutation = useRemoveTeacherSubject(teacher.id);
+  const [subjectToRemove, setSubjectToRemove] = useState<TeacherSubject | null>(null);
 
   const handleAssign = (subjectId: string) => {
     if (!subjectId) return;
     assignMutation.mutate(subjectId);
   };
 
-  const handleRemove = (subjectId: string) => {
-    removeMutation.mutate(subjectId);
+  const confirmRemove = () => {
+    if (!subjectToRemove) return;
+    removeMutation.mutate(subjectToRemove.id, { onSettled: () => setSubjectToRemove(null) });
   };
 
   const assignedIds = new Set(assignedSubjects?.map((s) => s.id) ?? []);
@@ -35,9 +36,9 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
         {isLoading ? (
           <SkeletonText width="6rem" />
         ) : isError ? (
-          <span style={{ color: "#da1e28", fontSize: "0.875rem" }}>Error loading subjects</span>
+          <span style={{ color: "var(--os-danger)", fontSize: "0.875rem" }}>Error loading subjects</span>
         ) : !assignedSubjects || assignedSubjects.length === 0 ? (
-          <span style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>No subjects assigned</span>
+          <span style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>No subjects assigned</span>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
             {assignedSubjects.map((s) => (
@@ -46,7 +47,7 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
                 type="blue"
                 size="sm"
                 title="Click to remove"
-                onClick={() => handleRemove(s.id)}
+                onClick={() => setSubjectToRemove(s)}
                 style={{ cursor: "pointer" }}
               >
                 {s.name} &times;
@@ -67,16 +68,30 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
           placeholder="Assign subject…"
         />
         {assignMutation.isError && (
-          <div style={{ color: "#da1e28", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+          <div style={{ color: "var(--os-danger)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
             Failed to assign
           </div>
         )}
         {removeMutation.isError && (
-          <div style={{ color: "#da1e28", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+          <div style={{ color: "var(--os-danger)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
             Failed to remove
           </div>
         )}
       </td>
+      <ConfirmDeleteModal
+        open={!!subjectToRemove}
+        title="Remove subject"
+        description={
+          <>
+            Remove <strong>{subjectToRemove?.name}</strong> from {teacher.full_name}&apos;s assigned subjects?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removeMutation.isPending}
+        onClose={() => setSubjectToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </tr>
   );
 }
@@ -140,7 +155,7 @@ export default function TeacherSubjects() {
             ))}
             {filteredTeachers.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ textAlign: "center", color: "#8d8d8d", padding: "2rem" }}>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--os-text-tertiary)", padding: "2rem" }}>
                   No teachers found matching your search.
                 </td>
               </tr>

@@ -1,5 +1,3 @@
-// This file renders the StudentMarks page, allowing students to check their exam and term marks across academic terms.
-
 import { useState } from "react";
 import { Select, SelectItem } from "@carbon/react";
 import { useMyMarks } from "../../queries/useStudentSelf";

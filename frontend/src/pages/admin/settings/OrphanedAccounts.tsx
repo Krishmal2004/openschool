@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Button, SkeletonText, InlineNotification } from "@carbon/react";
+import { Button, SkeletonText } from "@carbon/react";
 import { TrashCan } from "@carbon/icons-react";
 import { useOrphanedAccounts, useDeleteOrphanedAccount } from "../../../queries/useIdentityReconciliation";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
-import { getErrorMessage } from "../../../lib/errorMessage";
+
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 // docs/plan.md §0 — admin-triggered reconciliation, not automatic: deleting
 // a live identity account isn't something to do unattended, so this is a
@@ -33,16 +34,12 @@ export default function OrphanedAccounts() {
         </Button>
       </div>
 
-      {deleteOrphan.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          hideCloseButton
-          title="Could not delete account"
-          subtitle={getErrorMessage(deleteOrphan.error)}
-          style={{ marginBottom: "1rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteOrphan.isError}
+        error={deleteOrphan.error}
+        title="Could not delete account"
+        style={{ marginBottom: "1rem" }}
+      />
 
       {isError && <ErrorMessage message="Could not check for orphaned accounts." onRetry={refetch} />}
 

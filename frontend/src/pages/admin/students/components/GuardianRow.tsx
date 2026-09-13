@@ -24,12 +24,12 @@ export default function GuardianRow({
         alignItems: "center",
         gap: "1rem",
         padding: "0.875rem 1rem",
-        border: "1px solid #e0e0e0",
+        border: "1px solid var(--os-border-subtle)",
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-          <p style={{ margin: 0, fontWeight: 600, fontSize: "0.875rem", color: "#161616" }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: "0.875rem", color: "var(--os-text-primary)" }}>
             {g.full_name}
           </p>
           <Tag size="sm" type="gray">
@@ -47,7 +47,7 @@ export default function GuardianRow({
             </Tag>
           )}
         </div>
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
           {g.phone}
           {g.email ? ` · ${g.email}` : ""}
         </p>

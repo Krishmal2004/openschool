@@ -1,5 +1,3 @@
-// This file renders the TeacherMyAttendance page: the signed-in teacher's own staff-attendance record (present/late/absent/leave), separate from the "Attendance" page they use to mark student attendance.
-
 import { useState } from "react";
 import { Button, Tag } from "@carbon/react";
 import { ChevronLeft, ChevronRight, CheckmarkFilled, CloseFilled, Time, Renew } from "@carbon/icons-react";
@@ -8,11 +6,12 @@ import type { StaffAttendanceStatus } from "../../services/staffAttendance";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
 
+// "Leave" reuses the "excused" attendance-status colors — same palette, different label for the staff-attendance domain.
 const STATUS_STYLES: Record<StaffAttendanceStatus, { bg: string; border: string; color: string; label: string; Icon: typeof CheckmarkFilled }> = {
-  present: { bg: "#defbe6", border: "#24a148", color: "#0e6027", label: "Present", Icon: CheckmarkFilled },
-  absent: { bg: "#fff1f1", border: "#da1e28", color: "#a2191f", label: "Absent", Icon: CloseFilled },
-  late: { bg: "#fdf6dd", border: "#f1c21b", color: "#7d5a00", label: "Late", Icon: Time },
-  leave: { bg: "#f6f2ff", border: "#8a3ffc", color: "#6929c4", label: "Leave", Icon: Renew },
+  present: { bg: "var(--os-status-present-bg)", border: "var(--os-status-present-border)", color: "var(--os-status-present-text)", label: "Present", Icon: CheckmarkFilled },
+  absent: { bg: "var(--os-status-absent-bg)", border: "var(--os-status-absent-border)", color: "var(--os-status-absent-text)", label: "Absent", Icon: CloseFilled },
+  late: { bg: "var(--os-status-late-bg)", border: "var(--os-status-late-border)", color: "var(--os-status-late-text)", label: "Late", Icon: Time },
+  leave: { bg: "var(--os-status-excused-bg)", border: "var(--os-status-excused-border)", color: "var(--os-status-excused-text)", label: "Leave", Icon: Renew },
 };
 
 const MONTH_NAMES = [

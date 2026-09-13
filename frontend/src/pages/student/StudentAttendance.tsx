@@ -1,16 +1,8 @@
-// This file renders the StudentAttendance page, displaying a historical log of the student's attendance records.
-
 import { Tag } from "@carbon/react";
 import { useMyAttendance } from "../../queries/useStudentSelf";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
-
-const STATUS_TAG: Record<string, "green" | "red" | "warm-gray" | "blue"> = {
-  present: "green",
-  absent: "red",
-  late: "warm-gray",
-  excused: "blue",
-};
+import { ATTENDANCE_STATUS_TAG } from "../../lib/attendanceStatus";
 
 export default function StudentAttendance() {
   const { data: records, isLoading } = useMyAttendance();
@@ -49,7 +41,7 @@ export default function StudentAttendance() {
                       <td className="os-table__mono">{r.session_date}</td>
                       <td>{r.class_name}</td>
                       <td>
-                        <Tag type={STATUS_TAG[r.status] ?? "gray"} size="sm">
+                        <Tag type={ATTENDANCE_STATUS_TAG[r.status] ?? "gray"} size="sm">
                           {r.status[0].toUpperCase() + r.status.slice(1)}
                         </Tag>
                       </td>

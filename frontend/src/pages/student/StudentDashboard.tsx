@@ -1,9 +1,10 @@
-// This file renders the StudentDashboard page, presenting the student's profile information, house association, and academic metadata.
-
 import { Tag } from "@carbon/react";
 import { useMyStudentProfile } from "../../queries/useStudentSelf";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
+import { getInitials } from "../../lib/name";
+
+const kvItemStyle = { border: "1px solid var(--os-border-subtle)", background: "var(--os-layer)", padding: "1rem" };
 
 export default function StudentDashboard() {
   const { data: profile, isLoading, isError, refetch } = useMyStudentProfile();
@@ -18,10 +19,10 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <div className="os-profile__banner">
         <div className="os-profile__avatar">
-          {profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          {getInitials(profile.full_name)}
         </div>
         <div style={{ flex: 1 }}>
           <p className="os-profile__name">{profile.full_name}</p>
@@ -46,23 +47,23 @@ export default function StudentDashboard() {
             <h2 className="os-section__title">Student Details</h2>
           </div>
           <div className="os-section__body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-            <div className="os-kv-item" style={{ border: "1px solid #e0e0e0", background: "#ffffff", padding: "1rem" }}>
+            <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Full Name</p>
               <p className="os-kv-item__value">{profile.full_name}</p>
             </div>
-            <div className="os-kv-item" style={{ border: "1px solid #e0e0e0", background: "#ffffff", padding: "1rem" }}>
+            <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Index Number</p>
               <p className="os-kv-item__value">{profile.index_number}</p>
             </div>
-            <div className="os-kv-item" style={{ border: "1px solid #e0e0e0", background: "#ffffff", padding: "1rem" }}>
+            <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Class</p>
               <p className="os-kv-item__value">{profile.class_name || "—"}</p>
             </div>
-            <div className="os-kv-item" style={{ border: "1px solid #e0e0e0", background: "#ffffff", padding: "1rem" }}>
+            <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Grade</p>
               <p className="os-kv-item__value">{profile.grade_name || "—"}</p>
             </div>
-            <div className="os-kv-item" style={{ border: "1px solid #e0e0e0", background: "#ffffff", padding: "1rem" }}>
+            <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">House</p>
               <p className="os-kv-item__value">{profile.house_name || "—"}</p>
             </div>

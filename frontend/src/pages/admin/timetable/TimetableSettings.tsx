@@ -1,14 +1,12 @@
-// This file renders the TimetableSettings page, allowing administrators to configure default templates and custom intervals for different grades.
-
 import { useState } from "react";
 import { Save } from "@carbon/icons-react";
 import { Button, TextInput, NumberInput, InlineNotification, SkeletonText, Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useTimetableSettings, useUpsertTimetableSettings } from "../../../queries/timetable/useTimetableSettings";
 import type { TimetableSettings as TimetableSettingsData } from "../../../services/timetable/timetableSettings";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import GradeSections from "./GradeSections";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const DEFAULTS = {
   school_start_time: "08:00",
@@ -17,6 +15,17 @@ const DEFAULTS = {
   period_duration_minutes: 40,
   interval_duration_minutes: 30,
 };
+
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>
+        {label}
+      </p>
+      <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "var(--os-text-primary)", margin: 0 }}>{value}</p>
+    </div>
+  );
+}
 
 function SettingsForm({
   academicYearId,
@@ -62,30 +71,18 @@ function SettingsForm({
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: "1.25rem",
-            background: "#f4f4f4",
+            background: "var(--os-layer-hover)",
             padding: "1rem 1.5rem",
             marginBottom: "1.5rem",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--os-border-subtle)",
           }}
         >
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>School Hours</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.school_start_time} – {initial.school_end_time}
-            </p>
-          </div>
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>Periods & Duration</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.number_of_periods} periods ({initial.period_duration_minutes} mins)
-            </p>
-          </div>
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "#525252", margin: "0 0 0.25rem", fontWeight: 600, textTransform: "uppercase" }}>Default Interval</p>
-            <p style={{ fontSize: "1.125rem", fontWeight: 300, color: "#161616", margin: 0 }}>
-              {initial.interval_duration_minutes} minutes
-            </p>
-          </div>
+          <SummaryStat label="School Hours" value={`${initial.school_start_time} – ${initial.school_end_time}`} />
+          <SummaryStat
+            label="Periods & Duration"
+            value={`${initial.number_of_periods} periods (${initial.period_duration_minutes} mins)`}
+          />
+          <SummaryStat label="Default Interval" value={`${initial.interval_duration_minutes} minutes`} />
         </div>
       )}
 
@@ -94,16 +91,13 @@ function SettingsForm({
           {upsert.isPending ? "Saving…" : "Save"}
         </Button>
       </div>
-      {upsert.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not save settings"
-          subtitle={getErrorMessage(upsert.error)}
-          lowContrast
-          onClose={() => upsert.reset()}
-          style={{ maxWidth: "100%", marginBottom: "1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={upsert.isError}
+        error={upsert.error}
+        title="Could not save settings"
+        onClose={() => upsert.reset()}
+        style={{ marginBottom: "1rem" }}
+      />
       {upsert.isSuccess && (
         <InlineNotification
           kind="success"

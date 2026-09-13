@@ -2,8 +2,7 @@ import { Time } from "@carbon/icons-react";
 import RoleBadge from "./RoleBadge";
 import type { PositionRankLabel } from "../../../services/position";
 import type { Teacher } from "../../../services/teacher";
-
-const ACCENT = "#406AAF";
+import { getInitials } from "../../../lib/name";
 
 export default function WelcomeBanner({
   profile,
@@ -20,16 +19,15 @@ export default function WelcomeBanner({
   pendingCount: number;
   rankLabel: PositionRankLabel;
 }) {
-  const initials = profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div
       style={{
-        background: "#ffffff",
-        border: "1px solid #e0e0e0",
-        borderTop: `3px solid ${ACCENT}`,
+        background: "var(--os-layer)",
+        border: "1px solid var(--os-border-subtle)",
+        borderTop: "3px solid var(--os-accent)",
         padding: "1.25rem 1.5rem",
         marginBottom: "1.5rem",
         display: "flex",
@@ -43,34 +41,34 @@ export default function WelcomeBanner({
           width: "2.75rem",
           height: "2.75rem",
           borderRadius: "50%",
-          background: ACCENT,
+          background: "var(--os-accent)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#fff",
+          color: "var(--os-layer)",
           fontWeight: 700,
           fontSize: "1rem",
           flexShrink: 0,
         }}
       >
-        {initials}
+        {getInitials(profile.full_name)}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.15rem", flexWrap: "wrap" }}>
-          <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 500, color: "#161616" }}>
+          <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 500, color: "var(--os-text-primary)" }}>
             {greeting}, {profile.title ? `${profile.title} ` : ""}{profile.full_name}
           </p>
           <RoleBadge rankLabel={rankLabel} />
         </div>
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
           {subjectSummary} · {profile.employee_number}
           {currentYearLabel ? ` · ${currentYearLabel}` : ""}
           {currentTermName ? ` ${currentTermName}` : ""}
         </p>
       </div>
       {pendingCount > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.875rem", background: "#fff8e1", border: "1px solid #f1c21b", fontSize: "0.8125rem", color: "#6b4c00" }}>
-          <Time size={14} style={{ fill: "#f1c21b" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.875rem", background: "var(--os-status-late-bg)", border: "1px solid var(--os-warning)", fontSize: "0.8125rem", color: "var(--os-warning-text)" }}>
+          <Time size={14} style={{ fill: "var(--os-warning)" }} />
           {pendingCount} session{pendingCount > 1 ? "s" : ""} pending today
         </div>
       )}

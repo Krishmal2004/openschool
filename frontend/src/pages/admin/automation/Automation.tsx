@@ -1,19 +1,15 @@
-import { Toggle, Tag, Button, SkeletonText, InlineNotification } from "@carbon/react";
+import { Toggle, Tag, Button, SkeletonText } from "@carbon/react";
 import { Play } from "@carbon/icons-react";
 import { useJobs, useSetJobEnabled, useRunJobNow } from "../../../queries/useJobs";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 import type { JobRunStatus } from "../../../services/jobs";
 
 function humanizeJobName(name: string) {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Every agent's schedule is a fixed 5-field cron expression it sets in code
-// (not user-configurable), so a small lookup table reads better than a raw
-// cron string next to each agent's name. Falls back to the raw expression
-// for anything not in the table, so a future agent's schedule never renders
-// as blank.
+// Agent schedules are fixed cron expressions set in code; this just reads friendlier than raw cron next to each name.
 const SCHEDULE_LABELS: Record<string, string> = {
   "0 * * * *": "Hourly",
   "0 2 * * *": "Daily at 2:00 AM",
@@ -26,10 +22,7 @@ function humanizeSchedule(cron: string) {
   return SCHEDULE_LABELS[cron] ?? cron;
 }
 
-// The system-health agent (backup + migration drift) can't be disabled —
-// see the matching check in internal/handlers/jobs.go's SetEnabled.
-// Disabling it silently stops the school's only backup mechanism, with no
-// other symptom until an incident.
+// Can't be disabled — it's the school's only backup mechanism (see internal/handlers/jobs.go's SetEnabled).
 const NON_DISABLEABLE_JOBS = new Set(["system_health_agent"]);
 
 function statusTag(status: JobRunStatus) {
@@ -68,19 +61,17 @@ export default function Automation() {
         </div>
       )}
 
-      {(setEnabled.isError || runNow.isError) && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Action failed"
-          subtitle={getErrorMessage(setEnabled.error ?? runNow.error, "Please try again.")}
-          onClose={() => {
-            setEnabled.reset();
-            runNow.reset();
-          }}
-          style={{ marginBottom: "1.5rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={setEnabled.isError || runNow.isError}
+        error={setEnabled.error ?? runNow.error}
+        title="Action failed"
+        fallback="Please try again."
+        onClose={() => {
+          setEnabled.reset();
+          runNow.reset();
+        }}
+        style={{ marginBottom: "1.5rem" }}
+      />
 
       <div className="os-section" style={{ marginTop: 0 }}>
         {isLoading && (
@@ -99,7 +90,7 @@ export default function Automation() {
                 justifyContent: "space-between",
                 gap: "1.5rem",
                 padding: "1rem 1.5rem",
-                borderBottom: i < (jobs?.length ?? 0) - 1 ? "1px solid #e0e0e0" : "none",
+                borderBottom: i < (jobs?.length ?? 0) - 1 ? "1px solid var(--os-border-subtle)" : "none",
                 flexWrap: "wrap",
               }}
             >
@@ -108,7 +99,7 @@ export default function Automation() {
                   <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>{humanizeJobName(job.name)}</span>
                   <Tag type="blue" size="sm">{humanizeSchedule(job.schedule)}</Tag>
                 </div>
-                <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>{job.description}</p>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>{job.description}</p>
 
                 {job.last_run ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.625rem", flexWrap: "wrap" }}>
@@ -116,15 +107,15 @@ export default function Automation() {
                     {job.last_run.findings > 0 && (
                       <Tag type="magenta" size="sm">{job.last_run.findings} finding{job.last_run.findings === 1 ? "" : "s"}</Tag>
                     )}
-                    <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                       Last ran {new Date(job.last_run.started_at).toLocaleString()}
                     </span>
                   </div>
                 ) : (
-                  <p style={{ margin: "0.625rem 0 0", fontSize: "0.75rem", color: "#8d8d8d" }}>Never run yet</p>
+                  <p style={{ margin: "0.625rem 0 0", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Never run yet</p>
                 )}
                 {job.last_run?.summary && (
-                  <p style={{ margin: "0.375rem 0 0", fontSize: "0.8125rem", color: "#161616" }}>{job.last_run.summary}</p>
+                  <p style={{ margin: "0.375rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-primary)" }}>{job.last_run.summary}</p>
                 )}
               </div>
 

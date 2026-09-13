@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tag, Select, SelectItem, InlineNotification, Button } from "@carbon/react";
+import { Tag, Select, SelectItem, Button } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
 import {
   useUpdateNonAcademicStaffEmploymentStatus,
@@ -8,10 +8,10 @@ import {
 } from "../../../../queries/useNonAcademicStaff";
 import { useHouses } from "../../../../queries/useHouses";
 import type { NonAcademicStaff as StaffRow, NonAcademicEmploymentStatus } from "../../../../services/nonAcademicStaff";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
 import { EMPLOYMENT_STATUSES, designationLabel } from "../constants";
 import StaffFormModal from "./StaffFormModal";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onDeleted: () => void }) {
   const { data: houses } = useHouses();
@@ -52,24 +52,22 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
         </div>
       </div>
       <div className="os-section__body">
-        {deleteStaff.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete staff member"
-            subtitle={getErrorMessage(deleteStaff.error, "Something went wrong.")}
-            lowContrast
-            onClose={() => deleteStaff.reset()}
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteStaff.isError}
+          error={deleteStaff.error}
+          title="Could not delete staff member"
+          fallback="Something went wrong."
+          onClose={() => deleteStaff.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
           <div>
-            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "#8d8d8d" }}>Phone</p>
+            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Phone</p>
             <p style={{ margin: 0, fontSize: "0.875rem" }}>{staff.phone || "—"}</p>
           </div>
           <div>
-            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "#8d8d8d" }}>Joined</p>
+            <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Joined</p>
             <p style={{ margin: 0, fontSize: "0.875rem" }}>{staff.joined_date ?? "—"}</p>
           </div>
         </div>
@@ -115,7 +113,7 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
                 backgroundColor: currentHouse.color,
               }}
             />
-            <span style={{ fontSize: "0.8125rem", color: "#525252" }}>{currentHouse.name}</span>
+            <span style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>{currentHouse.name}</span>
           </div>
         )}
       </div>

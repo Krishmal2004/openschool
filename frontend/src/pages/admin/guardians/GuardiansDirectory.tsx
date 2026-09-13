@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Search } from "@carbon/icons-react";
-import { SkeletonText, Checkbox, Pagination } from "@carbon/react";
+import { Checkbox, Pagination } from "@carbon/react";
 import { useGuardians, useSearchGuardians } from "../../../queries/useGuardians";
 import { usePagination } from "../../../hooks/usePagination";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import Avatar from "../../../components/common/Avatar";
+import ListRowSkeleton from "../../../components/common/ListRowSkeleton";
 import { relationshipLabel } from "./constants";
 import GuardianDetail from "./components/GuardianDetail";
 
@@ -67,9 +68,7 @@ export default function GuardiansDirectory() {
           {isLoading && (
             <div>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #e0e0e0" }}>
-                  <SkeletonText width="70%" />
-                </div>
+                <ListRowSkeleton key={i} leadingWidth="2.25rem" titleWidth="70%" subtitleWidth={null} trailingWidth={null} />
               ))}
             </div>
           )}
@@ -86,30 +85,12 @@ export default function GuardiansDirectory() {
           )}
 
           {!isLoading &&
-            pageItems.map((g, i) => (
+            pageItems.map((g) => (
               <button
                 key={g.id}
                 onClick={() => setSelectedId(g.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.75rem 1.5rem",
-                  border: "none",
-                  borderBottom: i < pageItems.length - 1 ? "1px solid #e0e0e0" : "none",
-                  background: selected?.id === g.id ? "#edf5ff" : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  transition: "background 70ms ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (selected?.id !== g.id) e.currentTarget.style.background = "#f4f4f4";
-                }}
-                onMouseLeave={(e) => {
-                  if (selected?.id !== g.id) e.currentTarget.style.background = "transparent";
-                }}
+                className={selected?.id === g.id ? "os-list-row os-list-row--button is-selected" : "os-list-row os-list-row--button"}
+                style={{ padding: "0.75rem 1.5rem", gap: "0.75rem" }}
               >
                 <Avatar name={g.full_name} size="sm" />
                 <div style={{ minWidth: 0 }}>
@@ -117,7 +98,7 @@ export default function GuardiansDirectory() {
                     style={{
                       fontWeight: 600,
                       fontSize: "0.875rem",
-                      color: "#161616",
+                      color: "var(--os-text-primary)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -125,7 +106,7 @@ export default function GuardiansDirectory() {
                   >
                     {g.full_name}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                     {relationshipLabel(g.relationship)} · {g.phone}
                   </div>
                 </div>

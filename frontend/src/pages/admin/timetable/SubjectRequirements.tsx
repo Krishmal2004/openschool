@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { TrashCan } from "@carbon/icons-react";
-import { Button, NumberInput, InlineNotification, SkeletonText, Dropdown } from "@carbon/react";
+import { NumberInput, SkeletonText, Dropdown } from "@carbon/react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useGrades } from "../../../queries/useGrades";
 import { useSubjects } from "../../../queries/useSubjects";
@@ -9,11 +8,12 @@ import {
   useUpsertSubjectPeriodRequirement,
   useDeleteSubjectPeriodRequirement,
 } from "../../../queries/timetable/useSubjectPeriodRequirements";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
 import type { Grade } from "../../../services/grade";
 import type { SubjectPeriodRequirement } from "../../../services/timetable/subjectPeriodRequirement";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 export default function SubjectRequirements() {
   const { data: currentYear } = useCurrentAcademicYear();
@@ -92,26 +92,20 @@ export default function SubjectRequirements() {
           <EmptyState title="No subjects yet" description="Add subjects under Subjects first." />
         ) : (
           <>
-            {upsert.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not save"
-                subtitle={getErrorMessage(upsert.error)}
-                lowContrast
-                onClose={() => upsert.reset()}
-                style={{ maxWidth: "100%", marginBottom: "1rem" }}
-              />
-            )}
-            {remove.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not clear requirement"
-                subtitle={getErrorMessage(remove.error)}
-                lowContrast
-                onClose={() => remove.reset()}
-                style={{ maxWidth: "100%", marginBottom: "1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={upsert.isError}
+              error={upsert.error}
+              title="Could not save"
+              onClose={() => upsert.reset()}
+              style={{ marginBottom: "1rem" }}
+            />
+            <MutationErrorNotification
+              isError={remove.isError}
+              error={remove.error}
+              title="Could not clear requirement"
+              onClose={() => remove.reset()}
+              style={{ marginBottom: "1rem" }}
+            />
             <table className="os-table">
               <thead>
                 <tr>
@@ -168,15 +162,9 @@ export default function SubjectRequirements() {
                         />
                       </td>
                       <td>
-                        {/* Clearing removes the row entirely, which is not the
-                            same as setting 0 periods — an unset subject is not
-                            checked by the timetable validator at all. */}
-                        <Button
-                          hasIconOnly
-                          kind="ghost"
-                          size="sm"
-                          iconDescription="Clear requirement"
-                          renderIcon={TrashCan}
+                        {/* Clearing removes the row (unset), distinct from setting 0 periods (checked by the validator as zero). */}
+                        <RemoveIconButton
+                          label="Clear requirement"
                           disabled={!requirement || remove.isPending}
                           onClick={() => requirement && setToRemove(requirement)}
                         />

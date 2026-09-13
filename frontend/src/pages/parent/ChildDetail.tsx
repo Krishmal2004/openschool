@@ -1,5 +1,3 @@
-// This file renders the ChildDetail page, allowing parents to track their child's attendance, marks, class timetables, enrolled subjects, narrative progress reports, portfolio history, and linked guardians.
-
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { Tabs, TabList, Tab, TabPanels, TabPanel, Select, SelectItem, Tag } from "@carbon/react";
@@ -21,14 +19,10 @@ import { useStudentSocietyMemberships } from "../../queries/useSocieties";
 import { useGuardiansByStudent } from "../../queries/useGuardians";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
-
-const WEEKDAYS = [
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-];
+import PortfolioSection from "../../components/common/PortfolioSection";
+import { getInitials } from "../../lib/name";
+import { ATTENDANCE_STATUS_TAG } from "../../lib/attendanceStatus";
+import { WEEKDAYS } from "../../lib/timetable";
 
 const SEVERITY_TAG: Record<string, "red" | "magenta" | "cool-gray"> = {
   severe: "red",
@@ -84,13 +78,6 @@ function TimetableTab({ studentId }: { studentId: string }) {
   );
 }
 
-const STATUS_TAG: Record<string, "green" | "red" | "warm-gray" | "blue"> = {
-  present: "green",
-  absent: "red",
-  late: "warm-gray",
-  excused: "blue",
-};
-
 function AttendanceTab({ studentId }: { studentId: string }) {
   const { data: records, isLoading } = useChildAttendance(studentId);
 
@@ -117,7 +104,7 @@ function AttendanceTab({ studentId }: { studentId: string }) {
             <td className="os-table__mono">{r.session_date}</td>
             <td>{r.class_name}</td>
             <td>
-              <Tag type={STATUS_TAG[r.status] ?? "gray"} size="sm">
+              <Tag type={ATTENDANCE_STATUS_TAG[r.status] ?? "gray"} size="sm">
                 {r.status[0].toUpperCase() + r.status.slice(1)}
               </Tag>
             </td>
@@ -261,140 +248,117 @@ function PortfolioTab({ studentId }: { studentId: string }) {
 
   return (
     <div style={{ display: "grid", gap: "1.5rem" }}>
-      <div>
-        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Prefect Appointments</h3>
-        {!prefects || prefects.length === 0 ? (
-          <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>No prefect appointments recorded.</p>
-        ) : (
-          <table className="os-table os-table--no-hover">
+      <PortfolioSection title="Prefect Appointments" isEmpty={!prefects || prefects.length === 0} emptyMessage="No prefect appointments recorded.">
+        <table className="os-table os-table--no-hover">
+          <thead>
+            <tr><th>Year</th><th>Appointment / Rank</th></tr>
+          </thead>
+          <tbody>
+            {prefects?.map((p) => (
+              <tr key={p.id}>
+                <td style={{ fontWeight: 500 }}>{p.academic_year_label}</td>
+                <td>{p.rank}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PortfolioSection>
+
+      <PortfolioSection title="Societies & Clubs" isEmpty={!societies || societies.length === 0} emptyMessage="No society memberships recorded.">
+        <table className="os-table os-table--no-hover">
+          <thead>
+            <tr><th>Society</th><th>Role</th><th>Joined Date</th></tr>
+          </thead>
+          <tbody>
+            {societies?.map((s) => (
+              <tr key={s.id}>
+                <td style={{ fontWeight: 500 }}>{s.society_name}</td>
+                <td>{s.role ? s.role[0].toUpperCase() + s.role.slice(1) : "Member"}</td>
+                <td className="os-table__mono">{s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PortfolioSection>
+
+      <PortfolioSection title="Co-curricular Activities" isEmpty={!activities || activities.length === 0} emptyMessage="No activities logged.">
+        <table className="os-table os-table--no-hover">
+          <thead>
+            <tr><th>Activity</th><th>Category</th><th>Role</th><th>Achievement</th></tr>
+          </thead>
+          <tbody>
+            {activities?.map((a) => (
+              <tr key={a.id}>
+                <td style={{ fontWeight: 500 }}>{a.name}</td>
+                <td>{a.category ? a.category[0].toUpperCase() + a.category.slice(1) : "—"}</td>
+                <td>{a.role || "Participant"}</td>
+                <td>{a.achievement || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PortfolioSection>
+
+      <PortfolioSection
+        title="Leadership & Awards"
+        isEmpty={(!leadership || leadership.length === 0) && (!awards || awards.length === 0)}
+        emptyMessage="No leadership roles or awards recorded."
+      >
+        {leadership && leadership.length > 0 && (
+          <table className="os-table os-table--no-hover" style={{ marginBottom: "1rem" }}>
             <thead>
-              <tr><th>Year</th><th>Appointment / Rank</th></tr>
+              <tr><th>Leadership Role</th><th>Scope</th><th>Assigned</th></tr>
             </thead>
             <tbody>
-              {prefects.map((p) => (
-                <tr key={p.id}>
-                  <td style={{ fontWeight: 500 }}>{p.academic_year_label}</td>
-                  <td>{p.rank}</td>
+              {leadership.map((l) => (
+                <tr key={l.id}>
+                  <td style={{ fontWeight: 500 }}>{l.title}</td>
+                  <td>{l.scope || "School"}</td>
+                  <td className="os-table__mono">{l.created_at ? new Date(l.created_at).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-      </div>
-
-      <div>
-        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, margin: "1rem 0 0.5rem" }}>Societies & Clubs</h3>
-        {!societies || societies.length === 0 ? (
-          <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>No society memberships recorded.</p>
-        ) : (
+        {awards && awards.length > 0 && (
           <table className="os-table os-table--no-hover">
             <thead>
-              <tr><th>Society</th><th>Role</th><th>Joined Date</th></tr>
+              <tr><th>Award Recognition</th><th>Category</th><th>Date</th></tr>
             </thead>
             <tbody>
-              {societies.map((s) => (
-                <tr key={s.id}>
-                  <td style={{ fontWeight: 500 }}>{s.society_name}</td>
-                  <td>{s.role ? s.role[0].toUpperCase() + s.role.slice(1) : "Member"}</td>
-                  <td className="os-table__mono">{s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}</td>
+              {awards.map((aw) => (
+                <tr key={aw.id}>
+                  <td style={{ fontWeight: 500 }}>{aw.title}</td>
+                  <td>{aw.category || "—"}</td>
+                  <td className="os-table__mono">{aw.awarded_date ? new Date(aw.awarded_date).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-      </div>
+      </PortfolioSection>
 
-      <div>
-        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, margin: "1rem 0 0.5rem" }}>Co-curricular Activities</h3>
-        {!activities || activities.length === 0 ? (
-          <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>No activities logged.</p>
-        ) : (
-          <table className="os-table os-table--no-hover">
-            <thead>
-              <tr><th>Activity</th><th>Category</th><th>Role</th><th>Achievement</th></tr>
-            </thead>
-            <tbody>
-              {activities.map((a) => (
-                <tr key={a.id}>
-                  <td style={{ fontWeight: 500 }}>{a.name}</td>
-                  <td>{a.category ? a.category[0].toUpperCase() + a.category.slice(1) : "—"}</td>
-                  <td>{a.role || "Participant"}</td>
-                  <td>{a.achievement || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div>
-        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, margin: "1rem 0 0.5rem" }}>Leadership & Awards</h3>
-        {(!leadership || leadership.length === 0) && (!awards || awards.length === 0) ? (
-          <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>No leadership roles or awards recorded.</p>
-        ) : (
-          <>
-            {leadership && leadership.length > 0 && (
-              <table className="os-table os-table--no-hover" style={{ marginBottom: "1rem" }}>
-                <thead>
-                  <tr><th>Leadership Role</th><th>Scope</th><th>Assigned</th></tr>
-                </thead>
-                <tbody>
-                  {leadership.map((l) => (
-                    <tr key={l.id}>
-                      <td style={{ fontWeight: 500 }}>{l.title}</td>
-                      <td>{l.scope || "School"}</td>
-                      <td className="os-table__mono">{l.created_at ? new Date(l.created_at).toLocaleDateString() : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {awards && awards.length > 0 && (
-              <table className="os-table os-table--no-hover">
-                <thead>
-                  <tr><th>Award Recognition</th><th>Category</th><th>Date</th></tr>
-                </thead>
-                <tbody>
-                  {awards.map((aw) => (
-                    <tr key={aw.id}>
-                      <td style={{ fontWeight: 500 }}>{aw.title}</td>
-                      <td>{aw.category || "—"}</td>
-                      <td className="os-table__mono">{aw.awarded_date ? new Date(aw.awarded_date).toLocaleDateString() : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
-        )}
-      </div>
-
-      <div>
-        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, margin: "1rem 0 0.5rem" }}>Disciplinary Records</h3>
-        {!discipline || discipline.length === 0 ? (
-          <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>Disciplinary status is clear.</p>
-        ) : (
-          <table className="os-table os-table--no-hover">
-            <thead>
-              <tr><th>Date</th><th>Incident</th><th>Severity</th><th>Action Taken</th></tr>
-            </thead>
-            <tbody>
-              {discipline.map((d) => (
-                <tr key={d.id}>
-                  <td className="os-table__mono">{d.incident_date ? new Date(d.incident_date).toLocaleDateString() : "—"}</td>
-                  <td style={{ fontWeight: 500 }}>{d.description}</td>
-                  <td>
-                    <Tag type={SEVERITY_TAG[d.severity] ?? "cool-gray"} size="sm">
-                      {d.severity ? d.severity[0].toUpperCase() + d.severity.slice(1) : "Minor"}
-                    </Tag>
-                  </td>
-                  <td>{d.action_taken || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <PortfolioSection title="Disciplinary Records" isEmpty={!discipline || discipline.length === 0} emptyMessage="Disciplinary status is clear.">
+        <table className="os-table os-table--no-hover">
+          <thead>
+            <tr><th>Date</th><th>Incident</th><th>Severity</th><th>Action Taken</th></tr>
+          </thead>
+          <tbody>
+            {discipline?.map((d) => (
+              <tr key={d.id}>
+                <td className="os-table__mono">{d.incident_date ? new Date(d.incident_date).toLocaleDateString() : "—"}</td>
+                <td style={{ fontWeight: 500 }}>{d.description}</td>
+                <td>
+                  <Tag type={SEVERITY_TAG[d.severity] ?? "cool-gray"} size="sm">
+                    {d.severity ? d.severity[0].toUpperCase() + d.severity.slice(1) : "Minor"}
+                  </Tag>
+                </td>
+                <td>{d.action_taken || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PortfolioSection>
     </div>
   );
 }
@@ -425,7 +389,7 @@ function GuardiansTab({ studentId }: { studentId: string }) {
             <td className="os-table__mono">{g.phone || "—"}</td>
             <td>
               {g.is_primary_contact ? (
-                <span style={{ color: "#24a148", fontWeight: 600 }}>Yes</span>
+                <span style={{ color: "var(--os-success)", fontWeight: 600 }}>Yes</span>
               ) : (
                 "No"
               )}
@@ -460,10 +424,10 @@ export default function ChildDetail() {
   }
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <div className="os-profile__banner">
         <div className="os-profile__avatar">
-          {child.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          {getInitials(child.full_name)}
         </div>
         <div style={{ flex: 1 }}>
           <p className="os-profile__name">{child.full_name}</p>

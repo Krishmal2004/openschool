@@ -1,5 +1,3 @@
-// This file renders the TeacherAttendance page, displaying historical attendance sessions for classes the teacher is responsible for and allowing them to mark today's sessions.
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Tag } from "@carbon/react";
@@ -11,8 +9,6 @@ import { attendanceApi, type AttendanceSession } from "../../services/attendance
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import { todayISODate } from "../../lib/date";
-
-const ACCENT = "#406AAF";
 
 function PendingClassAction({ classId, className, gradeName }: { classId: string; className: string; gradeName: string }) {
   const navigate = useNavigate();
@@ -29,7 +25,7 @@ function PendingClassAction({ classId, className, gradeName }: { classId: string
     <button
       onClick={handleClick}
       disabled={createSession.isPending}
-      style={{ padding: "0.5rem 1rem", background: ACCENT, color: "#fff", border: "none", cursor: "pointer", fontSize: "0.8125rem", fontWeight: 500, whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "0.4rem", fontFamily: "inherit" }}
+      style={{ padding: "0.5rem 1rem", background: "var(--os-accent)", color: "var(--os-layer)", border: "none", cursor: "pointer", fontSize: "0.8125rem", fontWeight: 500, whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "0.4rem", fontFamily: "inherit" }}
     >
       <EventSchedule size={14} /> {createSession.isPending ? "Starting…" : `${gradeName} — ${className}`}
     </button>
@@ -47,24 +43,24 @@ function SessionRow({ session, className }: { session: AttendanceSession; classN
       <td style={{ fontWeight: 600 }}>{className}</td>
       <td>
         {isLoading ? (
-          <span style={{ color: "#8d8d8d" }}>—</span>
+          <span style={{ color: "var(--os-text-tertiary)" }}>—</span>
         ) : (
           <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            <CheckmarkFilled size={14} style={{ fill: "#24a148" }} />
-            <span style={{ color: "#24a148", fontWeight: 600 }}>{present}</span>
+            <CheckmarkFilled size={14} style={{ fill: "var(--os-success)" }} />
+            <span style={{ color: "var(--os-success)", fontWeight: 600 }}>{present}</span>
           </span>
         )}
       </td>
       <td>
         {isLoading ? (
-          <span style={{ color: "#8d8d8d" }}>—</span>
+          <span style={{ color: "var(--os-text-tertiary)" }}>—</span>
         ) : (
-          <span style={{ color: absent > 0 ? "#da1e28" : "#8d8d8d", fontWeight: absent > 0 ? 600 : 400 }}>{absent}</span>
+          <span style={{ color: absent > 0 ? "var(--os-danger)" : "var(--os-text-tertiary)", fontWeight: absent > 0 ? 600 : 400 }}>{absent}</span>
         )}
       </td>
       <td><Tag type="blue" size="sm">Marked</Tag></td>
       <td>
-        <Link to={`/attendance/sessions/${session.id}/mark`} style={{ color: "#8d8d8d", textDecoration: "none", fontSize: "0.8125rem" }}>
+        <Link to={`/attendance/sessions/${session.id}/mark`} style={{ color: "var(--os-text-tertiary)", textDecoration: "none", fontSize: "0.8125rem" }}>
           View
         </Link>
       </td>
@@ -128,13 +124,13 @@ export default function TeacherAttendance() {
       </div>
 
       {pendingToday.length > 0 && (
-        <div style={{ background: "#fff8e1", border: "1px solid #f1c21b", padding: "0.875rem 1.25rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-          <Time size={18} style={{ fill: "#f1c21b", flexShrink: 0 }} />
+        <div style={{ background: "var(--os-status-late-bg)", border: "1px solid var(--os-warning)", padding: "0.875rem 1.25rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <Time size={18} style={{ fill: "var(--os-warning)", flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ margin: "0 0 0.1rem", fontWeight: 600, fontSize: "0.875rem", color: "#6b4c00" }}>
+            <p style={{ margin: "0 0 0.1rem", fontWeight: 600, fontSize: "0.875rem", color: "var(--os-warning-text)" }}>
               {pendingToday.length} class{pendingToday.length > 1 ? "es" : ""} not marked today
             </p>
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "#8d6300" }}>Start today's session for a class.</p>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-warning-text)" }}>Start today's session for a class.</p>
           </div>
           {pendingToday.map((c) => (
             <PendingClassAction key={c.class_id} classId={c.class_id} className={c.class_name} gradeName={c.grade_name} />
@@ -144,13 +140,18 @@ export default function TeacherAttendance() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
         {[
-          { label: "Total Sessions", value: allSessions.length, color: "#161616" },
-          { label: "Marked Today", value: todayClassIds.size, color: "#24a148" },
-          { label: "Pending Today", value: pendingToday.length, color: pendingToday.length > 0 ? "#da1e28" : "#8d8d8d" },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: "#ffffff", border: "1px solid #e0e0e0", borderTop: `3px solid ${color === "#161616" ? ACCENT : color}`, padding: "1rem 1.25rem" }}>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#525252" }}>{label}</p>
-            <p style={{ margin: 0, fontSize: "1.75rem", fontWeight: 300, color }}>{value}</p>
+          { label: "Total Sessions", value: allSessions.length, borderColor: "var(--os-accent)", valueColor: "var(--os-text-primary)" },
+          { label: "Marked Today", value: todayClassIds.size, borderColor: "var(--os-success)", valueColor: "var(--os-success)" },
+          {
+            label: "Pending Today",
+            value: pendingToday.length,
+            borderColor: pendingToday.length > 0 ? "var(--os-danger)" : "var(--os-text-tertiary)",
+            valueColor: pendingToday.length > 0 ? "var(--os-danger)" : "var(--os-text-tertiary)",
+          },
+        ].map(({ label, value, borderColor, valueColor }) => (
+          <div key={label} className="os-stat-card" style={{ borderTop: `3px solid ${borderColor}` }}>
+            <p className="os-stat-card__label">{label}</p>
+            <p className="os-stat-card__value" style={{ color: valueColor }}>{value}</p>
           </div>
         ))}
       </div>
@@ -185,7 +186,7 @@ export default function TeacherAttendance() {
             ))}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "#8d8d8d", padding: "2rem" }}>
+                <td colSpan={6} style={{ textAlign: "center", color: "var(--os-text-tertiary)", padding: "2rem" }}>
                   No sessions found
                 </td>
               </tr>

@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { Button, DatePicker, DatePickerInput, Pagination, InlineNotification } from "@carbon/react";
+import { Button, DatePicker, DatePickerInput, Pagination } from "@carbon/react";
 import { Add } from "@carbon/icons-react";
 import type { useClassSessions, useCreateSession, useDeleteSession } from "../../../../queries/useAttendance";
 import type { AttendanceSession } from "../../../../services/attendance";
-import { getErrorMessage as apiError } from "../../../../lib/errorMessage";
 import { toYmd } from "../../../../lib/date";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 import EmptyState from "../../../../components/common/EmptyState";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 interface Props {
   sessions: ReturnType<typeof useClassSessions>["data"];
@@ -84,29 +84,22 @@ export default function AttendanceTab({
         </div>
       </div>
 
-      {createSession.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not create session"
-          subtitle={apiError(
-            createSession.error,
-            "A session may already exist for this class on this date.",
-          )}
-          lowContrast
-          onClose={() => createSession.reset()}
-          style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-        />
-      )}
-      {deleteSession.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete session"
-          subtitle={apiError(deleteSession.error, "Please try again.")}
-          lowContrast
-          onClose={() => deleteSession.reset()}
-          style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={createSession.isError}
+        error={createSession.error}
+        title="Could not create session"
+        fallback="A session may already exist for this class on this date."
+        onClose={() => createSession.reset()}
+        style={{ margin: "0 1.5rem 1rem" }}
+      />
+      <MutationErrorNotification
+        isError={deleteSession.isError}
+        error={deleteSession.error}
+        title="Could not delete session"
+        fallback="Please try again."
+        onClose={() => deleteSession.reset()}
+        style={{ margin: "0 1.5rem 1rem" }}
+      />
 
       {sessionsLoading ? (
         <LoadingSpinner />
@@ -137,7 +130,7 @@ export default function AttendanceTab({
                         size="sm"
                         as={Link}
                         to={`/attendance/sessions/${s.id}/mark`}
-                        style={{ color: "#406AAF", whiteSpace: "nowrap" }}
+                        style={{ color: "var(--os-accent)", whiteSpace: "nowrap" }}
                       >
                         Mark / View
                       </Button>

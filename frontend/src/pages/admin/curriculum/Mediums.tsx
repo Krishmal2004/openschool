@@ -3,12 +3,10 @@ import { Add, Language } from "@carbon/icons-react";
 import {
   Button,
   TextInput,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
   ModalFooter,
-  SkeletonText,
 } from "@carbon/react";
 import {
   useMediums,
@@ -17,26 +15,12 @@ import {
   useDeleteMedium,
 } from "../../../queries/useCurriculum";
 import type { Medium } from "../../../services/curriculum";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
-
-function MediumRowSkeleton() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        padding: "1rem 1.5rem",
-        borderBottom: "1px solid #e0e0e0",
-        gap: "1rem",
-      }}
-    >
-      <SkeletonText width="30%" />
-    </div>
-  );
-}
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
+import SectionHeader from "../../../components/common/SectionHeader";
+import ListRowSkeleton from "../../../components/common/ListRowSkeleton";
 
 export default function Mediums() {
   const { data: mediums, isLoading, isError, refetch } = useMediums();
@@ -87,15 +71,8 @@ export default function Mediums() {
 
   return (
     <div className="os-page">
-      <div
-        className="os-page__header"
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
+      <div className="os-page__header">
+        <div className="os-page__header-left">
           <h1 className="os-page__title">Mediums</h1>
           <p className="os-page__subtitle">
             Languages of instruction. Used to restrict a subject within a
@@ -108,19 +85,15 @@ export default function Mediums() {
       </div>
 
       <div className="os-section">
-        <div className="os-section__header">
-          <h2 className="os-section__title">Mediums</h2>
-          {mediums && (
-            <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
-              {mediums.length} total
-            </span>
-          )}
-        </div>
+        <SectionHeader
+          title="Mediums"
+          meta={mediums && <span className="os-section__meta">{mediums.length} total</span>}
+        />
 
         {isLoading && (
           <div>
             {Array.from({ length: 3 }).map((_, i) => (
-              <MediumRowSkeleton key={i} />
+              <ListRowSkeleton key={i} leadingWidth="1.5rem" titleWidth="30%" subtitleWidth={null} trailingWidth={null} />
             ))}
           </div>
         )}
@@ -128,19 +101,14 @@ export default function Mediums() {
           <ErrorMessage message="Could not load mediums." onRetry={refetch} />
         )}
 
-        {deleteMedium.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete medium"
-            subtitle={getErrorMessage(
-              deleteMedium.error,
-              "The medium may be in use by a group subject or enrollment.",
-            )}
-            lowContrast
-            onClose={() => deleteMedium.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteMedium.isError}
+          error={deleteMedium.error}
+          title="Could not delete medium"
+          fallback="The medium may be in use by a group subject or enrollment."
+          onClose={() => deleteMedium.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {!isLoading && !isError && mediums?.length === 0 && (
           <EmptyState
@@ -156,27 +124,10 @@ export default function Mediums() {
 
         {!isLoading && mediums && mediums.length > 0 && (
           <div>
-            {mediums.map((m, i) => (
-              <div
-                key={m.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "1rem 1.5rem",
-                  borderBottom:
-                    i < mediums.length - 1 ? "1px solid #e0e0e0" : "none",
-                  gap: "1rem",
-                }}
-              >
-                <Language size={20} style={{ fill: "#406AAF", flexShrink: 0 }} />
-                <span
-                  style={{
-                    flex: 1,
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    color: "#161616",
-                  }}
-                >
+            {mediums.map((m) => (
+              <div key={m.id} className="os-list-row">
+                <Language size={20} style={{ fill: "var(--os-accent)", flexShrink: 0 }} />
+                <span style={{ flex: 1, fontWeight: 600, fontSize: "0.9rem", color: "var(--os-text-primary)" }}>
                   {m.name}
                 </span>
                 <Button kind="ghost" size="sm" onClick={() => openEdit(m)}>
@@ -198,19 +149,12 @@ export default function Mediums() {
       <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)}>
         <ModalHeader title={modal === "create" ? "New medium" : "Edit medium"} />
         <ModalBody>
-          {(createMedium.isError || updateMedium.isError) && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(
-                createMedium.error ?? updateMedium.error,
-                "Failed to save medium",
-              )}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={createMedium.isError || updateMedium.isError}
+            error={createMedium.error ?? updateMedium.error}
+            fallback="Failed to save medium"
+            style={{ marginBottom: "1rem" }}
+          />
           <TextInput
             id="medium-name"
             labelText="Name"

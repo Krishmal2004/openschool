@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Select, SelectItem, TextArea, DatePicker, DatePickerInput, InlineNotification, Tag } from "@carbon/react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Button, Select, SelectItem, TextArea, DatePicker, DatePickerInput, Tag } from "@carbon/react";
+import { Add } from "@carbon/icons-react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import {
   useDisciplinaryRecords,
@@ -9,10 +9,11 @@ import {
 } from "../../../queries/useStudentPortfolio";
 import { DISCIPLINARY_SEVERITIES } from "../../../services/studentPortfolio";
 import type { DisciplinarySeverity } from "../../../services/studentPortfolio";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import { todayISODate, toYmd } from "../../../lib/date";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const SEVERITY_TAG: Record<DisciplinarySeverity, "gray" | "warm-gray" | "red"> = {
   minor: "gray",
@@ -52,9 +53,12 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         <h2 className="os-section__title">Disciplinary Records</h2>
       </div>
       <div className="os-section__body">
-        {createRecord.isError && (
-          <InlineNotification kind="error" title="Error" subtitle={getErrorMessage(createRecord.error, "Failed to add record")} lowContrast hideCloseButton style={{ marginBottom: "1rem", maxWidth: "100%" }} />
-        )}
+        <MutationErrorNotification
+          isError={createRecord.isError}
+          error={createRecord.error}
+          fallback="Failed to add record"
+          style={{ marginBottom: "1rem" }}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "10rem 10rem 1fr 1fr auto", gap: "0.75rem", alignItems: "end", marginBottom: "1.5rem" }}>
           <DatePicker datePickerType="single" dateFormat="Y-m-d" value={date} onChange={(dates) => {
@@ -77,18 +81,16 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         {!isLoading && (records?.length ?? 0) === 0 && <EmptyState title="No disciplinary records" description="Nothing on file for this student." />}
 
         {records?.map((r) => (
-          <div key={r.id} style={{ padding: "0.875rem 0", borderBottom: "1px solid #e0e0e0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-                  <Tag size="sm" type={SEVERITY_TAG[r.severity]}>{r.severity}</Tag>
-                  <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{r.incident_date}</span>
-                </div>
-                <p style={{ margin: 0, fontSize: "0.875rem" }}>{r.description}</p>
-                {r.action_taken && <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>Action: {r.action_taken}</p>}
+          <div key={r.id} className="os-list-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                <Tag size="sm" type={SEVERITY_TAG[r.severity]}>{r.severity}</Tag>
+                <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{r.incident_date}</span>
               </div>
-              <Button hasIconOnly iconDescription="Delete" renderIcon={TrashCan} kind="ghost" size="sm" onClick={() => setPendingDeleteId(r.id)} />
+              <p style={{ margin: 0, fontSize: "0.875rem" }}>{r.description}</p>
+              {r.action_taken && <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>Action: {r.action_taken}</p>}
             </div>
+            <RemoveIconButton label="Delete" onClick={() => setPendingDeleteId(r.id)} />
           </div>
         ))}
       </div>

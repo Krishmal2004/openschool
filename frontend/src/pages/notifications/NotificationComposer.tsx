@@ -21,8 +21,6 @@ import RecipientPicker from "./components/RecipientPicker";
 import SentHistoryRow from "./components/SentHistoryRow";
 import DraftRow from "./components/DraftRow";
 
-const ACCENT = "#406AAF";
-
 export default function NotificationComposer() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -124,7 +122,7 @@ export default function NotificationComposer() {
                 onChange={({ selectedItem }) => setCategory((selectedItem as (typeof CATEGORIES)[number]).value)}
               />
               <div>
-                <p style={{ fontSize: "0.75rem", fontWeight: 600, marginBottom: "0.5rem", color: "#525252" }}>Priority</p>
+                <p style={{ fontSize: "0.75rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--os-text-secondary)" }}>Priority</p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   {PRIORITIES.map((p) => (
                     <button
@@ -132,9 +130,9 @@ export default function NotificationComposer() {
                       onClick={() => setPriority(p.value)}
                       style={{
                         padding: "0.5rem 0.875rem",
-                        border: `1.5px solid ${priority === p.value ? ACCENT : "#e0e0e0"}`,
-                        background: priority === p.value ? "#eef2f9" : "#ffffff",
-                        color: priority === p.value ? ACCENT : "#525252",
+                        border: `1.5px solid ${priority === p.value ? "var(--os-accent)" : "var(--os-border-subtle)"}`,
+                        background: priority === p.value ? "var(--os-accent-light)" : "var(--os-layer)",
+                        color: priority === p.value ? "var(--os-accent)" : "var(--os-text-secondary)",
                         fontWeight: priority === p.value ? 600 : 400,
                         fontSize: "0.8125rem",
                         cursor: "pointer",
@@ -148,7 +146,7 @@ export default function NotificationComposer() {
             </div>
 
             <div>
-              <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#525252", marginBottom: "0.75rem" }}>
+              <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--os-text-secondary)", marginBottom: "0.75rem" }}>
                 Send To
               </p>
               {rules.length > 0 && (

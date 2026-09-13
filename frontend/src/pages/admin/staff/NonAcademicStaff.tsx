@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { Search, Add } from "@carbon/icons-react";
-import { SkeletonText, Button, Select, SelectItem, Pagination } from "@carbon/react";
+import { Button, Select, SelectItem, Pagination } from "@carbon/react";
 import { useNonAcademicStaffList } from "../../../queries/useNonAcademicStaff";
 import { NON_ACADEMIC_DESIGNATIONS } from "../../../services/nonAcademicStaff";
 import { usePagination } from "../../../hooks/usePagination";
 import EmptyState from "../../../components/common/EmptyState";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import Avatar from "../../../components/common/Avatar";
+import ListRowSkeleton from "../../../components/common/ListRowSkeleton";
 import { designationLabel } from "./constants";
 import StaffFormModal from "./components/StaffFormModal";
 import StaffDetail from "./components/StaffDetail";
@@ -75,9 +76,7 @@ export default function NonAcademicStaff() {
           {isLoading && (
             <div>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #e0e0e0" }}>
-                  <SkeletonText width="70%" />
-                </div>
+                <ListRowSkeleton key={i} leadingWidth="1.5rem" titleWidth="70%" subtitleWidth="40%" trailingWidth={null} />
               ))}
             </div>
           )}
@@ -90,30 +89,12 @@ export default function NonAcademicStaff() {
           )}
 
           {!isLoading &&
-            pageItems.map((s, i) => (
+            pageItems.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedId(s.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.75rem 1.5rem",
-                  border: "none",
-                  borderBottom: i < pageItems.length - 1 ? "1px solid #e0e0e0" : "none",
-                  background: selected?.id === s.id ? "#edf5ff" : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  transition: "background 70ms ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (selected?.id !== s.id) e.currentTarget.style.background = "#f4f4f4";
-                }}
-                onMouseLeave={(e) => {
-                  if (selected?.id !== s.id) e.currentTarget.style.background = "transparent";
-                }}
+                className={`os-list-row os-list-row--button${selected?.id === s.id ? " is-selected" : ""}`}
+                style={{ gap: "0.75rem", padding: "0.75rem 1.5rem" }}
               >
                 <Avatar name={s.full_name} size="sm" />
                 <div style={{ minWidth: 0 }}>
@@ -121,7 +102,7 @@ export default function NonAcademicStaff() {
                     style={{
                       fontWeight: 600,
                       fontSize: "0.875rem",
-                      color: "#161616",
+                      color: "var(--os-text-primary)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -129,7 +110,7 @@ export default function NonAcademicStaff() {
                   >
                     {s.full_name}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                     {designationLabel(s.designation)} · {s.employee_number}
                   </div>
                 </div>

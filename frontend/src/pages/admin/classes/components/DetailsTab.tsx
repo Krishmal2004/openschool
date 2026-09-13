@@ -3,6 +3,7 @@ import type { useClass } from "../../../../queries/useClasses";
 import type { Teacher } from "../../../../services/teacher";
 import type { Student } from "../../../../services/student";
 import Avatar from "../../../../components/common/Avatar";
+import SectionHeader from "../../../../components/common/SectionHeader";
 
 interface Props {
   cls: NonNullable<ReturnType<typeof useClass>["data"]>;
@@ -32,9 +33,7 @@ export default function DetailsTab({
   return (
     <>
       <div className="os-section" style={{ marginTop: "1rem" }}>
-        <div className="os-section__header">
-          <h2 className="os-section__title">Class Information</h2>
-        </div>
+        <SectionHeader title="Class Information" />
         <div className="os-kv-grid">
           {[
             ["Class Name", cls.name],
@@ -56,9 +55,7 @@ export default function DetailsTab({
       </div>
 
       <div className="os-section">
-        <div className="os-section__header">
-          <h2 className="os-section__title">Class Teacher</h2>
-        </div>
+        <SectionHeader title="Class Teacher" />
         <div className="os-section__body">
           {formTeacher ? (
             <Link
@@ -77,16 +74,16 @@ export default function DetailsTab({
                     margin: "0 0 0.1rem",
                     fontWeight: 600,
                     fontSize: "0.875rem",
-                    color: "#161616",
+                    color: "var(--os-text-primary)",
                   }}
                 >
                   {formTeacher.full_name}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#406AAF" }}>View profile →</p>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-accent)" }}>View profile →</p>
               </div>
             </Link>
           ) : (
-            <span style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>
+            <span style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>
               No class teacher assigned.
             </span>
           )}

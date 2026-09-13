@@ -1,1 +1,1 @@
-export const ACCENT = "#406AAF";
+export const ACCENT = "var(--os-accent)";

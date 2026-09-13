@@ -9,7 +9,7 @@ import {
   ModalFooter,
 } from "@carbon/react";
 import { useChangePassword } from "../../queries/useAuth";
-import { getErrorMessage } from "../../lib/errorMessage";
+import MutationErrorNotification from "./MutationErrorNotification";
 
 export default function ChangePasswordModal({
   onClose,
@@ -43,19 +43,12 @@ export default function ChangePasswordModal({
           />
         ) : (
           <>
-            {changePassword.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not update password"
-                subtitle={getErrorMessage(
-                  changePassword.error,
-                  "Please try again.",
-                )}
-                lowContrast
-                hideCloseButton
-                style={{ marginBottom: "1rem", maxWidth: "100%" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={changePassword.isError}
+              error={changePassword.error}
+              title="Could not update password"
+              fallback="Please try again."
+            />
             <div style={{ display: "grid", gap: "1rem" }}>
               <PasswordInput
                 id="change-password-new"

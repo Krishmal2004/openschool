@@ -1,13 +1,14 @@
 import { Link } from "react-router";
 import { Add, ChevronRight, Copy, Edit, Layers } from "@carbon/icons-react";
-import { Button, Tag, InlineNotification } from "@carbon/react";
+import { Button, Tag } from "@carbon/react";
 import type { useLevels, useDeleteLevel } from "../../../../queries/useCurriculum";
 import type { useGrades } from "../../../../queries/useGrades";
 import type { Level } from "../../../../services/curriculum";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import ErrorMessage from "../../../../components/common/ErrorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
-import LevelRowSkeleton from "./LevelRowSkeleton";
+import ListRowSkeleton from "../../../../components/common/ListRowSkeleton";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
+import SectionHeader from "../../../../components/common/SectionHeader";
 
 interface Props {
   levels: ReturnType<typeof useLevels>["data"];
@@ -38,30 +39,28 @@ export default function LevelsList({
 
   return (
     <div className="os-section">
-      <div className="os-section__header">
-        <h2 className="os-section__title">Levels</h2>
-        {levels && <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{levels.length} total</span>}
-      </div>
+      <SectionHeader
+        title="Levels"
+        meta={levels && <span className="os-section__meta">{levels.length} total</span>}
+      />
 
       {isLoading && (
         <div>
           {Array.from({ length: 4 }).map((_, i) => (
-            <LevelRowSkeleton key={i} />
+            <ListRowSkeleton key={i} titleWidth="30%" subtitleWidth="15%" trailingWidth="4rem" />
           ))}
         </div>
       )}
       {isError && <ErrorMessage message="Could not load levels." onRetry={refetch} />}
 
-      {deleteLevel.isError && (
-        <InlineNotification
-          kind="error"
-          title="Could not delete level"
-          subtitle={getErrorMessage(deleteLevel.error, "The level may have students enrolled through its groups.")}
-          lowContrast
-          onClose={() => deleteLevel.reset()}
-          style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={deleteLevel.isError}
+        error={deleteLevel.error}
+        title="Could not delete level"
+        fallback="The level may have students enrolled through its groups."
+        onClose={() => deleteLevel.reset()}
+        style={{ margin: "0 1.5rem 1rem" }}
+      />
 
       {!isLoading && !isError && levels?.length === 0 && (
         <EmptyState
@@ -77,23 +76,14 @@ export default function LevelsList({
 
       {!isLoading && levels && levels.length > 0 && (
         <div>
-          {levels.map((l, i) => (
-            <div
-              key={l.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "1.25rem 1.5rem",
-                borderBottom: i < levels.length - 1 ? "1px solid #e0e0e0" : "none",
-                gap: "1rem",
-              }}
-            >
-              <Layers size={20} style={{ fill: "#406AAF", flexShrink: 0 }} />
+          {levels.map((l) => (
+            <div key={l.id} className="os-list-row">
+              <Layers size={20} style={{ fill: "var(--os-accent)", flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
-                <p style={{ margin: "0 0 0.125rem", fontWeight: 600, fontSize: "0.9rem", color: "#161616" }}>
+                <p style={{ margin: "0 0 0.125rem", fontWeight: 600, fontSize: "0.9rem", color: "var(--os-text-primary)" }}>
                   {l.label}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#525252" }}>Order {l.sort_order}</p>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>Order {l.sort_order}</p>
               </div>
               {gradeName(l.grade_id) ? (
                 <Tag type="teal" size="sm">

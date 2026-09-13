@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, InlineNotification } from "@carbon/react";
+import { Button } from "@carbon/react";
 import { Add } from "@carbon/icons-react";
 import {
   useGuardiansByStudent,
@@ -7,12 +7,12 @@ import {
   useSetPrimaryGuardian,
 } from "../../../queries/useGuardians";
 import type { GuardianWithPrimary } from "../../../services/guardian";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AddGuardianModal from "./components/AddGuardianModal";
 import ProvisionLoginModal from "./components/ProvisionLoginModal";
 import GuardianRow from "./components/GuardianRow";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 // A student can have at most 2 guardians on file.
 const MAX_GUARDIANS = 2;
@@ -43,28 +43,24 @@ export default function StudentGuardians({ studentId }: { studentId: string }) {
         </Button>
       </div>
       <div className="os-section__body">
-        {setPrimary.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not set primary contact"
-            subtitle={getErrorMessage(setPrimary.error, "Please try again.")}
-            lowContrast
-            onClose={() => setPrimary.reset()}
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
-        {unlinkGuardian.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not remove guardian"
-            subtitle={getErrorMessage(unlinkGuardian.error, "Please try again.")}
-            lowContrast
-            onClose={() => unlinkGuardian.reset()}
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={setPrimary.isError}
+          error={setPrimary.error}
+          title="Could not set primary contact"
+          fallback="Please try again."
+          onClose={() => setPrimary.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
+        <MutationErrorNotification
+          isError={unlinkGuardian.isError}
+          error={unlinkGuardian.error}
+          title="Could not remove guardian"
+          fallback="Please try again."
+          onClose={() => unlinkGuardian.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
         {atMax && (
-          <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "#8d8d8d" }}>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
             A student can have at most {MAX_GUARDIANS} guardians on file. Remove one to add another.
           </p>
         )}

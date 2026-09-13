@@ -1,5 +1,3 @@
-// This file renders the NotificationsBell component, displaying an icon in the header that indicates unread notifications and opens a preview panel.
-
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
 import { HeaderGlobalAction, Tag } from "@carbon/react";

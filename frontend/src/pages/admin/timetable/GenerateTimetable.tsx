@@ -5,14 +5,14 @@
 
 import { useState } from "react";
 import { Link } from "react-router";
-import { Button, Select, SelectItem, Tag, InlineNotification, SkeletonText } from "@carbon/react";
+import { Button, Select, SelectItem, Tag, SkeletonText } from "@carbon/react";
 import { Rocket } from "@carbon/icons-react";
 import { useCurrentAcademicYear } from "../../../queries/useAcademicYears";
 import { useGradeSections } from "../../../queries/timetable/useGradeSections";
 import { useGenerateTimetables } from "../../../queries/timetable/useGenerate";
-import { getErrorMessage } from "../../../lib/errorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import type { ClassGenerationResult } from "../../../services/timetable/generate";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 function ClassResultCard({ result }: { result: ClassGenerationResult }) {
   if (result.skipped) {
@@ -24,7 +24,7 @@ function ClassResultCard({ result }: { result: ClassGenerationResult }) {
             Skipped
           </Tag>
         </div>
-        <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#8d8d8d" }}>{result.skip_reason}</p>
+        <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>{result.skip_reason}</p>
       </div>
     );
   }
@@ -47,7 +47,7 @@ function ClassResultCard({ result }: { result: ClassGenerationResult }) {
         </div>
       </div>
       {result.gaps.length > 0 && (
-        <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem", fontSize: "0.8125rem", color: "#8a6a00" }}>
+        <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem", fontSize: "0.8125rem", color: "var(--os-warning-text)" }}>
           {result.gaps.map((g, i) => (
             <li key={i}>
               {g.subject_name || "Unresolved subject"}
@@ -118,16 +118,13 @@ export default function GenerateTimetable() {
           </div>
         )}
 
-        {generate.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not generate timetables"
-            subtitle={getErrorMessage(generate.error)}
-            lowContrast
-            onClose={() => generate.reset()}
-            style={{ maxWidth: "100%", marginBottom: "1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={generate.isError}
+          error={generate.error}
+          title="Could not generate timetables"
+          onClose={() => generate.reset()}
+          style={{ marginBottom: "1rem" }}
+        />
 
         {result && (
           <div style={{ display: "grid", gap: "0.75rem", marginTop: "1rem" }}>

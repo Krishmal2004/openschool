@@ -60,7 +60,7 @@ export default function CreateYearModal({
         <TextInput
           id="ay-label"
           labelText="Label"
-          placeholder="e.g. 2026"
+          placeholder="e.g. 2027"
           value={form.label}
           onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
           onBlur={() => setTouched((t) => ({ ...t, label: true }))}

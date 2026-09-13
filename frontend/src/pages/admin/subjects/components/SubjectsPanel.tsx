@@ -1,7 +1,3 @@
-// This file renders the Subjects tab content of the Subjects & Curriculum
-// page: a searchable, paginated subject list with edit/delete, backed by
-// FormModal and ConfirmDeleteModal.
-
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Search, Add, Edit, TrashCan } from "@carbon/icons-react";
@@ -11,7 +7,6 @@ import {
   Tag,
   TextInput,
   NumberInput,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -25,11 +20,11 @@ import {
 } from "../../../../queries/useSubjects";
 import type { Subject } from "../../../../services/subject";
 import { usePagination } from "../../../../hooks/usePagination";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import TableSkeleton from "../../../../components/common/TableSkeleton";
 import ErrorMessage from "../../../../components/common/ErrorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 const SUBJECT_TABLE_HEADERS = ["Code", "Subject", "Type", "Actions"];
 
@@ -100,7 +95,7 @@ export default function SubjectsPanel() {
           margin: "1rem 0",
         }}
       >
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
           The school&apos;s subject catalogue. Offer a subject to students by
           adding it to a selection group under the Curriculum tab.
         </p>
@@ -122,19 +117,14 @@ export default function SubjectsPanel() {
           </div>
         </div>
 
-        {deleteSubject.isError && (
-          <InlineNotification
-            kind="error"
-            title="Could not delete subject"
-            subtitle={getErrorMessage(
-              deleteSubject.error,
-              "The subject may be in use by a class or curriculum group.",
-            )}
-            lowContrast
-            onClose={() => deleteSubject.reset()}
-            style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-          />
-        )}
+        <MutationErrorNotification
+          isError={deleteSubject.isError}
+          error={deleteSubject.error}
+          title="Could not delete subject"
+          fallback="The subject may be in use by a class or curriculum group."
+          onClose={() => deleteSubject.reset()}
+          style={{ margin: "0 1.5rem 1rem" }}
+        />
 
         {isLoading ? (
           <TableSkeleton headers={SUBJECT_TABLE_HEADERS} />
@@ -160,7 +150,7 @@ export default function SubjectsPanel() {
           <>
             <div className="os-section__header">
               <h2 className="os-section__title">All Subjects</h2>
-              <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                 {filtered.length} records
               </span>
             </div>
@@ -236,16 +226,12 @@ export default function SubjectsPanel() {
       <ComposedModal open={!!editing} size="sm" onClose={() => setEditing(null)}>
         <ModalHeader title="Edit subject" />
         <ModalBody>
-          {updateSubject.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(updateSubject.error, "Failed to update subject")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={updateSubject.isError}
+            error={updateSubject.error}
+            fallback="Failed to update subject"
+            style={{ marginBottom: "1rem" }}
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <TextInput
               id="edit-subject-name"

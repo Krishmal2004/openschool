@@ -1,5 +1,4 @@
-// This file defines the AssignClassSubjectTeacherModal component, which links a teacher to teach a subject for a specific class. The teacher picker is scoped to teachers already qualified for the chosen subject (Teacher Subjects) — a class-level assignment can never diverge from a teacher's declared qualifications.
-
+// Teacher picker is scoped to teachers already qualified for the subject, so a class assignment can't diverge from Teacher Subjects.
 import { useState } from "react";
 import { Link } from "react-router";
 import { InlineNotification } from "@carbon/react";
@@ -80,7 +79,7 @@ export default function AssignClassSubjectTeacherModal({
             placeholder={subjectId ? "Search qualified teachers…" : "Choose a subject first…"}
             disabled={!subjectId}
           />
-          <p style={{ margin: "0.375rem 0 0", fontSize: "0.75rem", color: "#8d8d8d" }}>
+          <p style={{ margin: "0.375rem 0 0", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
             Only teachers qualified for this subject on the{" "}
             <Link to="/teacher-subjects">Teacher Subjects</Link> page are shown.
           </p>

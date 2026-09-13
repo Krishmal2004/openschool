@@ -4,15 +4,12 @@ import type { useAcademicYears, useSetCurrentAcademicYear } from "../../../../qu
 import type { AcademicYear } from "../../../../services/academicYear";
 import ErrorMessage from "../../../../components/common/ErrorMessage";
 import EmptyState from "../../../../components/common/EmptyState";
-import AcademicYearRowSkeleton from "./AcademicYearRowSkeleton";
+import SectionHeader from "../../../../components/common/SectionHeader";
+import ListRowSkeleton from "../../../../components/common/ListRowSkeleton";
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
-  // start_date/end_date are PG DATE-only ("YYYY-MM-DD", no time/offset).
-  // new Date(iso) parses that as UTC midnight, which toLocaleDateString
-  // then renders in the browser's local zone — shifting to the previous
-  // day in any negative-UTC-offset timezone. Building the Date from the
-  // parsed Y/M/D components (as a local date) avoids that entirely.
+  // Built from the parsed Y/M/D as a local date, not `new Date(iso)` — the latter parses a date-only string as UTC midnight, which shifts to the previous day in negative-UTC timezones.
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-LK", {
     month: "short",
@@ -41,15 +38,15 @@ export default function YearsList({
 }: Props) {
   return (
     <div className="os-section">
-      <div className="os-section__header">
-        <h2 className="os-section__title">Academic Years</h2>
-        {years && <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{years.length} total</span>}
-      </div>
+      <SectionHeader
+        title="Academic Years"
+        meta={years && <span className="os-section__meta">{years.length} total</span>}
+      />
 
       {isLoading && (
         <div>
           {Array.from({ length: 3 }).map((_, i) => (
-            <AcademicYearRowSkeleton key={i} />
+            <ListRowSkeleton key={i} titleWidth="25%" subtitleWidth="40%" trailingWidth="5rem" />
           ))}
         </div>
       )}
@@ -61,25 +58,14 @@ export default function YearsList({
 
       {!isLoading && years && years.length > 0 && (
         <div>
-          {years.map((y, i) => (
-            <div
-              key={y.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "1.25rem 1.5rem",
-                borderBottom: i < years.length - 1 ? "1px solid #e0e0e0" : "none",
-                gap: "1rem",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f4f4f4")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-            >
-              <Calendar size={20} style={{ fill: y.is_current ? "#406AAF" : "#8d8d8d", flexShrink: 0 }} />
+          {years.map((y) => (
+            <div key={y.id} className="os-list-row">
+              <Calendar size={20} style={{ fill: y.is_current ? "var(--os-accent)" : "var(--os-text-tertiary)", flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
-                <p style={{ margin: "0 0 0.125rem", fontWeight: 600, fontSize: "0.9rem", color: "#161616" }}>
+                <p style={{ margin: "0 0 0.125rem", fontWeight: 600, fontSize: "0.9rem", color: "var(--os-text-primary)" }}>
                   {y.label}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#525252" }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                   {formatDate(y.start_date)} — {formatDate(y.end_date)}
                 </p>
               </div>

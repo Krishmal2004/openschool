@@ -50,7 +50,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
                     <td>{r.session_date}</td>
                     <td>{r.class_name}</td>
                     <td><Tag size="sm" type={ATTENDANCE_TAG[r.status] ?? "gray"}>{r.status}</Tag></td>
-                    <td style={{ color: r.note ? undefined : "#c6c6c6" }}>{r.note || "—"}</td>
+                    <td style={{ color: r.note ? undefined : "var(--os-text-disabled)" }}>{r.note || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -70,7 +70,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
               <SelectItem key={t.id} value={t.id} text={t.name} />
             ))}
           </Select>
-          {!termId && <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>Select a term to see marks.</p>}
+          {!termId && <p style={{ fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>Select a term to see marks.</p>}
           {termId && marksLoading && <SkeletonText width="60%" />}
           {termId && !marksLoading && (marks?.length ?? 0) === 0 && (
             <EmptyState title="No marks for this term" description="No marks have been entered for this term yet." />
@@ -86,7 +86,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
               <tbody>
                 {marks.map((m) => (
                   <tr key={m.id}>
-                    <td>{m.subject_name} <span style={{ color: "#8d8d8d", fontSize: "0.75rem" }}>({m.subject_code})</span></td>
+                    <td>{m.subject_name} <span style={{ color: "var(--os-text-tertiary)", fontSize: "0.75rem" }}>({m.subject_code})</span></td>
                     <td>{m.is_absent ? "AB" : `${m.marks} / ${m.max_marks}`}</td>
                   </tr>
                 ))}
@@ -110,7 +110,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
               {appointments.map((a) => (
                 <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <Tag size="sm" type="blue">{a.rank.replace(/_/g, " ")}</Tag>
-                  <span style={{ fontSize: "0.8125rem", color: "#525252" }}>{a.academic_year_label}</span>
+                  <span style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>{a.academic_year_label}</span>
                 </div>
               ))}
             </div>

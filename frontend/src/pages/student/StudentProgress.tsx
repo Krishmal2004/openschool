@@ -1,5 +1,3 @@
-// This file renders the StudentProgress page, showing the teacher's narrative remarks and progress reports for the student.
-
 import { useMyStudentProfile } from "../../queries/useStudentSelf";
 import { useProgressReports } from "../../queries/useStudentPortfolio";
 import LoadingSpinner from "../../components/common/LoadingSpinner";

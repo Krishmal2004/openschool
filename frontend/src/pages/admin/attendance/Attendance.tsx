@@ -1,30 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { EventSchedule, CheckmarkFilled, WarningFilled } from "@carbon/icons-react";
-import { Button, Tag, DatePicker, DatePickerInput, InlineNotification, SkeletonText } from "@carbon/react";
+import { Button, Tag, DatePicker, DatePickerInput } from "@carbon/react";
 import { useDailySessions, useDeleteSession } from "../../../queries/useAttendance";
 import { useRole } from "../../../hooks/useRole";
 import type { DailySession } from "../../../services/attendance";
-import { getErrorMessage } from "../../../lib/errorMessage";
-import { toYmd, todayISODate } from "../../../lib/date";
+import { toYmd, todayISODate, isLockedAfter24Hours } from "../../../lib/date";
 import TableSkeleton from "../../../components/common/TableSkeleton";
+import StatCardSkeleton from "../../../components/common/StatCardSkeleton";
+import SectionHeader from "../../../components/common/SectionHeader";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
+import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 
 const ATTENDANCE_TABLE_HEADERS = ["Class", "Grade", "Teacher", "Records", "Status", "Actions"];
-
-function StatCardSkeleton() {
-  return (
-    <div className="os-stat-card">
-      <div style={{ marginBottom: "0.5rem" }}>
-        <SkeletonText width="60%" />
-      </div>
-      <SkeletonText width="30%" heading />
-    </div>
-  );
-}
 
 function displayDate(ymd: string) {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -98,9 +89,7 @@ export default function Attendance() {
             ))}
           </div>
           <div className="os-section">
-            <div className="os-section__header">
-              <h2 className="os-section__title">Sessions</h2>
-            </div>
+            <SectionHeader title="Sessions" />
             <TableSkeleton headers={ATTENDANCE_TABLE_HEADERS} />
           </div>
         </>
@@ -108,25 +97,24 @@ export default function Attendance() {
         <ErrorMessage message="Could not load sessions for this date." onRetry={refetch} />
       ) : (
         <>
-          {/* Summary strip */}
           <div className="os-stat-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             <div className="os-stat-card">
               <p className="os-stat-card__label">
-                <EventSchedule size={14} style={{ fill: "#406AAF" }} /> Sessions
+                <EventSchedule size={14} style={{ fill: "var(--os-accent)" }} /> Sessions
               </p>
               <p className="os-stat-card__value">{sessions?.length ?? 0}</p>
               <p className="os-stat-card__meta">Created for this date</p>
             </div>
-            <div className="os-stat-card" style={{ borderTopColor: "#24a148" }}>
+            <div className="os-stat-card" style={{ borderTopColor: "var(--os-success)" }}>
               <p className="os-stat-card__label">
-                <CheckmarkFilled size={14} style={{ fill: "#24a148" }} /> Marked
+                <CheckmarkFilled size={14} style={{ fill: "var(--os-success)" }} /> Marked
               </p>
               <p className="os-stat-card__value">{marked}</p>
               <p className="os-stat-card__meta">At least one record</p>
             </div>
-            <div className="os-stat-card" style={{ borderTopColor: "#f1c21b" }}>
+            <div className="os-stat-card" style={{ borderTopColor: "var(--os-warning)" }}>
               <p className="os-stat-card__label">
-                <WarningFilled size={14} style={{ fill: "#f1c21b" }} /> Pending
+                <WarningFilled size={14} style={{ fill: "var(--os-warning)" }} /> Pending
               </p>
               <p className="os-stat-card__value">{pending}</p>
               <p className="os-stat-card__meta">No records yet</p>
@@ -134,20 +122,16 @@ export default function Attendance() {
           </div>
 
           <div className="os-section">
-            <div className="os-section__header">
-              <h2 className="os-section__title">Sessions</h2>
-            </div>
+            <SectionHeader title="Sessions" />
 
-            {deleteSession.isError && (
-              <InlineNotification
-                kind="error"
-                title="Could not delete session"
-                subtitle={getErrorMessage(deleteSession.error, "Please try again.")}
-                lowContrast
-                onClose={() => deleteSession.reset()}
-                style={{ maxWidth: "100%", margin: "0 1.5rem 1rem" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={deleteSession.isError}
+              error={deleteSession.error}
+              title="Could not delete session"
+              fallback="Please try again."
+              onClose={() => deleteSession.reset()}
+              style={{ margin: "0 1.5rem 1rem" }}
+            />
 
             {!sessions || sessions.length === 0 ? (
               <EmptyState
@@ -174,7 +158,8 @@ export default function Attendance() {
                 <tbody>
                   {sessions.map((s) => {
                     const isMarked = s.marked_count > 0;
-                    const isLocked = !!s.created_at && new Date().getTime() - new Date(s.created_at).getTime() > 24 * 60 * 60 * 1000;
+                    const isLocked = isLockedAfter24Hours(s.created_at);
+                    const rowReadOnly = isLocked && !isAdmin;
                     return (
                       <tr key={s.id}>
                         <td style={{ fontWeight: 600 }}>{s.class_name}</td>
@@ -209,25 +194,18 @@ export default function Attendance() {
                               justifyContent: "flex-end",
                             }}
                           >
-                            {(() => {
-                              // Teachers lose mark access once a session is
-                              // locked; admins can always mark/edit.
-                              const rowReadOnly = isLocked && !isAdmin;
-                              return (
-                                <Button
-                                  kind={isMarked || rowReadOnly ? "ghost" : "primary"}
-                                  size="sm"
-                                  as={Link}
-                                  to={`/attendance/sessions/${s.id}/mark`}
-                                  style={{
-                                    whiteSpace: "nowrap",
-                                    ...(isMarked || rowReadOnly ? { color: "#406AAF" } : {}),
-                                  }}
-                                >
-                                  {rowReadOnly ? "View" : isMarked ? "View" : "Mark"}
-                                </Button>
-                              );
-                            })()}
+                            <Button
+                              kind={isMarked || rowReadOnly ? "ghost" : "primary"}
+                              size="sm"
+                              as={Link}
+                              to={`/attendance/sessions/${s.id}/mark`}
+                              style={{
+                                whiteSpace: "nowrap",
+                                ...(isMarked || rowReadOnly ? { color: "var(--os-accent)" } : {}),
+                              }}
+                            >
+                              {rowReadOnly || isMarked ? "View" : "Mark"}
+                            </Button>
                             <Button
                               kind="danger--ghost"
                               size="sm"

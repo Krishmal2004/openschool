@@ -47,7 +47,7 @@ export default function ClassesStep({
         style={{ marginBottom: "1.25rem" }}
       />
       {orderedSelectedGrades.length === 0 ? (
-        <p style={{ fontSize: "0.875rem", color: "#8d8d8d" }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)" }}>
           No grades were selected in the previous step, so there's nothing to add classes to yet.
         </p>
       ) : (
@@ -57,9 +57,9 @@ export default function ClassesStep({
               {regularGradeNumbers.map((gradeNumber) => {
                 const count = sectionsPerGrade[gradeNumber] ?? 1;
                 return (
-                  <div key={gradeNumber} style={{ padding: "0.5rem 0", borderBottom: "1px solid #f4f4f4" }}>
+                  <div key={gradeNumber} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--os-layer-hover)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <span style={{ flex: 1, fontSize: "0.875rem", fontWeight: 500, color: "#161616" }}>Grade {gradeNumber}</span>
+                      <span style={{ flex: 1, fontSize: "0.875rem", fontWeight: 500, color: "var(--os-text-primary)" }}>Grade {gradeNumber}</span>
                       <NumberInput
                         id={`sections-${gradeNumber}`}
                         label="Sections"
@@ -102,10 +102,10 @@ export default function ClassesStep({
 
           {alGradeNumbers.length > 0 && (
             <div>
-              <p style={{ margin: "0 0 0.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#161616" }}>
+              <p style={{ margin: "0 0 0.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
                 A/L Streams - {alGradeNumbers.map((n) => `Grade ${n}`).join(" & ")}
               </p>
-              <p style={{ margin: "0 0 0.875rem", fontSize: "0.75rem", color: "#8d8d8d" }}>
+              <p style={{ margin: "0 0 0.875rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                 Applied to both A/L grades. Uncheck streams your school doesn't offer, and adjust the code and
                 section count for each.
               </p>
@@ -120,7 +120,7 @@ export default function ClassesStep({
                         alignItems: "center",
                         gap: "0.75rem",
                         padding: "0.5rem 0.25rem",
-                        borderBottom: "1px solid #f4f4f4",
+                        borderBottom: "1px solid var(--os-layer-hover)",
                         opacity: cfg.enabled ? 1 : 0.5,
                       }}
                     >
@@ -164,7 +164,7 @@ export default function ClassesStep({
                   );
                 })}
               </div>
-              <p style={{ margin: "0.75rem 0 0", fontSize: "0.75rem", color: "#8d8d8d" }}>
+              <p style={{ margin: "0.75rem 0 0", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
                 Example: Physical Science with code "M" and 2 sections creates{" "}
                 {alGradeNumbers.map((n) => `${n}-M1, ${n}-M2`).join(", ")}.
               </p>

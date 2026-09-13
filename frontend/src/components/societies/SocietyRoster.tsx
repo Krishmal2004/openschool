@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import { Add } from "@carbon/icons-react";
 import {
   Button,
   Select,
   SelectItem,
-  InlineNotification,
   ComposedModal,
   ModalHeader,
   ModalBody,
@@ -14,10 +13,12 @@ import {
 import { Link } from "react-router";
 import { useStudents } from "../../queries/useStudents";
 import { useSocietyMembers, useAssignSocietyMember, useRemoveSocietyMember } from "../../queries/useSocieties";
-import { getErrorMessage } from "../../lib/errorMessage";
 import EmptyState from "../common/EmptyState";
 import ErrorMessage from "../common/ErrorMessage";
 import EntityCombobox from "../common/EntityCombobox";
+import ConfirmDeleteModal from "../common/ConfirmDeleteModal";
+import MutationErrorNotification from "../common/MutationErrorNotification";
+import RemoveIconButton from "../common/RemoveIconButton";
 import type { SocietyMember, SocietyRole } from "../../services/society";
 
 const ROLES: { value: SocietyRole; label: string }[] = [
@@ -46,6 +47,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
   const [assignOpen, setAssignOpen] = useState(false);
   const [studentChoice, setStudentChoice] = useState("");
   const [roleChoice, setRoleChoice] = useState<SocietyRole>("member");
+  const [memberToRemove, setMemberToRemove] = useState<SocietyMember | null>(null);
 
   const openAssign = () => {
     assignMember.reset();
@@ -62,8 +64,12 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
     );
   };
 
-  const handleRemove = (m: SocietyMember) => {
-    removeMember.mutate({ memberId: m.id, studentId: m.student_id });
+  const confirmRemove = () => {
+    if (!memberToRemove) return;
+    removeMember.mutate(
+      { memberId: memberToRemove.id, studentId: memberToRemove.student_id },
+      { onSettled: () => setMemberToRemove(null) },
+    );
   };
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
@@ -84,16 +90,13 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
         )}
       </div>
 
-      {removeMember.isError && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Could not remove member"
-          subtitle={getErrorMessage(removeMember.error, "Please try again.")}
-          onClose={() => removeMember.reset()}
-          style={{ marginBottom: "1rem", maxWidth: "100%" }}
-        />
-      )}
+      <MutationErrorNotification
+        isError={removeMember.isError}
+        error={removeMember.error}
+        title="Could not remove member"
+        fallback="Please try again."
+        onClose={() => removeMember.reset()}
+      />
 
       {isLoading ? (
         <SkeletonText width="40%" />
@@ -104,40 +107,23 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
           byRole(value).length === 0 ? null : (
             <div key={value} style={{ marginBottom: "1rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-                <h3 style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", color: "#8d8d8d", margin: 0 }}>
+                <h3 style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", color: "var(--os-text-tertiary)", margin: 0 }}>
                   {label}
                 </h3>
-                <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{byRole(value).length}</span>
+                <span style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{byRole(value).length}</span>
               </div>
-              {byRole(value).map((m, i) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    padding: "0.625rem 0",
-                    borderBottom: i < byRole(value).length - 1 ? "1px solid #f4f4f4" : "none",
-                  }}
-                >
+              {byRole(value).map((m) => (
+                <div key={m.id} className="os-list-row os-list-row--compact">
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link to={`/students/${m.student_id}`} className="os-table__link" style={{ fontSize: "0.875rem", fontWeight: 500 }}>
                       {m.student_name}
                     </Link>
-                    <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "#525252" }}>
+                    <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                       {[m.grade_name, m.student_index].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   {!readOnly && (
-                    <Button
-                      hasIconOnly
-                      kind="ghost"
-                      size="sm"
-                      iconDescription="Remove"
-                      renderIcon={TrashCan}
-                      disabled={removeMember.isPending}
-                      onClick={() => handleRemove(m)}
-                    />
+                    <RemoveIconButton disabled={removeMember.isPending} onClick={() => setMemberToRemove(m)} />
                   )}
                 </div>
               ))}
@@ -149,16 +135,11 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
       <ComposedModal open={assignOpen} size="sm" onClose={() => setAssignOpen(false)}>
         <ModalHeader title="Add society member" />
         <ModalBody>
-          {assignMember.isError && (
-            <InlineNotification
-              kind="error"
-              title="Error"
-              subtitle={getErrorMessage(assignMember.error, "Failed to add member")}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: "1rem", maxWidth: "100%" }}
-            />
-          )}
+          <MutationErrorNotification
+            isError={assignMember.isError}
+            error={assignMember.error}
+            fallback="Failed to add member"
+          />
           <div style={{ display: "grid", gap: "1rem" }}>
             <EntityCombobox
               id="society-member-student"
@@ -191,6 +172,21 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
           </Button>
         </ModalFooter>
       </ComposedModal>
+
+      <ConfirmDeleteModal
+        open={!!memberToRemove}
+        title="Remove member"
+        description={
+          <>
+            Remove <strong>{memberToRemove?.student_name}</strong> from this society?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removeMember.isPending}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

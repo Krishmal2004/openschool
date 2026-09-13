@@ -1,16 +1,7 @@
-// This file renders the StudentTimetable page, displaying the weekly class scheduling and period listings.
-
 import { useMyClassTimetable } from "../../queries/timetable/useTimetables";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
-
-const WEEKDAYS = [
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-];
+import { WEEKDAYS } from "../../lib/timetable";
 
 export default function StudentTimetable() {
   const { data, isLoading, isError } = useMyClassTimetable();

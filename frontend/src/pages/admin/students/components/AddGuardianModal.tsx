@@ -4,11 +4,9 @@ import { Search } from "@carbon/icons-react";
 import { useAddGuardian, useSearchGuardians, useLinkGuardian } from "../../../../queries/useGuardians";
 import { GUARDIAN_RELATIONSHIPS } from "../../../../services/guardian";
 import type { GuardianRelationship } from "../../../../services/guardian";
-import { getErrorMessage } from "../../../../lib/errorMessage";
 import { useDebounced } from "../../../../hooks/useDebounced";
 import { isValidSriLankanPhone, PHONE_INVALID_TEXT } from "../../../../lib/phone";
-
-const RELATIONSHIPS = GUARDIAN_RELATIONSHIPS;
+import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
 const EMPTY_GUARDIAN_FORM = {
   full_name: "",
@@ -100,7 +98,7 @@ export default function AddGuardianModal({
 
         {step === "search" && !created && (
           <>
-            <p style={{ fontSize: "0.8125rem", color: "#525252", margin: "0 0 1rem" }}>
+            <p style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)", margin: "0 0 1rem" }}>
               Search first — siblings often share a guardian already on file.
             </p>
             <div className="os-search" style={{ marginBottom: "1rem" }}>
@@ -118,7 +116,7 @@ export default function AddGuardianModal({
             {query.trim().length > 0 && (
               <div style={{ display: "grid", gap: "0.5rem", marginBottom: "1rem" }}>
                 {results.length === 0 && !search.isLoading && (
-                  <p style={{ fontSize: "0.8125rem", color: "#8d8d8d" }}>No matching guardians found.</p>
+                  <p style={{ fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>No matching guardians found.</p>
                 )}
                 {results.map((g) => (
                   <div
@@ -128,12 +126,12 @@ export default function AddGuardianModal({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "0.625rem 0.875rem",
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid var(--os-border-subtle)",
                     }}
                   >
                     <div>
                       <div style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{g.full_name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{g.phone}</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>{g.phone}</div>
                     </div>
                     <Button size="sm" kind="tertiary" onClick={() => handleLink(g.id)} disabled={linkGuardian.isPending}>
                       Link
@@ -143,31 +141,23 @@ export default function AddGuardianModal({
               </div>
             )}
 
-            {linkGuardian.isError && (
-              <InlineNotification
-                kind="error"
-                title="Error"
-                subtitle={getErrorMessage(linkGuardian.error, "Failed to link guardian")}
-                lowContrast
-                hideCloseButton
-                style={{ marginBottom: "1rem", maxWidth: "100%" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={linkGuardian.isError}
+              error={linkGuardian.error}
+              fallback="Failed to link guardian"
+              style={{ marginBottom: "1rem" }}
+            />
           </>
         )}
 
         {step === "create" && !created && (
           <>
-            {addGuardian.isError && (
-              <InlineNotification
-                kind="error"
-                title="Error"
-                subtitle={getErrorMessage(addGuardian.error, "Failed to add guardian")}
-                lowContrast
-                hideCloseButton
-                style={{ marginBottom: "1rem", maxWidth: "100%" }}
-              />
-            )}
+            <MutationErrorNotification
+              isError={addGuardian.isError}
+              error={addGuardian.error}
+              fallback="Failed to add guardian"
+              style={{ marginBottom: "1rem" }}
+            />
             <div style={{ display: "grid", gap: "1rem" }}>
               <TextInput
                 id="guardian-name"
@@ -186,7 +176,7 @@ export default function AddGuardianModal({
                   setForm((f) => ({ ...f, relationship: e.target.value as GuardianRelationship }))
                 }
               >
-                {RELATIONSHIPS.map((r) => (
+                {GUARDIAN_RELATIONSHIPS.map((r) => (
                   <SelectItem key={r.value} value={r.value} text={r.label} />
                 ))}
               </Select>

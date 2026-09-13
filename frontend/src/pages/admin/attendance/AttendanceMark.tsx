@@ -1,10 +1,9 @@
-// This file renders the AttendanceMark page, allowing teachers and administrators to view, mark, and update student attendance records for a specific session.
-
 import { useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { Button, Tag, InlineNotification, TextInput } from "@carbon/react";
 import { ArrowLeft, Save, CheckmarkFilled, Search, UserMultiple, Warning } from "@carbon/icons-react";
 import { getErrorMessage } from "../../../lib/errorMessage";
+import { isLockedAfter24Hours } from "../../../lib/date";
 import { useSession, useSessionRecords, useMarkAttendance } from "../../../queries/useAttendance";
 import { useClass, useClassStudents } from "../../../queries/useClasses";
 import { useGrades } from "../../../queries/useGrades";
@@ -12,8 +11,11 @@ import { useTeachers } from "../../../queries/useTeachers";
 import { useRole } from "../../../hooks/useRole";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import TableSkeleton from "../../../components/common/TableSkeleton";
 import { recordsToState, type Status } from "./constants";
 import StudentAttendanceRow from "./components/StudentAttendanceRow";
+
+const ATTENDANCE_MARK_HEADERS = ["#", "Student", "Index No.", "Attendance", "Note"];
 
 export default function AttendanceMark() {
   const { id = "" } = useParams();
@@ -29,7 +31,7 @@ export default function AttendanceMark() {
   const markAttendance = useMarkAttendance(id);
 
   const isAdmin = role === "admin";
-  const locked = !!session?.created_at && new Date().getTime() - new Date(session.created_at).getTime() > 24 * 60 * 60 * 1000;
+  const locked = isLockedAfter24Hours(session?.created_at);
   const readOnly = locked && !isAdmin;
   const isOverride = locked && isAdmin;
 
@@ -125,7 +127,7 @@ export default function AttendanceMark() {
   metaParts.push(session.date);
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <div
         style={{
           padding: "1.25rem 2rem",
@@ -133,12 +135,12 @@ export default function AttendanceMark() {
           alignItems: "center",
           gap: "1.5rem",
           flexWrap: "wrap",
-          borderBottom: "1px solid #e0e0e0",
+          borderBottom: "1px solid var(--os-border-subtle)",
         }}
       >
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-            <span style={{ fontSize: "1.125rem", fontWeight: 600, color: "#161616" }}>
+            <span style={{ fontSize: "1.125rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
               Class {cls?.name ?? "…"}
             </span>
             {gradeName && (
@@ -149,7 +151,7 @@ export default function AttendanceMark() {
           </div>
           <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
             {metaParts.map((val, idx) => (
-              <span key={idx} style={{ fontSize: "0.8rem", color: "#525252" }}>
+              <span key={idx} style={{ fontSize: "0.8rem", color: "var(--os-text-secondary)" }}>
                 {val}
               </span>
             ))}
@@ -184,31 +186,31 @@ export default function AttendanceMark() {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
           {[
-            { label: "Present", count: summary.present, color: "#24a148" },
-            { label: "Absent", count: summary.absent, color: "#da1e28" },
-            { label: "Late", count: summary.late, color: "#7d5a00" },
-            { label: "Excused", count: summary.excused, color: "#6929c4" },
-            { label: "Unmarked", count: summary.unmarked, color: "#525252" },
+            { label: "Present", count: summary.present, color: "var(--os-status-present-border)" },
+            { label: "Absent", count: summary.absent, color: "var(--os-status-absent-border)" },
+            { label: "Late", count: summary.late, color: "var(--os-status-late-text)" },
+            { label: "Excused", count: summary.excused, color: "var(--os-status-excused-text)" },
+            { label: "Unmarked", count: summary.unmarked, color: "var(--os-text-secondary)" },
           ].map(({ label, count, color }) => (
             <div
               key={label}
               style={{
-                background: "#ffffff",
-                border: "1px solid #e0e0e0",
+                background: "var(--os-layer)",
+                border: "1px solid var(--os-border-subtle)",
                 borderTop: `3px solid ${color}`,
                 padding: "0.875rem 1rem",
               }}
             >
-              <p style={{ margin: "0 0 0.25rem", fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#525252" }}>
+              <p style={{ margin: "0 0 0.25rem", fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--os-text-secondary)" }}>
                 {label}
               </p>
-              <p style={{ margin: 0, fontSize: "1.75rem", fontWeight: 300, color: "#161616" }}>{count}</p>
+              <p style={{ margin: 0, fontSize: "1.75rem", fontWeight: 300, color: "var(--os-text-primary)" }}>{count}</p>
             </div>
           ))}
         </div>
 
         <div className="os-section">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.875rem 1.5rem", borderBottom: "1px solid #e0e0e0", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.875rem 1.5rem", borderBottom: "1px solid var(--os-border-subtle)", flexWrap: "wrap" }}>
             <div className="os-search" style={{ maxWidth: "280px" }}>
               <Search size={16} className="os-search__icon" />
               <input
@@ -221,23 +223,14 @@ export default function AttendanceMark() {
             <div style={{ flex: 1 }} />
             {!readOnly && (
               <>
-                <span style={{ fontSize: "0.75rem", color: "#525252", whiteSpace: "nowrap" }}>Mark all:</span>
-                <button
-                  onClick={() => markAll("present")}
-                  style={{ padding: "0.375rem 0.875rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", border: "1px solid #24a148", background: "#defbe6", color: "#0e6027", fontFamily: "inherit", borderRadius: "2px" }}
-                >
+                <span style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)", whiteSpace: "nowrap" }}>Mark all:</span>
+                <button className="os-quick-mark os-quick-mark--present" onClick={() => markAll("present")}>
                   ✓ Present
                 </button>
-                <button
-                  onClick={() => markAll("absent")}
-                  style={{ padding: "0.375rem 0.875rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", border: "1px solid #da1e28", background: "#fff1f1", color: "#a2191f", fontFamily: "inherit", borderRadius: "2px" }}
-                >
+                <button className="os-quick-mark os-quick-mark--absent" onClick={() => markAll("absent")}>
                   ✕ Absent
                 </button>
-                <button
-                  onClick={() => setStatuses({})}
-                  style={{ padding: "0.375rem 0.875rem", fontSize: "0.75rem", cursor: "pointer", border: "1px solid #e0e0e0", background: "#ffffff", color: "#525252", fontFamily: "inherit", borderRadius: "2px" }}
-                >
+                <button className="os-quick-mark os-quick-mark--clear" onClick={() => setStatuses({})}>
                   Clear
                 </button>
               </>
@@ -245,7 +238,7 @@ export default function AttendanceMark() {
           </div>
 
           {studentsLoading || recordsLoading ? (
-            <LoadingSpinner />
+            <TableSkeleton headers={ATTENDANCE_MARK_HEADERS} />
           ) : (
             <>
               <table className="os-table">
@@ -302,18 +295,18 @@ export default function AttendanceMark() {
             )}
             <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
               {summary.unmarked > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.8125rem", color: "#7d5a00" }}>
-                  <Warning size={16} style={{ fill: "#f1c21b" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.8125rem", color: "var(--os-status-late-text)" }}>
+                  <Warning size={16} style={{ fill: "var(--os-warning)" }} />
                   {summary.unmarked} student{summary.unmarked !== 1 ? "s" : ""} not yet marked
                 </div>
               )}
               {saveError && (
-                <span style={{ fontSize: "0.8125rem", color: "#da1e28" }}>{saveError}</span>
+                <span style={{ fontSize: "0.8125rem", color: "var(--os-danger)" }}>{saveError}</span>
               )}
               <div style={{ flex: 1 }} />
               {saved && (
-                <span style={{ fontSize: "0.8125rem", color: "#24a148", display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                  <CheckmarkFilled size={16} style={{ fill: "#24a148" }} /> Saved — redirecting…
+                <span style={{ fontSize: "0.8125rem", color: "var(--os-success)", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                  <CheckmarkFilled size={16} style={{ fill: "var(--os-success)" }} /> Saved — redirecting…
                 </span>
               )}
               <Button kind="secondary" size="md" as={Link} to={backPath}>

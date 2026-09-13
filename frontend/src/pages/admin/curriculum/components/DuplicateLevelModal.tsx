@@ -44,7 +44,7 @@ export default function DuplicateLevelModal({
       error={duplicateLevel.error}
       errorFallback="Failed to duplicate level"
     >
-      <p style={{ fontSize: "0.875rem", color: "#525252", marginBottom: "1rem" }}>
+      <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)", marginBottom: "1rem" }}>
         Every selection group and its subjects are copied to the new level. Editing one afterwards does not affect
         the other.
       </p>

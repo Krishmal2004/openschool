@@ -1,7 +1,3 @@
-// This file renders the admin Overview/Dashboard page: header with the
-// current academic year, stat cards, attendance-by-class (with a teacher
-// attendance summary) and recent activity.
-
 import { useMemo } from "react";
 import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons-react";
 import { useSchool } from "../../../queries/useSchool";
@@ -84,16 +80,16 @@ export default function Dashboard() {
                 alignItems: "center",
                 gap: "0.5rem",
                 padding: "0.5rem 0.875rem",
-                background: "#edf2fa",
+                background: "var(--os-accent-light)",
                 borderRadius: "999px",
               }}
             >
               <Calendar size={16} style={{ fill: ACCENT, flexShrink: 0 }} />
-              <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#161616" }}>
+              <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--os-text-primary)" }}>
                 {currentYear.label}
               </span>
               {currentYear.start_date && currentYear.end_date && (
-                <span style={{ fontSize: "0.75rem", color: "#525252" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                   {new Date(currentYear.start_date).toLocaleDateString("en-LK", { month: "short", year: "numeric" })}
                   {" – "}
                   {new Date(currentYear.end_date).toLocaleDateString("en-LK", { month: "short", year: "numeric" })}

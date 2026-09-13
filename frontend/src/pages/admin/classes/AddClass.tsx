@@ -1,7 +1,4 @@
-// This file renders the Add Class form page: picks grade, name, stream/sub-
-// stream, medium and form teacher, then creates the class for an academic
-// year. Supports preselecting the grade via a `?grade_id=` query param.
-
+// Supports preselecting the grade via a `?grade_id=` query param.
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
@@ -23,6 +20,7 @@ import { useClassrooms, useCreateClassroom } from "../../../queries/timetable/us
 import { useTeachers } from "../../../queries/useTeachers";
 import { useAcademicYears } from "../../../queries/useAcademicYears";
 import { getErrorMessage } from "../../../lib/errorMessage";
+import { suggestHomeClassroom } from "../../../lib/classroom";
 import EntityCombobox from "../../../components/common/EntityCombobox";
 
 type Touched = Partial<Record<"grade" | "name" | "year", boolean>>;
@@ -59,12 +57,7 @@ export default function AddClass() {
 
   const markTouched = (field: keyof Touched) => setTouched((t) => ({ ...t, [field]: true }));
 
-  // Sri Lankan schools usually name a class's homeroom the same as the
-  // class itself (e.g. class "13-M1" sits in room "13-M1") - suggest that
-  // match automatically, but let the admin override it.
-  const suggestedHomeClassroom = form.name.trim()
-    ? regularClassrooms?.find((c) => c.name.trim().toLowerCase() === form.name.trim().toLowerCase())
-    : undefined;
+  const suggestedHomeClassroom = suggestHomeClassroom(classrooms, form.name);
   const effectiveHomeClassroomId = form.home_classroom_id || suggestedHomeClassroom?.id || "";
 
   const { data: streamGroups } = useStreamGroups(form.stream_id);
