@@ -21,6 +21,7 @@ import EntityCombobox from "../../../components/common/EntityCombobox";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import SectionHeader from "../../../components/common/SectionHeader";
 import type { Prefect, PrefectRank } from "../../../services/prefect";
 
 const RANKS: { value: PrefectRank; label: string }[] = [
@@ -80,8 +81,7 @@ export default function Prefects() {
 
   const loading = yearLoading || prefectsLoading;
 
-  // Years selectable in the archive dropdown: every year with a board on
-  // record, plus the current year even if it has no appointments yet.
+  // Every year with a board on record, plus the current year even with no appointments yet.
   const selectableYears = (() => {
     const byId = new Map((allYears ?? []).map((y) => [y.id, y]));
     const ids = new Set((pastYears ?? []).map((y) => y.id));
@@ -160,12 +160,14 @@ export default function Prefects() {
 
       {RANKS.map(({ value, label }) => (
         <div className="os-section" key={value}>
-          <div className="os-section__header">
-            <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Trophy size={16} style={{ fill: "#406AAF" }} /> {label}
-            </h2>
-            <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{byRank(value).length}</span>
-          </div>
+          <SectionHeader
+            title={
+              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Trophy size={16} style={{ fill: "var(--os-accent)" }} /> {label}
+              </span>
+            }
+            meta={<span className="os-section__meta">{byRank(value).length}</span>}
+          />
 
           {loading ? (
             <div style={{ padding: "1.25rem 1.5rem" }}>
@@ -175,22 +177,13 @@ export default function Prefects() {
             <EmptyState title={`No ${label.toLowerCase()} yet`} description="Appoint a student to this rank." />
           ) : (
             <div>
-              {byRank(value).map((p, i) => (
-                <div
-                  key={p.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    padding: "0.75rem 1.5rem",
-                    borderBottom: i < byRank(value).length - 1 ? "1px solid #f4f4f4" : "none",
-                  }}
-                >
+              {byRank(value).map((p) => (
+                <div key={p.id} className="os-list-row" style={{ padding: "0.75rem 1.5rem" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link to={`/students/${p.student_id}`} className="os-table__link" style={{ fontSize: "0.875rem", fontWeight: 500 }}>
                       {p.student_name}
                     </Link>
-                    <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "#525252" }}>
+                    <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                       {[p.grade_name, p.student_index].filter(Boolean).join(" · ")}
                     </p>
                   </div>

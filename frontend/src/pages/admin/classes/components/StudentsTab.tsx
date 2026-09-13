@@ -6,6 +6,7 @@ import type { Student } from "../../../../services/student";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 import EmptyState from "../../../../components/common/EmptyState";
 import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
+import SectionHeader from "../../../../components/common/SectionHeader";
 
 interface Props {
   cls: NonNullable<ReturnType<typeof useClass>["data"]>;
@@ -26,12 +27,14 @@ export default function StudentsTab({
 }: Props) {
   return (
     <div className="os-section" style={{ marginTop: "1rem" }}>
-      <div className="os-section__header">
-        <h2 className="os-section__title">Enrolled Students</h2>
-        <Button renderIcon={Add} kind="ghost" size="sm" onClick={onOpenEnrol}>
-          Enrol
-        </Button>
-      </div>
+      <SectionHeader
+        title="Enrolled Students"
+        meta={
+          <Button renderIcon={Add} kind="ghost" size="sm" onClick={onOpenEnrol}>
+            Enrol
+          </Button>
+        }
+      />
 
       {/* enrollStudent's error is shown inside EnrolStudentModal, where the
           user is actively enrolling — not duplicated here. */}
@@ -104,15 +107,15 @@ export default function StudentsTab({
       <div
         style={{
           padding: "0.75rem 1.5rem",
-          borderTop: "1px solid #e0e0e0",
+          borderTop: "1px solid var(--os-border-subtle)",
           display: "flex",
           alignItems: "center",
           gap: "0.5rem",
           fontSize: "0.8125rem",
-          color: "#525252",
+          color: "var(--os-text-secondary)",
         }}
       >
-        <UserMultiple size={14} style={{ fill: "#8d8d8d" }} />
+        <UserMultiple size={14} style={{ fill: "var(--os-text-tertiary)" }} />
         {students?.length ?? 0} enrolled
       </div>
     </div>

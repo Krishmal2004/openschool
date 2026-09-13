@@ -132,7 +132,7 @@ export default function CurriculumPanel() {
           margin: "1rem 0",
         }}
       >
-        <p style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--os-text-secondary)" }}>
           A level is any container you name - a grade, a stream, an exam
           stage. Each level holds selection groups that decide what students
           pick from the Subjects tab.

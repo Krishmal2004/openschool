@@ -18,7 +18,7 @@ import type { Term } from "../../../../services/term";
 import ConfirmDeleteModal from "../../../../components/common/ConfirmDeleteModal";
 import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 import RemoveIconButton from "../../../../components/common/RemoveIconButton";
-import { toYmd } from "../../../../lib/date";
+import { toYmd, isDateRangeInvalid } from "../../../../lib/date";
 
 function formatTermDate(iso: string | null) {
   if (!iso) return "—";
@@ -50,7 +50,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
   // When set, the form below edits this term instead of creating a new one.
   const [editing, setEditing] = useState<Term | null>(null);
 
-  const dateRangeInvalid = !!form.start_date && !!form.end_date && form.end_date <= form.start_date;
+  const dateRangeInvalid = isDateRangeInvalid(form.start_date, form.end_date);
   const isValid = form.name.trim().length > 0 && !!form.start_date && !!form.end_date && !dateRangeInvalid;
 
   const resetForm = () => {
@@ -117,7 +117,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
           {isLoading && <SkeletonText paragraph lineCount={3} />}
 
           {!isLoading && terms?.length === 0 && (
-            <p style={{ fontSize: "0.875rem", color: "#8d8d8d", marginBottom: "1.25rem" }}>
+            <p style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)", marginBottom: "1.25rem" }}>
               No terms yet — a school year typically has three.
             </p>
           )}
@@ -125,19 +125,10 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
           {!isLoading && terms && terms.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
               {terms.map((t) => (
-                <div
-                  key={t.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.625rem",
-                    padding: "0.625rem 0",
-                    borderBottom: "1px solid #e0e0e0",
-                  }}
-                >
+                <div key={t.id} className="os-list-row os-list-row--compact" style={{ gap: "0.625rem" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 500, fontSize: "0.875rem", color: "#161616" }}>{t.name}</p>
-                    <p style={{ margin: 0, fontSize: "0.75rem", color: "#525252" }}>
+                    <p style={{ margin: 0, fontWeight: 500, fontSize: "0.875rem", color: "var(--os-text-primary)" }}>{t.name}</p>
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
                       {formatTermDate(t.start_date)} – {formatTermDate(t.end_date)}
                     </p>
                   </div>
@@ -172,7 +163,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
 
           <div style={{ display: "grid", gap: "0.75rem" }}>
             {editing && (
-              <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "#161616" }}>
+              <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
                 Editing {editing.name}
               </p>
             )}

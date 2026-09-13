@@ -34,7 +34,7 @@ export default function NewSessionModal({
       error={createSession.error}
       errorFallback="A session may already exist for this class on this date."
     >
-      <p style={{ fontSize: "0.875rem", color: "#525252", marginBottom: "1rem" }}>
+      <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)", marginBottom: "1rem" }}>
         One session per class per day. Creating it takes you straight to marking attendance.
       </p>
       <DatePicker

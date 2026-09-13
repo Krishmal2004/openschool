@@ -6,10 +6,10 @@ export const STATUS_STYLES: Record<
   NonNullable<Status>,
   { bg: string; border: string; color: string; label: string }
 > = {
-  present: { bg: "#defbe6", border: "#24a148", color: "#0e6027", label: "Present" },
-  absent: { bg: "#fff1f1", border: "#da1e28", color: "#a2191f", label: "Absent" },
-  late: { bg: "#fdf6dd", border: "#f1c21b", color: "#7d5a00", label: "Late" },
-  excused: { bg: "#f6f2ff", border: "#8a3ffc", color: "#6929c4", label: "Excused" },
+  present: { bg: "var(--os-status-present-bg)", border: "var(--os-status-present-border)", color: "var(--os-status-present-text)", label: "Present" },
+  absent: { bg: "var(--os-status-absent-bg)", border: "var(--os-status-absent-border)", color: "var(--os-status-absent-text)", label: "Absent" },
+  late: { bg: "var(--os-status-late-bg)", border: "var(--os-status-late-border)", color: "var(--os-status-late-text)", label: "Late" },
+  excused: { bg: "var(--os-status-excused-bg)", border: "var(--os-status-excused-border)", color: "var(--os-status-excused-text)", label: "Excused" },
 };
 
 export function recordsToState(records: AttendanceRecordRow[]) {

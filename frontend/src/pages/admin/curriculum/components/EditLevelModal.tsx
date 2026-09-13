@@ -43,7 +43,7 @@ export default function EditLevelModal({
       error={updateLevel.error}
       errorFallback="Failed to update level"
     >
-      <p style={{ fontSize: "0.875rem", color: "#525252", marginBottom: "1rem" }}>
+      <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)", marginBottom: "1rem" }}>
         Renaming a level leaves its selection groups and student choices untouched — only the label, grade link,
         and ordering change.
       </p>

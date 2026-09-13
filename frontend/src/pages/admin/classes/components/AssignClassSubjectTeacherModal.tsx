@@ -79,7 +79,7 @@ export default function AssignClassSubjectTeacherModal({
             placeholder={subjectId ? "Search qualified teachers…" : "Choose a subject first…"}
             disabled={!subjectId}
           />
-          <p style={{ margin: "0.375rem 0 0", fontSize: "0.75rem", color: "#8d8d8d" }}>
+          <p style={{ margin: "0.375rem 0 0", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
             Only teachers qualified for this subject on the{" "}
             <Link to="/teacher-subjects">Teacher Subjects</Link> page are shown.
           </p>

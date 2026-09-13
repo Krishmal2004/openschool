@@ -8,6 +8,7 @@ import {
   useDeleteAcademicYear,
 } from "../../../queries/useAcademicYears";
 import type { AcademicYear } from "../../../services/academicYear";
+import { isDateRangeInvalid } from "../../../lib/date";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import AgentFindingsBanner from "../../../components/common/AgentFindingsBanner";
 import YearsList from "./components/YearsList";
@@ -40,7 +41,7 @@ export default function AcademicYears() {
     setCreateOpen(true);
   };
 
-  const dateRangeInvalid = !!form.start_date && !!form.end_date && form.end_date <= form.start_date;
+  const dateRangeInvalid = isDateRangeInvalid(form.start_date, form.end_date);
 
   const isValid =
     form.label.trim().length > 0 && !!form.start_date && !!form.end_date && !dateRangeInvalid;
@@ -66,15 +67,8 @@ export default function AcademicYears() {
 
   return (
     <div className="os-page">
-      <div
-        className="os-page__header"
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
+      <div className="os-page__header">
+        <div className="os-page__header-left">
           <h1 className="os-page__title">Academic Years</h1>
           <p className="os-page__subtitle">
             Manage academic year periods for the school

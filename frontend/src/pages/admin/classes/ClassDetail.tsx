@@ -28,6 +28,8 @@ import type { AttendanceSession } from "../../../services/attendance";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
+import SectionHeader from "../../../components/common/SectionHeader";
+import InfoRow from "../../../components/common/InfoRow";
 import ClassMarks from "./ClassMarks";
 import StudentsTab from "./components/StudentsTab";
 import AttendanceTab from "./components/AttendanceTab";
@@ -39,6 +41,7 @@ import EnrolStudentModal from "./components/EnrolStudentModal";
 import NewSessionModal from "./components/NewSessionModal";
 import SubjectsTab from "./components/SubjectsTab";
 import { todayISODate } from "../../../lib/date";
+import { suggestHomeClassroom } from "../../../lib/classroom";
 
 function formatClassLabel(name: string) {
   const m = name.match(/^(\d+)([^\d-].*)$/);
@@ -107,12 +110,7 @@ export default function ClassDetail() {
     [allStudents, enrolledIds],
   );
 
-  // Sri Lankan schools usually name a class's homeroom the same as the
-  // class itself (e.g. class "13-M1" sits in room "13-M1") - suggest that
-  // match automatically while editing, but let the admin override it.
-  const suggestedHomeClassroom = nameEdit.trim()
-    ? classrooms?.find((c) => c.room_type === "regular" && c.name.trim().toLowerCase() === nameEdit.trim().toLowerCase())
-    : undefined;
+  const suggestedHomeClassroom = suggestHomeClassroom(classrooms, nameEdit);
   const effectiveHomeClassroomEdit = homeClassroomEdit || suggestedHomeClassroom?.id || "";
 
   const openEdit = () => {
@@ -218,7 +216,7 @@ export default function ClassDetail() {
   if (formTeacher) metaParts.push(`Form teacher: ${formTeacher.full_name}`);
 
   return (
-    <div style={{ background: "#f4f4f4", minHeight: "calc(100vh - 3rem)" }}>
+    <div style={{ background: "var(--os-layer-hover)", minHeight: "calc(100vh - 3rem)" }}>
       <div className="os-profile__banner">
         <div className="os-profile__avatar">
           {cls.name}
@@ -329,59 +327,27 @@ export default function ClassDetail() {
 
           <div>
             <div className="os-section">
-              <div className="os-section__header">
-                <h2 className="os-section__title">Quick Info</h2>
-              </div>
+              <SectionHeader title="Quick Info" />
               <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-                {[
-                  ["Grade", gradeName ?? "-"],
-                  ["Stream", streamName ?? "None"],
-                  ["Medium", mediumName ?? "Not designated"],
-                  ["Home Classroom", homeClassroomName ?? "Not assigned"],
-                  ["Enrolled", `${students?.length ?? 0}`],
-                  ["Academic Year", academicYearLabel ?? "-"],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "0.5rem 0",
-                      borderBottom: "1px solid #f4f4f4",
-                      fontSize: "0.8125rem",
-                    }}
-                  >
-                    <span style={{ color: "#525252" }}>{label}</span>
-                    <span style={{ fontWeight: 500, color: "#161616" }}>{value}</span>
-                  </div>
-                ))}
+                <InfoRow label="Grade" value={gradeName ?? "-"} />
+                <InfoRow label="Stream" value={streamName ?? "None"} />
+                <InfoRow label="Medium" value={mediumName ?? "Not designated"} />
+                <InfoRow label="Home Classroom" value={homeClassroomName ?? "Not assigned"} />
+                <InfoRow label="Enrolled" value={students?.length ?? 0} />
+                <InfoRow label="Academic Year" value={academicYearLabel ?? "-"} divider={false} />
               </div>
             </div>
 
             <div className="os-section">
-              <div className="os-section__header">
-                <h2 className="os-section__title">Attendance Summary</h2>
-              </div>
+              <SectionHeader title="Attendance Summary" />
               <div className="os-section__body" style={{ padding: "0.75rem 1.5rem" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "0.5rem 0",
-                    fontSize: "0.8125rem",
-                  }}
-                >
-                  <span style={{ color: "#525252" }}>Total sessions</span>
-                  <span style={{ fontWeight: 600, color: "#161616" }}>
-                    {sessions?.length ?? 0}
-                  </span>
-                </div>
+                <InfoRow label="Total sessions" value={sessions?.length ?? 0} bold divider={false} />
                 <div style={{ marginTop: "0.5rem" }}>
                   <Button
                     kind="ghost"
                     size="sm"
                     onClick={openNewSession}
-                    style={{ color: "#406AAF", padding: 0 }}
+                    style={{ color: "var(--os-accent)", padding: 0 }}
                   >
                     <EventSchedule size={14} style={{ marginRight: "0.35rem" }} />
                     New session →

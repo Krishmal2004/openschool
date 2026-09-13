@@ -130,7 +130,7 @@ export default function AttendanceTab({
                         size="sm"
                         as={Link}
                         to={`/attendance/sessions/${s.id}/mark`}
-                        style={{ color: "#406AAF", whiteSpace: "nowrap" }}
+                        style={{ color: "var(--os-accent)", whiteSpace: "nowrap" }}
                       >
                         Mark / View
                       </Button>

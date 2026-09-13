@@ -9,11 +9,8 @@ import {
   TrendSummary,
   DonutChart,
 } from "../../../components/analytics/ChartPrimitives";
-import { ACCENT, STATUS_COLORS } from "../../../components/analytics/chartColors";
+import { ACCENT, STATUS_COLORS, CHART_BLUE, CHART_PURPLE, CATEGORICAL_PALETTE, GENDER_COLORS } from "../../../components/analytics/chartColors";
 import type { CountRow, AttendanceTrendPoint } from "../../../services/dashboardAnalytics";
-
-const HOUSE_FALLBACK_COLORS = ["#406AAF", "#8a3ffc", "#24a148", "#f1c21b", "#da1e28", "#0f62fe"];
-const GENDER_COLORS: Record<string, string> = { Male: "#406AAF", Female: "#d02670", Unspecified: "#8d8d8d" };
 
 // `scope` picks the data source: "admin" hits /dashboard/analytics,
 // "leadership" hits the Principal/Vice Principal's own scoped
@@ -83,9 +80,9 @@ export default function Analytics({ scope = "admin" }: { scope?: "admin" | "lead
   );
 }
 
-type Analytics = NonNullable<ReturnType<typeof useDashboardAnalytics>["data"]>;
+type AnalyticsData = NonNullable<ReturnType<typeof useDashboardAnalytics>["data"]>;
 
-function StudentsPanel({ data }: { data: Analytics }) {
+function StudentsPanel({ data }: { data: AnalyticsData }) {
   const genderRows: CountRow[] = data.student.gender_distribution.map((g) => ({
     label: g.label ? g.label[0].toUpperCase() + g.label.slice(1) : "Unspecified",
     count: g.count,
@@ -108,7 +105,7 @@ function StudentsPanel({ data }: { data: Analytics }) {
             slices={genderRows.map((r) => ({
               label: r.label,
               value: r.count,
-              color: GENDER_COLORS[r.label] ?? "#8d8d8d",
+              color: GENDER_COLORS[r.label] ?? "var(--os-text-tertiary)",
             }))}
           />
         </Section>
@@ -117,7 +114,7 @@ function StudentsPanel({ data }: { data: Analytics }) {
             slices={data.student.house_distribution.map((h, i) => ({
               label: h.name,
               value: h.count,
-              color: h.color || HOUSE_FALLBACK_COLORS[i % HOUSE_FALLBACK_COLORS.length],
+              color: h.color || CATEGORICAL_PALETTE[i % CATEGORICAL_PALETTE.length],
             }))}
           />
         </Section>
@@ -130,7 +127,7 @@ function StudentsPanel({ data }: { data: Analytics }) {
         <Section title="Students by Class">
           <BarList
             rows={data.student.by_class.map((r: CountRow) => ({ label: r.label, value: r.count }))}
-            color="#0f62fe"
+            color={CHART_BLUE}
           />
         </Section>
       </div>
@@ -150,14 +147,14 @@ function StudentsPanel({ data }: { data: Analytics }) {
   );
 }
 
-function AcademicsPanel({ data }: { data: Analytics }) {
+function AcademicsPanel({ data }: { data: AnalyticsData }) {
   return (
     <div style={{ margin: "1rem 0" }}>
       <div className="os-stat-grid">
         <StatTile label="Examination Average" value={`${data.academic.examination_average}%`} color={ACCENT} />
-        <StatTile label="Students With Marks" value={data.academic.students_with_marks} color="#0f62fe" />
-        <StatTile label="Overall Attendance %" value={`${Math.round(data.academic.attendance_percentage)}%`} color="#24a148" />
-        <StatTile label="Mark Entries This Term" value={data.academic.examination_entries} color="#8a3ffc" />
+        <StatTile label="Students With Marks" value={data.academic.students_with_marks} color={CHART_BLUE} />
+        <StatTile label="Overall Attendance %" value={`${Math.round(data.academic.attendance_percentage)}%`} color={STATUS_COLORS.present} />
+        <StatTile label="Mark Entries This Term" value={data.academic.examination_entries} color={CHART_PURPLE} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginTop: "1.5rem" }}>
@@ -170,7 +167,7 @@ function AcademicsPanel({ data }: { data: Analytics }) {
         <Section title="Marks by Grade (avg %, current term)">
           <BarList
             rows={data.academic.grade_wise_performance.map((r) => ({ label: r.label, value: r.average_percentage }))}
-            color="#0f62fe"
+            color={CHART_BLUE}
             formatValue={(v) => `${v}%`}
           />
         </Section>
@@ -180,7 +177,7 @@ function AcademicsPanel({ data }: { data: Analytics }) {
         <Section title="Marks by Class (avg %, current term)">
           <BarList
             rows={data.academic.class_wise_performance.map((r) => ({ label: r.label, value: r.average_percentage }))}
-            color="#24a148"
+            color={STATUS_COLORS.present}
             formatValue={(v) => `${v}%`}
           />
         </Section>
@@ -189,12 +186,12 @@ function AcademicsPanel({ data }: { data: Analytics }) {
   );
 }
 
-function StaffPanel({ data }: { data: Analytics }) {
+function StaffPanel({ data }: { data: AnalyticsData }) {
   return (
     <div style={{ margin: "1rem 0" }}>
       <div className="os-stat-grid">
         <StatTile label="Academic Staff" value={data.staff.academic_staff_count} color={ACCENT} />
-        <StatTile label="Non-Academic Staff" value={data.staff.non_academic_staff_count} color="#8a3ffc" />
+        <StatTile label="Non-Academic Staff" value={data.staff.non_academic_staff_count} color={CHART_PURPLE} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginTop: "1.5rem" }}>
@@ -208,20 +205,20 @@ function StaffPanel({ data }: { data: Analytics }) {
             ]}
           />
         </Section>
-        <TrendSummary title="Staff Growth by Joining Year" points={data.school.staff_growth} color="#8a3ffc" />
+        <TrendSummary title="Staff Growth by Joining Year" points={data.school.staff_growth} color={CHART_PURPLE} />
       </div>
     </div>
   );
 }
 
-function SchoolPanel({ data }: { data: Analytics }) {
+function SchoolPanel({ data }: { data: AnalyticsData }) {
   return (
     <div style={{ margin: "1rem 0" }}>
       <div className="os-stat-grid">
-        <StatTile label="Notifications Sent" value={data.school.notifications_sent_count} color="#0f62fe" />
-        <StatTile label="Timetable Completion" value={`${Math.round(data.school.timetable_completion_pct)}%`} color="#24a148" />
+        <StatTile label="Notifications Sent" value={data.school.notifications_sent_count} color={CHART_BLUE} />
+        <StatTile label="Timetable Completion" value={`${Math.round(data.school.timetable_completion_pct)}%`} color={STATUS_COLORS.present} />
         <StatTile label="Total Classes" value={data.school.total_classes} color={ACCENT} />
-        <StatTile label="Published Timetables" value={data.school.published_classes} color="#8a3ffc" />
+        <StatTile label="Published Timetables" value={data.school.published_classes} color={CHART_PURPLE} />
       </div>
 
       <div style={{ marginTop: "1.5rem" }}>

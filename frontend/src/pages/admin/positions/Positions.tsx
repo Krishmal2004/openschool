@@ -21,6 +21,7 @@ import EntityCombobox from "../../../components/common/EntityCombobox";
 import ConfirmDeleteModal from "../../../components/common/ConfirmDeleteModal";
 import MutationErrorNotification from "../../../components/common/MutationErrorNotification";
 import RemoveIconButton from "../../../components/common/RemoveIconButton";
+import SectionHeader from "../../../components/common/SectionHeader";
 import type { TeacherPosition } from "../../../services/position";
 
 export default function Positions() {
@@ -110,11 +111,13 @@ export default function Positions() {
       />
 
       <div className="os-section">
-        <div className="os-section__header">
-          <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <UserRole size={16} style={{ fill: "#406AAF" }} /> Principal
-          </h2>
-        </div>
+        <SectionHeader
+          title={
+            <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <UserRole size={16} style={{ fill: "var(--os-accent)" }} /> Principal
+            </span>
+          }
+        />
 
         {isLoading ? (
           <div style={{ padding: "1.25rem 1.5rem" }}>
@@ -128,7 +131,7 @@ export default function Positions() {
               <Link to={`/teachers/${principal.teacher_id}`} className="os-table__link" style={{ fontSize: "0.875rem", fontWeight: 500 }}>
                 {principal.teacher_name}
               </Link>
-              <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "#525252" }}>Notifies the whole school</p>
+              <p style={{ margin: "0.1rem 0 0", fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>Notifies the whole school</p>
             </div>
             <Button kind="ghost" size="sm" onClick={openPrincipal}>
               Change
@@ -146,12 +149,14 @@ export default function Positions() {
       </div>
 
       <div className="os-section">
-        <div className="os-section__header">
-          <h2 className="os-section__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <UserRole size={16} style={{ fill: "#406AAF" }} /> Vice Principals
-          </h2>
-          <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>{vicePrincipals.length}</span>
-        </div>
+        <SectionHeader
+          title={
+            <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <UserRole size={16} style={{ fill: "var(--os-accent)" }} /> Vice Principals
+            </span>
+          }
+          meta={<span className="os-section__meta">{vicePrincipals.length}</span>}
+        />
 
         {isLoading ? (
           <div style={{ padding: "1.25rem 1.5rem" }}>
@@ -161,17 +166,8 @@ export default function Positions() {
           <EmptyState title="No Vice Principals yet" description="Add a Vice Principal and set their notification reach." />
         ) : (
           <div>
-            {vicePrincipals.map((vp, i) => (
-              <div
-                key={vp.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  padding: "0.75rem 1.5rem",
-                  borderBottom: i < vicePrincipals.length - 1 ? "1px solid #f4f4f4" : "none",
-                }}
-              >
+            {vicePrincipals.map((vp) => (
+              <div key={vp.id} className="os-list-row" style={{ padding: "0.75rem 1.5rem" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Link to={`/teachers/${vp.teacher_id}`} className="os-table__link" style={{ fontSize: "0.875rem", fontWeight: 500 }}>
                     {vp.teacher_name}

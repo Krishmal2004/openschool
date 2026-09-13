@@ -7,6 +7,7 @@ import { useSubjects } from "../../../../queries/useSubjects";
 import { usePublishedTimetableForClass } from "../../../../queries/timetable/useTimetables";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 import EmptyState from "../../../../components/common/EmptyState";
+import SectionHeader from "../../../../components/common/SectionHeader";
 import AssignClassSubjectTeacherModal from "./AssignClassSubjectTeacherModal";
 
 export default function SubjectsTab({ classId, academicYearId }: { classId: string; academicYearId: string }) {
@@ -25,17 +26,14 @@ export default function SubjectsTab({ classId, academicYearId }: { classId: stri
   return (
     <div style={{ marginTop: "1rem" }}>
       <div className="os-section">
-        <div className="os-section__header">
-          <h2 className="os-section__title">Subjects & Teachers</h2>
-          <Button
-            renderIcon={UserFollow}
-            size="sm"
-            onClick={() => setModalOpen(true)}
-            style={{ marginLeft: "auto" }}
-          >
-            Assign Subject Teacher
-          </Button>
-        </div>
+        <SectionHeader
+          title="Subjects & Teachers"
+          meta={
+            <Button renderIcon={UserFollow} size="sm" onClick={() => setModalOpen(true)}>
+              Assign Subject Teacher
+            </Button>
+          }
+        />
 
         <div className="os-section__body" style={{ padding: 0 }}>
           {!assignments || assignments.length === 0 ? (

@@ -1,4 +1,5 @@
 import StatusTag from "../../../../components/common/StatusTag";
+import { getInitials } from "../../../../lib/name";
 import type { Student } from "../../../../services/student";
 import { STATUS_STYLES, type Status } from "../constants";
 import StatusButton from "./StatusButton";
@@ -21,8 +22,8 @@ export default function StudentAttendanceRow({
   onNoteChange: (value: string) => void;
 }) {
   return (
-    <tr style={{ background: status ? STATUS_STYLES[status].bg + "66" : "transparent" }}>
-      <td style={{ color: "#8d8d8d", fontFamily: "IBM Plex Mono, monospace", fontSize: "0.75rem" }}>
+    <tr style={{ background: status ? `color-mix(in srgb, ${STATUS_STYLES[status].bg} 40%, white)` : "transparent" }}>
+      <td style={{ color: "var(--os-text-tertiary)", fontFamily: "IBM Plex Mono, monospace", fontSize: "0.75rem" }}>
         {idx + 1}
       </td>
       <td>
@@ -32,18 +33,18 @@ export default function StudentAttendanceRow({
               width: "1.75rem",
               height: "1.75rem",
               borderRadius: "50%",
-              background: status ? STATUS_STYLES[status].bg : "#eef4f8",
-              border: `1px solid ${status ? STATUS_STYLES[status].border : "#b3cedc"}`,
+              background: status ? STATUS_STYLES[status].bg : "var(--os-accent-light)",
+              border: `1px solid ${status ? STATUS_STYLES[status].border : "var(--os-accent-border)"}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "0.6rem",
               fontWeight: 700,
-              color: status ? STATUS_STYLES[status].color : "#406AAF",
+              color: status ? STATUS_STYLES[status].color : "var(--os-accent)",
               flexShrink: 0,
             }}
           >
-            {student.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+            {getInitials(student.full_name)}
           </div>
           <span style={{ fontWeight: 500, fontSize: "0.875rem" }}>{student.full_name}</span>
         </div>
@@ -54,7 +55,7 @@ export default function StudentAttendanceRow({
           status ? (
             <StatusTag {...STATUS_STYLES[status]} />
           ) : (
-            <span style={{ color: "#c6c6c6", fontSize: "0.75rem" }}>Not marked</span>
+            <span style={{ color: "var(--os-text-disabled)", fontSize: "0.75rem" }}>Not marked</span>
           )
         ) : (
           <div style={{ display: "flex", gap: "0.375rem" }}>
@@ -66,17 +67,17 @@ export default function StudentAttendanceRow({
       </td>
       <td>
         {readOnly ? (
-          <span style={{ fontSize: "0.75rem", color: note ? "#525252" : "#c6c6c6" }}>{note || "—"}</span>
+          <span style={{ fontSize: "0.75rem", color: note ? "var(--os-text-secondary)" : "var(--os-text-disabled)" }}>{note || "—"}</span>
         ) : status === "absent" || status === "late" || status === "excused" ? (
           <input
+            className="os-note-input"
             placeholder="Optional note…"
             aria-label={`Note for ${student.full_name}`}
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
-            style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", fontFamily: "inherit", border: "1px solid #e0e0e0", outline: "none", width: "140px" }}
           />
         ) : (
-          <span style={{ color: "#c6c6c6", fontSize: "0.75rem" }}>—</span>
+          <span style={{ color: "var(--os-text-disabled)", fontSize: "0.75rem" }}>—</span>
         )}
       </td>
     </tr>

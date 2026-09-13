@@ -21,9 +21,9 @@ export default function SubjectCard({
       onMouseLeave={() => setHover(false)}
       style={{
         padding: "0.75rem",
-        border: `1px solid ${hover ? "#406AAF" : "#e0e0e0"}`,
+        border: `1px solid ${hover ? "var(--os-accent)" : "var(--os-border-subtle)"}`,
         borderRadius: "4px",
-        background: hover ? "#f7f9fd" : "#fff",
+        background: hover ? "var(--os-accent-light)" : "var(--os-layer)",
         transition: "border-color 70ms ease, background-color 70ms ease",
         display: "flex",
         flexDirection: "column",
@@ -31,13 +31,13 @@ export default function SubjectCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <Book size={16} style={{ fill: "#406AAF", flexShrink: 0 }} />
+        <Book size={16} style={{ fill: "var(--os-accent)", flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
               fontSize: "0.8125rem",
               fontWeight: 500,
-              color: "#161616",
+              color: "var(--os-text-primary)",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -50,7 +50,7 @@ export default function SubjectCard({
             style={{
               fontSize: "0.6875rem",
               fontFamily: "IBM Plex Mono, monospace",
-              color: "#8d8d8d",
+              color: "var(--os-text-tertiary)",
             }}
           >
             {subject.subject_code}
@@ -73,12 +73,12 @@ export default function SubjectCard({
               style={{
                 margin: 0,
                 fontSize: "0.6875rem",
-                color: "#525252",
+                color: "var(--os-text-secondary)",
                 display: "flex",
                 gap: "0.25rem",
               }}
             >
-              <Warning size={12} style={{ fill: "#8d8d8d", flexShrink: 0, marginTop: "1px" }} />
+              <Warning size={12} style={{ fill: "var(--os-text-tertiary)", flexShrink: 0, marginTop: "1px" }} />
               {subject.prerequisite_note}
             </p>
           )}

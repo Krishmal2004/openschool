@@ -6,8 +6,7 @@ import EmptyState from "../../../../components/common/EmptyState";
 import SubjectCard from "./SubjectCard";
 import MutationErrorNotification from "../../../../components/common/MutationErrorNotification";
 
-// Describes a group's pick rule in plain words. An all-mandatory pool is just
-// min = max = pool size, so it needs no special flag anywhere.
+// Describes a group's pick rule in plain words — an all-mandatory pool is just min = max = pool size.
 function ruleLabel(min: number, max: number, pool: number) {
   if (pool > 0 && min === pool && max === pool) {
     return `all ${pool} mandatory`;
@@ -18,9 +17,7 @@ function ruleLabel(min: number, max: number, pool: number) {
   return `pick ${min}–${max} of ${pool}`;
 }
 
-// A group asking for more subjects than it offers can never be satisfied. The
-// backend does not reject this (the pool changes independently of the rule), so
-// surface it here while the admin is still editing.
+// A group asking for more subjects than it offers can never be satisfied — the backend doesn't reject this, so flag it here.
 function unsatisfiable(min: number, pool: number) {
   return min > pool;
 }
@@ -88,23 +85,23 @@ export default function GroupsList({
               <div
                 key={g.id}
                 style={{
-                  border: "1px solid #e0e0e0",
+                  border: "1px solid var(--os-border-subtle)",
                   borderRadius: "6px",
                   overflow: "hidden",
-                  background: "#fff",
+                  background: "var(--os-layer)",
                 }}
               >
                 <div
                   style={{
                     padding: "0.75rem 1rem",
-                    background: "#f4f4f4",
-                    borderBottom: "1px solid #e0e0e0",
+                    background: "var(--os-layer-hover)",
+                    borderBottom: "1px solid var(--os-border-subtle)",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.75rem",
                   }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#161616" }}>{g.label}</span>
+                  <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--os-text-primary)" }}>{g.label}</span>
                   <Tag type={broken ? "red" : "blue"} size="sm">
                     {ruleLabel(g.min_select, g.max_select, pool)}
                   </Tag>
@@ -131,7 +128,7 @@ export default function GroupsList({
 
                 <div style={{ padding: "0.75rem" }}>
                   {pool === 0 ? (
-                    <p style={{ margin: 0, padding: "0.75rem", fontSize: "0.8125rem", color: "#8d8d8d" }}>
+                    <p style={{ margin: 0, padding: "0.75rem", fontSize: "0.8125rem", color: "var(--os-text-tertiary)" }}>
                       No subjects in this group yet.
                     </p>
                   ) : (
@@ -140,8 +137,7 @@ export default function GroupsList({
                         display: "grid",
                         gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
                         gap: "0.5rem",
-                        // let each card hug its own content: stretching makes
-                        // cards without a tag look bottom-padded
+                        // Hug each card's own content — stretching pads cards without a tag.
                         alignItems: "start",
                       }}
                     >

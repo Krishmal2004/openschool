@@ -16,3 +16,13 @@ export function toYmd(d: Date | undefined): string {
 export function todayISODate(): string {
   return toYmd(new Date());
 }
+
+// True once both dates are filled in and end isn't strictly after start.
+export function isDateRangeInvalid(startDate: string, endDate: string): boolean {
+  return !!startDate && !!endDate && endDate <= startDate;
+}
+
+// Attendance sessions lock 24 hours after creation — teachers lose edit access, admins keep an override path.
+export function isLockedAfter24Hours(createdAt: string | null | undefined): boolean {
+  return !!createdAt && Date.now() - new Date(createdAt).getTime() > 24 * 60 * 60 * 1000;
+}

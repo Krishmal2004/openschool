@@ -97,8 +97,7 @@ export default function LevelDetail() {
 
   const openAddSubject = (g: CurriculumTreeGroup) => {
     addSubject.reset();
-    // Max existing + 1, not length — a gap from a deleted subject would
-    // otherwise hand out a colliding sort_order.
+    // Max existing + 1, not length, so a gap from a deleted subject doesn't hand out a colliding sort_order.
     const nextSortOrder = g.subjects.reduce((max, s) => Math.max(max, s.sort_order), -1) + 1;
     setSubjectForm({ ...EMPTY_SUBJECT, sort_order: nextSortOrder });
     setSubjectModalGroup(g);
