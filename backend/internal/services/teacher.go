@@ -11,6 +11,7 @@ import (
 	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -23,11 +24,11 @@ var (
 type TeacherService struct {
 	repo     *repositories.TeacherRepository
 	idp      identity.Provider
-	houseSvc *HouseService
+	houseSvc ports.HouseAssignments
 	audit    *AuditService
 }
 
-func NewTeacherService(repo *repositories.TeacherRepository, idp identity.Provider, houseSvc *HouseService, audit *AuditService) *TeacherService {
+func NewTeacherService(repo *repositories.TeacherRepository, idp identity.Provider, houseSvc ports.HouseAssignments, audit *AuditService) *TeacherService {
 	return &TeacherService{repo: repo, idp: idp, houseSvc: houseSvc, audit: audit}
 }
 
@@ -170,7 +171,7 @@ func (s *TeacherService) UpdateTeacher(ctx context.Context, id uuid.UUID, req mo
 }
 
 // UpdateTeacherHouse delegates to HouseService so every change is audit-logged.
-func (s *TeacherService) UpdateTeacherHouse(ctx context.Context, id uuid.UUID, houseID string, actorID uuid.UUID) (db.TeacherProfile, error) {
+func (s *TeacherService) UpdateTeacherHouse(ctx context.Context, id uuid.UUID, houseID string, actorID uuid.UUID) (ports.TeacherHouseProfile, error) {
 	return s.houseSvc.ChangeTeacherHouse(ctx, id, houseID, actorID)
 }
 

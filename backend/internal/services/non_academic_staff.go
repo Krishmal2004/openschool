@@ -120,12 +120,24 @@ func (s *NonAcademicStaffService) UpdateHouse(ctx context.Context, id uuid.UUID,
 
 	if s.audit != nil {
 		_ = s.audit.Record(ctx, "non_academic_staff_house", id, "house_changed", actorID,
-			houseState{HouseID: pgUUIDToPtr(before.HouseID)},
-			houseState{HouseID: newHouseID},
+			nonAcademicStaffHouseState{HouseID: nonAcademicStaffHouseID(before.HouseID)},
+			nonAcademicStaffHouseState{HouseID: newHouseID},
 			"")
 	}
 
 	return updated, nil
+}
+
+type nonAcademicStaffHouseState struct {
+	HouseID *uuid.UUID `json:"house_id"`
+}
+
+func nonAcademicStaffHouseID(id pgtype.UUID) *uuid.UUID {
+	if !id.Valid {
+		return nil
+	}
+	value := uuid.UUID(id.Bytes)
+	return &value
 }
 
 func (s *NonAcademicStaffService) Delete(ctx context.Context, id uuid.UUID) error {

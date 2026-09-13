@@ -32,6 +32,10 @@ type UpdateStudentEnrollmentStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=active left"`
 }
 
+type UpdateStudentHouseRequest struct {
+	HouseID string `json:"house_id"`
+}
+
 type StudentResponse struct {
 	ID             string `json:"id"`
 	UserID         string `json:"user_id"`

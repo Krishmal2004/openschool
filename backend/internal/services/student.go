@@ -11,6 +11,7 @@ import (
 	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -25,12 +26,12 @@ var ErrGenderMismatchSchoolType = errors.New("student gender does not match the 
 type StudentService struct {
 	repo       *repositories.StudentRepository
 	idp        identity.Provider
-	houseSvc   *HouseService
+	houseSvc   ports.HouseAssignments
 	audit      *AuditService
 	schoolRepo *repositories.SchoolRepository
 }
 
-func NewStudentService(repo *repositories.StudentRepository, idp identity.Provider, houseSvc *HouseService, audit *AuditService, schoolRepo *repositories.SchoolRepository) *StudentService {
+func NewStudentService(repo *repositories.StudentRepository, idp identity.Provider, houseSvc ports.HouseAssignments, audit *AuditService, schoolRepo *repositories.SchoolRepository) *StudentService {
 	return &StudentService{repo: repo, idp: idp, houseSvc: houseSvc, audit: audit, schoolRepo: schoolRepo}
 }
 
@@ -226,7 +227,7 @@ func (s *StudentService) SetEnrollmentStatus(ctx context.Context, id uuid.UUID, 
 }
 
 // UpdateStudentHouse delegates to HouseService so every change is audit-logged.
-func (s *StudentService) UpdateStudentHouse(ctx context.Context, id uuid.UUID, houseID string, actorID uuid.UUID) (db.StudentProfile, error) {
+func (s *StudentService) UpdateStudentHouse(ctx context.Context, id uuid.UUID, houseID string, actorID uuid.UUID) (ports.StudentHouseProfile, error) {
 	return s.houseSvc.ChangeStudentHouse(ctx, id, houseID, actorID)
 }
 

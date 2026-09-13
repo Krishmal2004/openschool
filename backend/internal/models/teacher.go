@@ -40,6 +40,10 @@ type UpdateTeacherEmploymentStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=active resigned transferred"`
 }
 
+type UpdateTeacherHouseRequest struct {
+	HouseID string `json:"house_id"`
+}
+
 type TeacherResponse struct {
 	ID             string `json:"id"`
 	UserID         string `json:"user_id"`

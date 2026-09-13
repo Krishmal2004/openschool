@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/services"
@@ -50,7 +51,7 @@ func actorFromContext(c *gin.Context) (services.Actor, error) {
 		ID:       id,
 		Email:    c.GetString("email"),
 		FullName: strings.TrimSpace(c.GetString("given_name") + " " + c.GetString("family_name")),
-		Role:     services.ResolveAppRole(roleList),
+		Role:     identity.ResolveAppRole(roleList),
 	}, nil
 }
 

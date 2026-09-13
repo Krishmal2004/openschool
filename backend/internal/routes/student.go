@@ -4,20 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/services"
 )
 
-func RegisterStudentRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
+func RegisterStudentRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterGroup, houseAssignments ports.HouseAssignments, pool *pgxpool.Pool) {
 	repo := repositories.NewStudentRepository(pool)
 	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
-	houseSvc := services.NewHouseService(
-		repositories.NewHouseRepository(pool),
-		repo,
-		repositories.NewTeacherRepository(pool),
-		auditSvc,
-	)
-	service := services.NewStudentService(repo, newIdentityProvider(), houseSvc, auditSvc, repositories.NewSchoolRepository(pool))
+	service := services.NewStudentService(repo, newIdentityProvider(), houseAssignments, auditSvc, repositories.NewSchoolRepository(pool))
 	handler := handlers.NewStudentHandler(service)
 
 	admin.POST("/students", handler.Create)
