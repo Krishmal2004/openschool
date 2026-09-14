@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/modules/notifications"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // PeopleComplianceAgentName is this agent's stable job_settings/job_runs identifier.

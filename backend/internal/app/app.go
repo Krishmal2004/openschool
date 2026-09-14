@@ -14,14 +14,12 @@ import (
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
+	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
-	notificationsrepositories "github.com/openschool-org/openschool/internal/repositories/notifications"
-	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
 	"github.com/openschool-org/openschool/internal/routes"
 	"github.com/openschool-org/openschool/internal/services"
-	notificationsservices "github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // HTTPGroups contains the authorization-scoped route groups shared by modules.
@@ -39,6 +37,7 @@ type HTTPGroups struct {
 // Setup composes the API modules and returns the scheduler owned by the process lifecycle.
 func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	groups := newHTTPGroups(router, pool)
+	notifications := notificationmodule.NewNotificationService(notificationmodule.NewNotificationRepository(pool))
 
 	groups.API.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
@@ -65,7 +64,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	timetablemodule.RegisterTimetableCRUDRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	timetablemodule.RegisterTimetableStatusHistoryRoute(groups.TeacherOrAdmin, pool)
 	timetableRepository := timetablemodule.NewWorkflowRepository(pool)
-	timetablemodule.RegisterTimetableWorkflowRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Teacher, timetableRepository, timetablemodule.NewWorkflowValidator(pool), newTimetableNotifier(pool))
+	timetablemodule.RegisterTimetableWorkflowRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Teacher, timetableRepository, timetablemodule.NewWorkflowValidator(pool), notifications)
 	timetablemodule.RegisterTimetablePortalRoutes(groups.Teacher, groups.Student, groups.TeacherOrAdmin, timetableRepository)
 	timetablemodule.RegisterTimetableGenerationRoute(groups.Admin, timetableRepository)
 	academicsmodule.RegisterSubjectRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
@@ -76,7 +75,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterPeopleModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, houseService, pool)
 	routes.RegisterSelfServiceModule(groups.Student, pool)
 	positionService := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
-	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), newTimetableNotifier(pool), auditService, attendanceLeadership{positions: positionService})
+	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), notifications, auditService, attendanceLeadership{positions: positionService})
 	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
 	staffAttendanceService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
 	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffAttendanceService, services.NewTeacherSelfService(repositories.NewTeacherRepository(pool)))
@@ -84,23 +83,9 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 
 	timetableReader := timetablemodule.NewReader(pool)
 	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, pool)
-	routes.RegisterNotificationModule(groups.TeacherOrAdmin, groups.Protected, pool)
+	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
 
 	return routes.RegisterAutomationModule(groups.Admin, pool)
-}
-
-func newTimetableNotifier(pool *pgxpool.Pool) *notificationsservices.NotificationService {
-	return notificationsservices.NewNotificationService(
-		notificationsrepositories.NewNotificationRepository(pool),
-		repositories.NewClassRepository(pool),
-		timetablerepositories.NewGradeSectionRepository(pool),
-		repositories.NewSectionHeadRepository(pool),
-		repositories.NewTeacherRepository(pool),
-		repositories.NewStudentRepository(pool),
-		repositories.NewGuardianRepository(pool),
-		repositories.NewSchoolRepository(pool),
-		repositories.NewPositionRepository(pool),
-	)
 }
 
 func newHTTPGroups(router *gin.Engine, pool *pgxpool.Pool) HTTPGroups {

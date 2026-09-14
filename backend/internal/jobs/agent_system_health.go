@@ -17,8 +17,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/db/migrations"
+	"github.com/openschool-org/openschool/internal/modules/notifications"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // SystemHealthAgentName is this agent's stable job_settings/job_runs identifier.

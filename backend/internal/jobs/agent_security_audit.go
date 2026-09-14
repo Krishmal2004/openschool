@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/openschool-org/openschool/internal/modules/notifications"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // SecurityAuditAgentName is this agent's stable job_settings/job_runs identifier.

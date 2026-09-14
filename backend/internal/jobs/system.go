@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/openschool-org/openschool/internal/modules/notifications"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // errNoAdminAccount signals notifyAdmins found no admin account to notify or attribute the notification to.

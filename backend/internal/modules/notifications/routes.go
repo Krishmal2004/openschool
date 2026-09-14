@@ -9,15 +9,32 @@ import (
 	"github.com/openschool-org/openschool/internal/middleware"
 	rootmodels "github.com/openschool-org/openschool/internal/models"
 	models "github.com/openschool-org/openschool/internal/models/notifications"
-	services "github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 type NotificationHandler struct {
-	service *services.NotificationService
+	service *NotificationService
 }
 
-func NewNotificationHandler(service *services.NotificationService) *NotificationHandler {
+func NewNotificationHandler(service *NotificationService) *NotificationHandler {
 	return &NotificationHandler{service: service}
+}
+
+// RegisterRoutes mounts the composer and authenticated notification center.
+func RegisterRoutes(teacherOrAdmin, protected *gin.RouterGroup, service *NotificationService) {
+	h := NewNotificationHandler(service)
+	teacherOrAdmin.POST("/notifications", h.Create)
+	teacherOrAdmin.PUT("/notifications/:id", h.Update)
+	teacherOrAdmin.POST("/notifications/:id/send", h.Send)
+	teacherOrAdmin.DELETE("/notifications/:id", h.Delete)
+	teacherOrAdmin.GET("/notifications/sent", h.ListSent)
+	teacherOrAdmin.GET("/notifications/drafts", h.ListDrafts)
+	teacherOrAdmin.GET("/notifications/:id/stats", h.Stats)
+	protected.GET("/me/notifications", h.ListMine)
+	protected.GET("/me/notifications/archived", h.ListMyArchived)
+	protected.GET("/me/notifications/unread-count", h.UnreadCount)
+	protected.POST("/me/notifications/:id/read", h.MarkRead)
+	protected.POST("/me/notifications/:id/archive", h.Archive)
+	protected.POST("/me/notifications/:id/unarchive", h.Unarchive)
 }
 
 func (h *NotificationHandler) caller(c *gin.Context) (uuid.UUID, string, bool) {
@@ -44,11 +61,11 @@ func (h *NotificationHandler) caller(c *gin.Context) (uuid.UUID, string, bool) {
 
 func (h *NotificationHandler) writeServiceError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, services.ErrNotificationNotFound):
+	case errors.Is(err, ErrNotificationNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-	case errors.Is(err, services.ErrForbiddenRecipients):
+	case errors.Is(err, ErrForbiddenRecipients):
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-	case errors.Is(err, services.ErrNotADraft):
+	case errors.Is(err, ErrNotADraft):
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

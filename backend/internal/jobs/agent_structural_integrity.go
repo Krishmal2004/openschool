@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/openschool-org/openschool/internal/modules/notifications"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 // StructuralIntegrityAgentName is this agent's stable job_settings/job_runs identifier.

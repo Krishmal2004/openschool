@@ -105,21 +105,22 @@ cmd/api
 | DONE | Student portfolio routes | Migrated all portfolio HTTP handlers and endpoint registration into People | `internal/modules/people` |
 | DONE | Student attendance | Migrated sessions, records, authorization, 24-hour locking, correction auditing, absence notifications, self-service reads, and report reads | `internal/modules/attendance` |
 | DONE | Staff attendance | Migrated daily marking, directories, monthly summaries, staff histories, and teacher self-service attendance | `internal/modules/attendance` |
+| DONE | Notifications | Migrated composer authorization, recipient resolution, drafts, delivery, inbox, unread/archive state, and system delivery | `internal/modules/notifications` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Twenty-seven have now been migrated out of the legacy service layer.
+sqlc. Twenty-eight have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 27 |
-| Remaining legacy sqlc service files | 8 |
+| Migrated legacy sqlc service files | 28 |
+| Remaining legacy sqlc service files | 7 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 60% |
+| Feature migration estimate | Approximately 65% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -147,7 +148,7 @@ sqlc. Twenty-seven have now been migrated out of the legacy service layer.
 | TODO | Teacher self-service | Teacher-facing timetable and workload endpoints | Depends on timetable engine and teacher module |
 | DONE | Student attendance | None | Sessions, records, scoped authorization, lock/correction rules, notifications, self/parent reads, and report reads are module-owned |
 | DONE | Staff attendance | None | Admin marking, date views, monthly summaries, histories, and teacher self-service are module-owned |
-| TODO | Notifications | Notifications, unread counts, and delivery behavior | Includes timetable and people dependencies |
+| DONE | Notifications | None | Composer, scoped recipients, drafts, delivery, inbox state, and system-triggered delivery are module-owned |
 | TODO | Positions | Teacher positions and scoped notifications | Check existing ADR before changing semantics |
 | TODO | Section heads | Section-head assignments and access rules | Related to grade sections and teacher roles |
 | TODO | Prefects | Prefect assignments and student leadership | Academic-year scoped |
@@ -162,9 +163,9 @@ sqlc. Twenty-seven have now been migrated out of the legacy service layer.
 
 These are intentionally retained until their consumers are migrated:
 
-- Legacy timetable repositories used by notifications, parent and
+- Legacy timetable repositories used by parent and
   student views, teacher self-service, and jobs.
-- Legacy grade-section repository used by notifications, parent and
+- Legacy grade-section repository used by parent and
   student views, teacher self-service, and jobs.
 - Legacy classroom repository used for subject-specific lab-room lookup.
 - Legacy subject and grade repositories used by curriculum preset seeding and

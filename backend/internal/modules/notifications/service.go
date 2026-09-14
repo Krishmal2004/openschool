@@ -10,13 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/openschool-org/openschool/db/sqlc"
 	rootmodels "github.com/openschool-org/openschool/internal/models"
 	models "github.com/openschool-org/openschool/internal/models/notifications"
-	"github.com/openschool-org/openschool/internal/ports"
-	rootrepositories "github.com/openschool-org/openschool/internal/repositories"
-	repositories "github.com/openschool-org/openschool/internal/repositories/notifications"
-	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
 )
 
 var (
@@ -26,33 +21,77 @@ var (
 )
 
 type NotificationService struct {
-	repo             *repositories.NotificationRepository
-	classRepo        *rootrepositories.ClassRepository
-	gradeSectionRepo *timetablerepositories.GradeSectionRepository
-	sectionHeadRepo  *rootrepositories.SectionHeadRepository
-	teacherRepo      *rootrepositories.TeacherRepository
-	studentRepo      *rootrepositories.StudentRepository
-	guardianRepo     *rootrepositories.GuardianRepository
-	schoolRepo       ports.CurrentAcademicYearReader
-	positionRepo     *rootrepositories.PositionRepository
+	repo store
 }
 
-func NewNotificationService(
-	repo *repositories.NotificationRepository,
-	classRepo *rootrepositories.ClassRepository,
-	gradeSectionRepo *timetablerepositories.GradeSectionRepository,
-	sectionHeadRepo *rootrepositories.SectionHeadRepository,
-	teacherRepo *rootrepositories.TeacherRepository,
-	studentRepo *rootrepositories.StudentRepository,
-	guardianRepo *rootrepositories.GuardianRepository,
-	schoolRepo ports.CurrentAcademicYearReader,
-	positionRepo *rootrepositories.PositionRepository,
-) *NotificationService {
-	return &NotificationService{
-		repo: repo, classRepo: classRepo, gradeSectionRepo: gradeSectionRepo, sectionHeadRepo: sectionHeadRepo,
-		teacherRepo: teacherRepo, studentRepo: studentRepo, guardianRepo: guardianRepo, schoolRepo: schoolRepo,
-		positionRepo: positionRepo,
-	}
+func NewNotificationService(repo store) *NotificationService {
+	return &NotificationService{repo: repo}
+}
+
+type notification struct {
+	ID                                         uuid.UUID
+	Title, Message, Category, Priority, Status string
+	RecipientRules                             []byte
+	CreatedBy                                  uuid.UUID
+	SentAt, CreatedAt, UpdatedAt               pgtype.Timestamptz
+}
+type notificationCommand struct {
+	ID                                         uuid.UUID
+	Title, Message, Category, Priority, Status string
+	RecipientRules                             []byte
+	CreatedBy                                  uuid.UUID
+	SentAt                                     pgtype.Timestamptz
+}
+type sentNotification struct {
+	notification
+	SenderName string
+}
+type recipientNotification struct {
+	RecipientID, NotificationID                    uuid.UUID
+	Title, Message, Category, Priority, SenderName string
+	SentAt                                         pgtype.Timestamptz
+	IsRead, IsArchived                             bool
+}
+type recipientStats struct{ Total, Read int32 }
+
+type store interface {
+	Create(context.Context, notificationCommand) (notification, error)
+	UpdateDraft(context.Context, notificationCommand) (notification, error)
+	MarkSent(context.Context, uuid.UUID) (notification, error)
+	GetByID(context.Context, uuid.UUID) (notification, error)
+	DeleteDraft(context.Context, uuid.UUID) (int64, error)
+	ListSentByUser(context.Context, uuid.UUID) ([]sentNotification, error)
+	ListAllSent(context.Context) ([]sentNotification, error)
+	ListMyDrafts(context.Context, uuid.UUID) ([]notification, error)
+	GetStats(context.Context, uuid.UUID) (recipientStats, error)
+	AddRecipient(context.Context, uuid.UUID, uuid.UUID) error
+	ListMine(context.Context, uuid.UUID) ([]recipientNotification, error)
+	ListMyArchived(context.Context, uuid.UUID) ([]recipientNotification, error)
+	CountMyUnread(context.Context, uuid.UUID) (int64, error)
+	MarkRead(context.Context, uuid.UUID, uuid.UUID) error
+	SetArchived(context.Context, uuid.UUID, uuid.UUID, bool) error
+	ListAllUserIDs(context.Context) ([]uuid.UUID, error)
+	ListStudentUserIDsByClass(context.Context, uuid.UUID) ([]pgtype.UUID, error)
+	ListGuardianUserIDsByClass(context.Context, uuid.UUID) ([]pgtype.UUID, error)
+	ListTeacherUserIDsByClass(context.Context, uuid.UUID) ([]uuid.UUID, error)
+	ListClassIDsByGrade(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error)
+	ListTeacherUserIDsBySubject(context.Context, uuid.UUID) ([]uuid.UUID, error)
+	ListStudentUserIDsBySubject(context.Context, uuid.UUID, uuid.UUID) ([]pgtype.UUID, error)
+	ListStudentIDsByGuardian(context.Context, uuid.UUID) ([]uuid.UUID, error)
+	IsTeacherAssignedToSubject(context.Context, uuid.UUID, uuid.UUID) (bool, error)
+	CurrentAcademicYearID(context.Context) (uuid.UUID, error)
+	ListGradeIDs(context.Context, uuid.UUID) ([]uuid.UUID, error)
+	GetGradeTIC(context.Context, uuid.UUID, uuid.UUID) (uuid.UUID, error)
+	GetGradeSectionHead(context.Context, uuid.UUID, uuid.UUID) (pgtype.UUID, error)
+	IsVicePrincipalAuthorizedForGrade(context.Context, uuid.UUID, uuid.UUID) (bool, error)
+	TeacherIDByUser(context.Context, uuid.UUID) (uuid.UUID, error)
+	IsPrincipal(context.Context, uuid.UUID) (bool, error)
+	IsTeacherAssignedToClass(context.Context, uuid.UUID, uuid.UUID) (bool, error)
+	StudentCurrentClass(context.Context, uuid.UUID) (uuid.UUID, error)
+	IsTeacherAssignedToAnyStudentClass(context.Context, []uuid.UUID, uuid.UUID) (bool, error)
+	StudentUserID(context.Context, uuid.UUID) (pgtype.UUID, error)
+	GuardianUserID(context.Context, uuid.UUID) (pgtype.UUID, error)
+	TeacherUserID(context.Context, uuid.UUID) (uuid.UUID, error)
 }
 
 func addUUID(seen map[uuid.UUID]bool, out *[]uuid.UUID, id uuid.UUID) {
@@ -69,7 +108,7 @@ func addPgUUID(seen map[uuid.UUID]bool, out *[]uuid.UUID, id pgtype.UUID) {
 }
 
 func (s *NotificationService) currentAcademicYearID(ctx context.Context) (uuid.UUID, error) {
-	yearID, err := s.schoolRepo.CurrentAcademicYearID(ctx)
+	yearID, err := s.repo.CurrentAcademicYearID(ctx)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("no current academic year configured")
 	}
@@ -89,15 +128,11 @@ func (s *NotificationService) gradesForRule(ctx context.Context, rule models.Rec
 		if rule.GradeSectionID == nil {
 			return nil, nil
 		}
-		grades, err := s.gradeSectionRepo.ListGrades(ctx, *rule.GradeSectionID)
+		grades, err := s.repo.ListGradeIDs(ctx, *rule.GradeSectionID)
 		if err != nil {
 			return nil, err
 		}
-		ids := make([]uuid.UUID, len(grades))
-		for i, g := range grades {
-			ids[i] = g.ID
-		}
-		return ids, nil
+		return grades, nil
 	default:
 		return nil, nil
 	}
@@ -109,18 +144,18 @@ func (s *NotificationService) isTeacherAuthorizedForGrade(ctx context.Context, t
 	if err != nil {
 		return false, err
 	}
-	if tic, err := s.sectionHeadRepo.GetGradeTIC(ctx, yearID, gradeID); err == nil && tic == teacherID {
+	if tic, err := s.repo.GetGradeTIC(ctx, yearID, gradeID); err == nil && tic == teacherID {
 		return true, nil
 	} else if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return false, err
 	}
-	section, err := s.gradeSectionRepo.GetForGrade(ctx, yearID, gradeID)
-	if err == nil && section.SectionHeadTeacherID.Valid && uuid.UUID(section.SectionHeadTeacherID.Bytes) == teacherID {
+	sectionHead, err := s.repo.GetGradeSectionHead(ctx, yearID, gradeID)
+	if err == nil && sectionHead.Valid && uuid.UUID(sectionHead.Bytes) == teacherID {
 		return true, nil
 	} else if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return false, err
 	}
-	if authorized, err := s.positionRepo.IsVicePrincipalAuthorizedForGrade(ctx, teacherID, gradeID); err != nil {
+	if authorized, err := s.repo.IsVicePrincipalAuthorizedForGrade(ctx, teacherID, gradeID); err != nil {
 		return false, err
 	} else if authorized {
 		return true, nil
@@ -136,14 +171,14 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 	if callerRole != rootmodels.RoleTeacher {
 		return ErrForbiddenRecipients
 	}
-	teacher, err := s.teacherRepo.GetByUserID(ctx, callerUserID)
+	teacherID, err := s.repo.TeacherIDByUser(ctx, callerUserID)
 	if err != nil {
 		return fmt.Errorf("no teacher profile linked to this account")
 	}
 
 	// Principal has the same reach as admin, including RuleEveryone. This is
 	// a permanent appointment, not scoped to an academic year.
-	if isPrincipal, err := s.positionRepo.IsPrincipal(ctx, teacher.ID); err != nil {
+	if isPrincipal, err := s.repo.IsPrincipal(ctx, teacherID); err != nil {
 		return err
 	} else if isPrincipal {
 		return nil
@@ -158,7 +193,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 			if rule.ClassID == nil {
 				return ErrForbiddenRecipients
 			}
-			ok, err := s.classRepo.IsTeacherAssignedToClass(ctx, *rule.ClassID, teacher.ID)
+			ok, err := s.repo.IsTeacherAssignedToClass(ctx, *rule.ClassID, teacherID)
 			if err != nil || !ok {
 				return ErrForbiddenRecipients
 			}
@@ -172,7 +207,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				return ErrForbiddenRecipients
 			}
 			for _, gradeID := range gradeIDs {
-				ok, err := s.isTeacherAuthorizedForGrade(ctx, teacher.ID, gradeID)
+				ok, err := s.isTeacherAuthorizedForGrade(ctx, teacherID, gradeID)
 				if err != nil {
 					return err
 				}
@@ -185,7 +220,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 			if rule.SubjectID == nil || rule.SubjectAudience != models.AudienceStudents {
 				return ErrForbiddenRecipients
 			}
-			ok, err := s.repo.IsTeacherAssignedToSubject(ctx, teacher.ID, *rule.SubjectID)
+			ok, err := s.repo.IsTeacherAssignedToSubject(ctx, teacherID, *rule.SubjectID)
 			if err != nil || !ok {
 				return ErrForbiddenRecipients
 			}
@@ -194,11 +229,11 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 			if rule.StudentID == nil {
 				return ErrForbiddenRecipients
 			}
-			class, err := s.classRepo.GetStudentCurrentClass(ctx, *rule.StudentID)
+			classID, err := s.repo.StudentCurrentClass(ctx, *rule.StudentID)
 			if err != nil {
 				return ErrForbiddenRecipients
 			}
-			ok, err := s.classRepo.IsTeacherAssignedToClass(ctx, class.ID, teacher.ID)
+			ok, err := s.repo.IsTeacherAssignedToClass(ctx, classID, teacherID)
 			if err != nil || !ok {
 				return ErrForbiddenRecipients
 			}
@@ -211,7 +246,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 			if err != nil {
 				return err
 			}
-			authorized, err := s.classRepo.IsTeacherAssignedToAnyStudentClass(ctx, studentIDs, teacher.ID)
+			authorized, err := s.repo.IsTeacherAssignedToAnyStudentClass(ctx, studentIDs, teacherID)
 			if err != nil || !authorized {
 				return ErrForbiddenRecipients
 			}
@@ -342,31 +377,31 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 			if rule.StudentID == nil {
 				continue
 			}
-			student, err := s.studentRepo.GetByID(ctx, *rule.StudentID)
+			userID, err := s.repo.StudentUserID(ctx, *rule.StudentID)
 			if err != nil {
 				return nil, err
 			}
-			addPgUUID(seen, &result, student.UserID)
+			addPgUUID(seen, &result, userID)
 
 		case models.RuleGuardian:
 			if rule.GuardianID == nil {
 				continue
 			}
-			guardian, err := s.guardianRepo.GetByID(ctx, *rule.GuardianID)
+			userID, err := s.repo.GuardianUserID(ctx, *rule.GuardianID)
 			if err != nil {
 				return nil, err
 			}
-			addPgUUID(seen, &result, guardian.UserID)
+			addPgUUID(seen, &result, userID)
 
 		case models.RuleTeacher:
 			if rule.TeacherID == nil {
 				continue
 			}
-			teacher, err := s.teacherRepo.GetByID(ctx, *rule.TeacherID)
+			userID, err := s.repo.TeacherUserID(ctx, *rule.TeacherID)
 			if err != nil {
 				return nil, err
 			}
-			addUUID(seen, &result, teacher.UserID)
+			addUUID(seen, &result, userID)
 		}
 	}
 
@@ -419,7 +454,7 @@ func (s *NotificationService) Create(ctx context.Context, req models.CreateNotif
 		sentAt = pgtype.Timestamptz{Time: time.Now(), Valid: true}
 	}
 
-	notification, err := s.repo.Create(ctx, db.CreateNotificationParams{
+	notification, err := s.repo.Create(ctx, notificationCommand{
 		Title: req.Title, Message: req.Message, Category: req.Category, Priority: req.Priority,
 		Status: status, RecipientRules: rulesJSON, CreatedBy: callerUserID, SentAt: sentAt,
 	})
@@ -459,7 +494,7 @@ func (s *NotificationService) UpdateDraft(ctx context.Context, id uuid.UUID, req
 		return models.NotificationResponse{}, err
 	}
 
-	updated, err := s.repo.UpdateDraft(ctx, db.UpdateNotificationDraftParams{
+	updated, err := s.repo.UpdateDraft(ctx, notificationCommand{
 		ID: id, Title: req.Title, Message: req.Message, Category: req.Category, Priority: req.Priority, RecipientRules: rulesJSON,
 	})
 	if err != nil {
@@ -524,11 +559,7 @@ func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UU
 		}
 		result := make([]models.NotificationResponse, len(rows))
 		for i, row := range rows {
-			result[i] = s.toResponse(db.Notification{
-				ID: row.ID, Title: row.Title, Message: row.Message, Category: row.Category, Priority: row.Priority,
-				Status: row.Status, RecipientRules: row.RecipientRules, CreatedBy: row.CreatedBy, SentAt: row.SentAt,
-				CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
-			}, row.SenderName)
+			result[i] = s.toResponse(row.notification, row.SenderName)
 		}
 		return result, nil
 	}
@@ -539,11 +570,7 @@ func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UU
 	}
 	result := make([]models.NotificationResponse, len(rows))
 	for i, row := range rows {
-		result[i] = s.toResponse(db.Notification{
-			ID: row.ID, Title: row.Title, Message: row.Message, Category: row.Category, Priority: row.Priority,
-			Status: row.Status, RecipientRules: row.RecipientRules, CreatedBy: row.CreatedBy, SentAt: row.SentAt,
-			CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
-		}, row.SenderName)
+		result[i] = s.toResponse(row.notification, row.SenderName)
 	}
 	return result, nil
 }
@@ -568,7 +595,7 @@ func (s *NotificationService) SendDirect(ctx context.Context, title, message, ca
 	if err := validateCategoryAndPriority(category, priority); err != nil {
 		return err
 	}
-	notification, err := s.repo.Create(ctx, db.CreateNotificationParams{
+	notification, err := s.repo.Create(ctx, notificationCommand{
 		Title: title, Message: message, Category: category, Priority: priority,
 		Status: models.StatusSent, RecipientRules: []byte("[]"), CreatedBy: createdBy,
 		SentAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
@@ -597,10 +624,10 @@ func (s *NotificationService) GetStats(ctx context.Context, id, callerUserID uui
 	if err != nil {
 		return models.NotificationStatsResponse{}, err
 	}
-	return models.NotificationStatsResponse{Total: row.Total, Read: row.ReadCount, Unread: row.Total - row.ReadCount}, nil
+	return models.NotificationStatsResponse{Total: row.Total, Read: row.Read, Unread: row.Total - row.Read}, nil
 }
 
-func (s *NotificationService) toResponse(n db.Notification, senderName string) models.NotificationResponse {
+func (s *NotificationService) toResponse(n notification, senderName string) models.NotificationResponse {
 	var rules []models.RecipientRule
 	_ = json.Unmarshal(n.RecipientRules, &rules)
 	return models.NotificationResponse{

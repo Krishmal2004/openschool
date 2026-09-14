@@ -7,7 +7,6 @@ import (
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
-	notificationroutes "github.com/openschool-org/openschool/internal/routes/notifications"
 )
 
 // The functions in this file are the composition-root modules. Each module
@@ -38,10 +37,6 @@ func RegisterSelfServiceModule(student *gin.RouterGroup, pool *pgxpool.Pool) {
 func RegisterParentAndTeacherSelfModule(parent, teacher *gin.RouterGroup, timetableService *timetablemodule.Reader, pool *pgxpool.Pool) {
 	RegisterParentRoutes(parent, timetableService, pool)
 	RegisterTeacherSelfRoutes(teacher, pool, timetableService)
-}
-
-func RegisterNotificationModule(teacherOrAdmin, protected *gin.RouterGroup, pool *pgxpool.Pool) {
-	notificationroutes.RegisterNotificationRoutes(teacherOrAdmin, protected, pool)
 }
 
 func RegisterAutomationModule(admin *gin.RouterGroup, pool *pgxpool.Pool) *jobs.Scheduler {
