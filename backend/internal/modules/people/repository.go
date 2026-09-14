@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -119,6 +120,56 @@ func (r *studentRepository) SetActive(c context.Context, id uuid.UUID, active bo
 type teacherReader struct{ queries *db.Queries }
 
 type guardianReader struct{ queries *db.Queries }
+
+type guardianRepository struct{ queries *db.Queries }
+
+func NewGuardianStore(pool *pgxpool.Pool) *guardianRepository {
+	return &guardianRepository{queries: db.New(pool)}
+}
+
+func (r *guardianRepository) guardian(c context.Context, id uuid.UUID) (guardianRecord, error) {
+	g, err := r.queries.GetGuardianByID(c, id)
+	var userID *uuid.UUID
+	if g.UserID.Valid {
+		id := uuid.UUID(g.UserID.Bytes)
+		userID = &id
+	}
+	return guardianRecord{ID: g.ID, UserID: userID, FullName: g.FullName, Email: g.Email.String, Phone: g.Phone, NIC: g.NicNumber}, err
+}
+func (r *guardianRepository) guardianDuplicates(c context.Context, phone, email string) (any, error) {
+	return r.queries.FindGuardianDuplicateCandidates(c, db.FindGuardianDuplicateCandidatesParams{Phone: phone, Email: pgtype.Text{String: email, Valid: email != ""}})
+}
+func (r *guardianRepository) createGuardian(c context.Context, req models.CreateGuardianRequest) (any, error) {
+	return r.queries.CreateGuardian(c, db.CreateGuardianParams{FullName: req.FullName, Relationship: req.Relationship, Phone: req.Phone, Email: pgtype.Text{String: req.Email, Valid: req.Email != ""}, NicNumber: req.NICNumber})
+}
+func (r *guardianRepository) updateGuardian(c context.Context, id uuid.UUID, req models.UpdateGuardianRequest) (any, error) {
+	return r.queries.UpdateGuardian(c, db.UpdateGuardianParams{ID: id, FullName: req.FullName, Relationship: req.Relationship, Phone: req.Phone, Email: pgtype.Text{String: req.Email, Valid: req.Email != ""}, NicNumber: req.NICNumber})
+}
+func (r *guardianRepository) deleteGuardian(c context.Context, id uuid.UUID) (int64, error) {
+	return r.queries.DeleteGuardian(c, id)
+}
+func (r *guardianRepository) linkGuardian(c context.Context, student, guardian uuid.UUID, primary bool) error {
+	return r.queries.LinkGuardianToStudent(c, db.LinkGuardianToStudentParams{StudentID: student, GuardianID: guardian, IsPrimaryContact: primary})
+}
+func (r *guardianRepository) unlinkGuardian(c context.Context, student, guardian uuid.UUID) error {
+	return r.queries.UnlinkGuardianFromStudent(c, db.UnlinkGuardianFromStudentParams{StudentID: student, GuardianID: guardian})
+}
+func (r *guardianRepository) setPrimaryGuardian(c context.Context, student, guardian uuid.UUID) error {
+	return r.queries.SetPrimaryContact(c, db.SetPrimaryContactParams{StudentID: student, GuardianID: guardian})
+}
+func (r *guardianRepository) ensureParentUser(c context.Context, id uuid.UUID, email, name string) error {
+	_, err := r.queries.EnsureUserExists(c, db.EnsureUserExistsParams{ID: id, Email: email, FullName: name, Role: "parent", MustChangePassword: true})
+	return err
+}
+func (r *guardianRepository) deleteGuardianUser(c context.Context, id uuid.UUID) error {
+	return r.queries.DeleteUser(c, id)
+}
+func (r *guardianRepository) setGuardianUser(c context.Context, guardian, user uuid.UUID) error {
+	return r.queries.SetGuardianUserID(c, db.SetGuardianUserIDParams{ID: guardian, UserID: pgtype.UUID{Bytes: user, Valid: true}})
+}
+func (r *guardianRepository) guardianResponse(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.GetGuardianByID(c, id)
+}
 
 func NewGuardianReader(pool *pgxpool.Pool) GuardianReader {
 	return &guardianReader{queries: db.New(pool)}

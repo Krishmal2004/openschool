@@ -18,7 +18,6 @@ const modulePath = "github.com/openschool-org/openschool/"
 var sqlcServiceDebt = map[string]bool{
 	"services/attendance.go": true, "services/audit.go": true, "services/class.go": true,
 	"services/curriculum.go": true, "services/curriculum_preset.go": true,
-	"services/guardian.go":                   true,
 	"services/non_academic_staff.go":         true,
 	"services/notifications/notification.go": true, "services/position.go": true,
 	"services/prefect.go": true, "services/promotion.go": true, "services/report_export.go": true,

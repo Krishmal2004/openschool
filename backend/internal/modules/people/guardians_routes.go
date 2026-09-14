@@ -2,6 +2,7 @@ package people
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -84,7 +85,7 @@ func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) 
 			return
 		}
 		if err := writer.Delete(c, id, actor); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			guardianWriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "guardian deleted"})
@@ -153,11 +154,21 @@ func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) 
 		}
 		value, err := writer.Provision(c, id, req, actor)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			guardianWriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, value)
 	})
+}
+
+func guardianWriteError(c *gin.Context, err error) {
+	status := http.StatusBadRequest
+	if errors.Is(err, ErrGuardianNotFound) {
+		status = http.StatusNotFound
+	} else if errors.Is(err, ErrGuardianInUse) || errors.Is(err, ErrGuardianAlreadyProvisioned) || errors.Is(err, ErrGuardianMissingEmail) || errors.Is(err, ErrGuardianMissingNIC) {
+		status = http.StatusConflict
+	}
+	c.JSON(status, gin.H{"error": err.Error()})
 }
 
 func guardianActor(c *gin.Context) (uuid.UUID, bool) {

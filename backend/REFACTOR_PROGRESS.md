@@ -111,8 +111,8 @@ sqlc. Twenty have now been migrated out of the legacy service layer.
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 22 |
-| Remaining legacy sqlc service files | 13 |
+| Migrated legacy sqlc service files | 23 |
+| Remaining legacy sqlc service files | 12 |
 | Foundation and composition work | DONE |
 | Feature migration estimate | Approximately 50% |
 
@@ -134,7 +134,7 @@ sqlc. Twenty have now been migrated out of the legacy service layer.
 | TODO | Term marks | None for the mark workflows | Reports still use the compatibility repository until Reports is migrated |
 | DONE | Students | None for student profile CRUD and lifecycle | Identity provisioning, rollback, house assignment, and deletion are migrated |
 | DONE | Teachers | None for teacher profile and qualification workflows | Identity provisioning, rollback, lifecycle, house, and subject operations are migrated |
-| TODO | Guardians | Move guardian administration write logic and provisioning out of the compatibility adapter | Parent access, authentication, notifications, reads, and route ownership are migrated |
+| DONE | Guardians | None | CRUD, relationships, provisioning and rollback, parent access, authentication, notifications, reads, and routes are migrated |
 | TODO | Non-academic staff | Staff profile and house operations | House reassignment currently remains in the legacy service |
 | TODO | Student portfolio | Portfolio records and student access | Requires narrow student-access contracts |
 | TODO | Student self-service | Student-facing profile, timetable, and academic endpoints | Some endpoints currently depend on legacy timetable repositories |
