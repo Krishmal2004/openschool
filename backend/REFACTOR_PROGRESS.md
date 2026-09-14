@@ -114,7 +114,8 @@ cmd/api
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
 | DONE | Dead repository cleanup | Removed fourteen superseded School, Academics, Curriculum, People, and Timetable repository adapters | Module repository adapters |
-| DONE | Repository debt guard | Added an exact allowlist for the nine active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
+| DONE | Repository debt guard | Added an exact allowlist for the eight active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
+| DONE | Dashboard | Migrated student, staff, academic, school, and timetable aggregates plus admin and teacher analytics consumers | `internal/modules/dashboard` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -129,7 +130,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 93% |
+| Feature migration estimate | Approximately 94% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -164,7 +165,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | DONE | Societies | None | CRUD, roster authorization, membership history, and teacher self-service are module-owned |
 | DONE | Reports | None for attendance and marks PDF exports | Query adapters, templates, column selection, and routes are module-owned |
 | DONE | Audit | None | Recording is exposed through a narrow shared port; admin reads and persistence are module-owned |
-| TODO | Dashboard | Dashboard aggregates and house distributions | Depends on people and attendance data |
+| DONE | Dashboard | None | Aggregate queries, response composition, admin route, and teacher analytics consumer are module-owned |
 | TODO | Search | Cross-entity search | Should be isolated behind a search capability |
 | TODO | Automation | Jobs, scheduler, and admin job endpoints | Keep process lifecycle ownership in `internal/app` |
 
@@ -172,14 +173,14 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 These are intentionally retained until their active consumers are migrated:
 
-- Nine horizontal repository files used by Authentication, Identity
-  Reconciliation, Dashboard, Search, Automation, and self-service.
+- Eight horizontal repository files used by Authentication, Identity
+  Reconciliation, Search, Automation, and self-service.
 - Legacy handlers and services for those same remaining capabilities.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
 
-Fourteen superseded repositories for School, Academics, Curriculum, People,
-and Timetable have been deleted. The architecture guard rejects any new file
-outside the exact nine-file compatibility allowlist.
+Fifteen superseded repositories for School, Academics, Curriculum, People,
+Timetable, and Dashboard have been deleted. The architecture guard rejects any
+new file outside the exact eight-file compatibility allowlist.
 
 These are migration debt, not new architecture targets. No new feature should
 be added to them unless it is required to keep an unmigrated consumer working.
@@ -213,8 +214,8 @@ The architecture test also verifies:
    as the People module.
 5. Migrate Student, Parent, and Teacher self-service endpoints.
 6. Student and Staff Attendance are complete.
-7. Notifications, Audit, and Report Export are complete; migrate Dashboard,
-   Search, and Automation.
+7. Notifications, Audit, Report Export, and Dashboard are complete; migrate
+   Search and Automation.
 8. Positions, Section Heads, Prefects, and Societies are complete.
 9. School Setup and Report Export are complete; remove compatibility
    repositories and the legacy route bridge.

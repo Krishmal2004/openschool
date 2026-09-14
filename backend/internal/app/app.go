@@ -14,6 +14,7 @@ import (
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
+	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
@@ -60,6 +61,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	leadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, leadershipService)
 	studentLeadershipService := studentleadershipmodule.NewService(studentleadershipmodule.NewRepository(pool))
 	studentleadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, studentLeadershipService)
+	dashboardService := dashboardmodule.NewService(dashboardmodule.NewRepository(pool))
+	dashboardmodule.RegisterRoutes(groups.Admin, dashboardService)
 	houseService := schoolmodule.NewHouseService(pool, auditService)
 	schoolmodule.RegisterHouseRoutes(groups.Admin, groups.TeacherOrAdmin, houseService)
 	schoolmodule.RegisterSchoolRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Protected, pool)
@@ -90,10 +93,10 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService))
 	staffAttendanceService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
 	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffAttendanceService, services.NewTeacherSelfService(repositories.NewTeacherRepository(pool)))
-	routes.RegisterAdminOperationsModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, pool)
+	routes.RegisterIdentityReconciliationRoutes(groups.Admin, pool)
 
 	timetableReader := timetablemodule.NewReader(pool)
-	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, leadershipService, studentLeadershipService, pool)
+	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, leadershipService, studentLeadershipService, dashboardService, pool)
 	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
 
 	return routes.RegisterAutomationModule(groups.Admin, pool)

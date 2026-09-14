@@ -17,7 +17,6 @@ const modulePath = "github.com/openschool-org/openschool/"
 // Entries are removed as their remaining feature consumers migrate to modules.
 var legacyRepositoryDebt = map[string]bool{
 	"repositories/auth.go":          true,
-	"repositories/dashboard.go":     true,
 	"repositories/job_checks.go":    true,
 	"repositories/job_scheduler.go": true,
 	"repositories/school.go":        true,

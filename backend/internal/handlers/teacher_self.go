@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
+	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
@@ -20,7 +21,7 @@ type TeacherSelfHandler struct {
 	school      ports.CurrentAcademicYearReader
 	positions   *leadershipmodule.Service
 	societies   *studentleadershipmodule.Service
-	dashboard   *services.DashboardService
+	dashboard   *dashboardmodule.Service
 	timetables  *timetablemodule.Reader
 }
 
@@ -30,7 +31,7 @@ func NewTeacherSelfHandler(
 	school ports.CurrentAcademicYearReader,
 	positions *leadershipmodule.Service,
 	societies *studentleadershipmodule.Service,
-	dashboard *services.DashboardService,
+	dashboard *dashboardmodule.Service,
 	timetables *timetablemodule.Reader,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{
