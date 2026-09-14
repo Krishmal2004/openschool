@@ -78,6 +78,120 @@ type streamRepository struct{ queries *db.Queries }
 func newStreamRepository(pool *pgxpool.Pool) *streamRepository {
 	return &streamRepository{queries: db.New(pool)}
 }
+
+type classRepository struct{ queries *db.Queries }
+
+func newClassRepository(pool *pgxpool.Pool) *classRepository {
+	return &classRepository{queries: db.New(pool)}
+}
+
+func classUUID(v pgtype.UUID) *uuid.UUID {
+	if !v.Valid {
+		return nil
+	}
+	id := uuid.UUID(v.Bytes)
+	return &id
+}
+func classText(v pgtype.Text) *string {
+	if !v.Valid {
+		return nil
+	}
+	value := v.String
+	return &value
+}
+func mapClass(v db.Class) Class {
+	return Class{ID: v.ID, GradeID: v.GradeID, AcademicYearID: v.AcademicYearID, FormTeacherID: classUUID(v.FormTeacherID), StreamID: classUUID(v.StreamID), StreamGroupID: classUUID(v.StreamGroupID), Name: v.Name, CreatedAt: v.CreatedAt.Time.String(), GirlMonitorID: classUUID(v.GirlMonitorID), BoyMonitorID: classUUID(v.BoyMonitorID), MediumID: classUUID(v.MediumID), HomeClassroomID: classUUID(v.HomeClassroomID)}
+}
+func mapDetails(id, grade, year uuid.UUID, form, stream, streamGroup, girl, boy, medium, room pgtype.UUID, name string, created pgtype.Timestamptz, gradeName, yearLabel string, mediumName, roomName pgtype.Text) ClassDetails {
+	return ClassDetails{Class: Class{ID: id, GradeID: grade, AcademicYearID: year, FormTeacherID: classUUID(form), StreamID: classUUID(stream), StreamGroupID: classUUID(streamGroup), GirlMonitorID: classUUID(girl), BoyMonitorID: classUUID(boy), MediumID: classUUID(medium), HomeClassroomID: classUUID(room), Name: name, CreatedAt: created.Time.String()}, GradeName: gradeName, AcademicYearLabel: yearLabel, MediumName: classText(mediumName), HomeClassroomName: classText(roomName)}
+}
+func classUUIDParam(v *uuid.UUID) pgtype.UUID {
+	if v == nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: *v, Valid: true}
+}
+
+func (r *classRepository) create(ctx context.Context, v createClassRequest) (Class, error) {
+	row, e := r.queries.CreateClass(ctx, db.CreateClassParams{GradeID: v.GradeID, AcademicYearID: v.AcademicYearID, Name: v.Name, FormTeacherID: classUUIDParam(v.FormTeacherID), StreamID: classUUIDParam(v.StreamID), StreamGroupID: classUUIDParam(v.StreamGroupID), MediumID: classUUIDParam(v.MediumID), HomeClassroomID: classUUIDParam(v.HomeClassroomID)})
+	return mapClass(row), e
+}
+func (r *classRepository) get(ctx context.Context, id uuid.UUID) (Class, error) {
+	v, e := r.queries.GetClassByID(ctx, id)
+	return mapClass(v), e
+}
+func (r *classRepository) listCurrent(ctx context.Context) ([]ClassDetails, error) {
+	rows, e := r.queries.ListCurrentClasses(ctx)
+	if e != nil {
+		return nil, e
+	}
+	out := make([]ClassDetails, len(rows))
+	for i, v := range rows {
+		out[i] = mapDetails(v.ID, v.GradeID, v.AcademicYearID, v.FormTeacherID, v.StreamID, v.StreamGroupID, v.GirlMonitorID, v.BoyMonitorID, v.MediumID, v.HomeClassroomID, v.Name, v.CreatedAt, v.GradeName, v.AcademicYearLabel, v.MediumName, v.HomeClassroomName)
+	}
+	return out, nil
+}
+func (r *classRepository) listByYear(ctx context.Context, id uuid.UUID) ([]ClassDetails, error) {
+	rows, e := r.queries.ListClassesByAcademicYear(ctx, id)
+	if e != nil {
+		return nil, e
+	}
+	out := make([]ClassDetails, len(rows))
+	for i, v := range rows {
+		out[i] = mapDetails(v.ID, v.GradeID, v.AcademicYearID, v.FormTeacherID, v.StreamID, v.StreamGroupID, v.GirlMonitorID, v.BoyMonitorID, v.MediumID, v.HomeClassroomID, v.Name, v.CreatedAt, v.GradeName, v.AcademicYearLabel, v.MediumName, v.HomeClassroomName)
+	}
+	return out, nil
+}
+func (r *classRepository) update(ctx context.Context, id uuid.UUID, v updateClassRequest) (Class, error) {
+	row, e := r.queries.UpdateClass(ctx, db.UpdateClassParams{ID: id, Name: v.Name, FormTeacherID: classUUIDParam(v.FormTeacherID), MediumID: classUUIDParam(v.MediumID), HomeClassroomID: classUUIDParam(v.HomeClassroomID)})
+	return mapClass(row), e
+}
+func (r *classRepository) delete(ctx context.Context, id uuid.UUID) error {
+	return r.queries.DeleteClass(ctx, id)
+}
+func (r *classRepository) studentCount(ctx context.Context, id uuid.UUID) (int64, error) {
+	return r.queries.GetClassStudentCount(ctx, id)
+}
+func (r *classRepository) assignFormTeacher(ctx context.Context, id, teacher uuid.UUID) (Class, error) {
+	row, e := r.queries.AssignFormTeacher(ctx, db.AssignFormTeacherParams{ID: id, FormTeacherID: classUUIDParam(&teacher)})
+	return mapClass(row), e
+}
+func (r *classRepository) assignMonitors(ctx context.Context, id uuid.UUID, girl, boy *uuid.UUID) (Class, error) {
+	row, e := r.queries.AssignClassMonitors(ctx, db.AssignClassMonitorsParams{ID: id, GirlMonitorID: classUUIDParam(girl), BoyMonitorID: classUUIDParam(boy)})
+	return mapClass(row), e
+}
+func (r *classRepository) qualified(ctx context.Context, teacher, subject uuid.UUID) (bool, error) {
+	rows, e := r.queries.ListSubjectsByTeacher(ctx, teacher)
+	if e != nil {
+		return false, e
+	}
+	for _, v := range rows {
+		if v.ID == subject {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+func (r *classRepository) assignSubjectTeacher(ctx context.Context, id, subject, teacher uuid.UUID) error {
+	return r.queries.AssignSubjectTeacherToClass(ctx, db.AssignSubjectTeacherToClassParams{ClassID: id, SubjectID: subject, TeacherID: teacher})
+}
+func (r *classRepository) listSubjectTeachers(ctx context.Context, id uuid.UUID) ([]SubjectTeacher, error) {
+	rows, e := r.queries.ListSubjectTeachersByClass(ctx, id)
+	if e != nil {
+		return nil, e
+	}
+	out := make([]SubjectTeacher, len(rows))
+	for i, v := range rows {
+		out[i] = SubjectTeacher{SubjectID: v.SubjectID, SubjectName: v.SubjectName, SubjectCode: v.SubjectCode, TeacherID: v.TeacherID, TeacherName: v.TeacherName}
+	}
+	return out, nil
+}
+func (r *classRepository) enroll(ctx context.Context, id, student uuid.UUID) error {
+	return r.queries.EnrollStudentInClass(ctx, db.EnrollStudentInClassParams{ClassID: id, StudentID: student})
+}
+func (r *classRepository) unenroll(ctx context.Context, id, student uuid.UUID) error {
+	return r.queries.UnenrollStudentFromClass(ctx, db.UnenrollStudentFromClassParams{ClassID: id, StudentID: student})
+}
 func (r *streamRepository) createStream(ctx context.Context, name string) (Stream, error) {
 	row, err := r.queries.CreateStream(ctx, name)
 	return mapStream(row), err

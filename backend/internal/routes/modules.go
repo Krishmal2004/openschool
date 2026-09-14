@@ -18,7 +18,6 @@ func RegisterCoreModule(admin, protected *gin.RouterGroup, pool *pgxpool.Pool) {
 }
 
 func RegisterAcademicModule(admin, teacherOrAdmin, studentAccess, protected *gin.RouterGroup, pool *pgxpool.Pool) {
-	RegisterClassRoutes(admin, teacherOrAdmin, pool)
 	RegisterPromotionRoutes(admin, pool)
 	RegisterTermMarkRoutes(teacherOrAdmin, pool)
 	RegisterEnrollmentRoutes(admin, teacherOrAdmin, studentAccess, protected, pool)

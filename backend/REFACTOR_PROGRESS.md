@@ -82,21 +82,25 @@ cmd/api
 | DONE | Timetable review workflow | Migrated submit, approve, reject, publish, and reviewer queue endpoints | `internal/modules/timetable` |
 | DONE | Timetable portal views | Migrated teacher schedule, student timetable, and published class timetable endpoints | `internal/modules/timetable` |
 | DONE | Timetable generation | Migrated grade-section automatic generation and draft entry persistence | `internal/modules/timetable` |
+| DONE | Curriculum mediums | Migrated medium CRUD endpoints and reference-safe deletion | `internal/modules/curriculum` |
+| DONE | Curriculum levels and groups | Migrated level, selection-group, group-subject, duplicate, delete, and tree endpoints | `internal/modules/curriculum` |
+| DONE | Curriculum presets | Migrated preview and transactional, idempotent preset seeding | `internal/modules/curriculum` |
+| DONE | Classes | Migrated class CRUD, assignments, subject-teacher qualification, and enrollment endpoints | `internal/modules/academics` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Fourteen have now been migrated out of the legacy service layer.
+sqlc. Seventeen have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 14 |
-| Remaining legacy sqlc service files | 21 |
+| Migrated legacy sqlc service files | 17 |
+| Remaining legacy sqlc service files | 18 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 30% |
+| Feature migration estimate | Approximately 40% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -108,9 +112,9 @@ sqlc. Fourteen have now been migrated out of the legacy service layer.
 | TODO | Authentication | Login/setup lifecycle, password lifecycle, and related identity operations | ThunderID remains the identity provider |
 | TODO | Identity reconciliation | Admin reconciliation and identity-provider/local-user consistency operations | Keep provider calls behind `internal/identity` |
 | TODO | School setup | Initial setup workflow and setup status | Spans school and academic configuration |
-| TODO | Curriculum | Mediums, curriculum levels, selection groups, group subjects, and curriculum tree | Larger aggregate with several dependent types |
-| TODO | Curriculum presets | Preview and transactional preset seeding | Must preserve dry-run and transaction behavior |
-| TODO | Classes | Class CRUD and class-subject configuration | Depends on grades, streams, and sections |
+| TODO | Curriculum | None for the core curriculum configuration endpoints | Levels, groups, subjects, tree, and mediums are migrated |
+| TODO | Curriculum presets | None | Preview and transactional, idempotent preset seeding are migrated |
+| TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
 | TODO | Enrollments | Student subject/group enrollment workflows | Depends on curriculum and student profiles |
 | TODO | Promotions | Student promotion between academic years | Depends on classes, enrollment, and academic years |
 | TODO | Term marks | Teacher mark entry and reporting data | Depends on students, subjects, and terms |

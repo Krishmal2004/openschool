@@ -11,6 +11,7 @@ import (
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
+	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
@@ -45,6 +46,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterAuthRoutes(groups.API, groups.Protected, pool)
 	identitymodule.Register(groups.Protected, pool)
 	routes.RegisterCoreModule(groups.Admin, groups.Protected, pool)
+	curriculummodule.RegisterMediumRoutes(groups.Admin, groups.Protected, pool)
+	curriculummodule.RegisterLevelRoutes(groups.Admin, groups.Protected, pool)
 	auditService := services.NewAuditService(repositories.NewAuditRepository(pool))
 	houseService := schoolmodule.NewHouseService(pool, auditService)
 	schoolmodule.RegisterHouseRoutes(groups.Admin, groups.TeacherOrAdmin, houseService)
@@ -66,6 +69,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	timetablemodule.RegisterTimetableGenerationRoute(groups.Admin, timetableRepository)
 	academicsmodule.RegisterSubjectRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	academicsmodule.RegisterStreamRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
+	academicsmodule.RegisterClassRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	routes.RegisterAcademicModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, pool)
 	routes.RegisterPeopleModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, houseService, pool)
 	routes.RegisterSelfServiceModule(groups.Student, pool)
