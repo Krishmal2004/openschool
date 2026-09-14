@@ -100,6 +100,7 @@ cmd/api
 | DONE | Guardian parent-access contract | Migrated parent child listing and guardian ownership checks to a narrow People port | `internal/ports`, `internal/modules/people` |
 | DONE | Guardian authentication contract | Migrated guardian NIC credential verification behind a People-owned authentication port | `internal/ports`, `internal/modules/people` |
 | DONE | Guardian notification access | Migrated guardian notification history reads into a People-owned repository adapter | `internal/modules/people` |
+| DONE | Non-academic staff | Migrated CRUD, employee numbering, employment status, and audited house assignment | `internal/modules/people` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -111,8 +112,8 @@ sqlc. Twenty have now been migrated out of the legacy service layer.
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 23 |
-| Remaining legacy sqlc service files | 12 |
+| Migrated legacy sqlc service files | 24 |
+| Remaining legacy sqlc service files | 11 |
 | Foundation and composition work | DONE |
 | Feature migration estimate | Approximately 50% |
 
@@ -135,7 +136,7 @@ sqlc. Twenty have now been migrated out of the legacy service layer.
 | DONE | Students | None for student profile CRUD and lifecycle | Identity provisioning, rollback, house assignment, and deletion are migrated |
 | DONE | Teachers | None for teacher profile and qualification workflows | Identity provisioning, rollback, lifecycle, house, and subject operations are migrated |
 | DONE | Guardians | None | CRUD, relationships, provisioning and rollback, parent access, authentication, notifications, reads, and routes are migrated |
-| TODO | Non-academic staff | Staff profile and house operations | House reassignment currently remains in the legacy service |
+| DONE | Non-academic staff | None | CRUD, employee numbering, employment status, and audited house assignment are migrated |
 | TODO | Student portfolio | Portfolio records and student access | Requires narrow student-access contracts |
 | TODO | Student self-service | Student-facing profile, timetable, and academic endpoints | Some endpoints currently depend on legacy timetable repositories |
 | TODO | Parent self-service | Parent-facing student and timetable endpoints | Some endpoints currently depend on legacy repositories |

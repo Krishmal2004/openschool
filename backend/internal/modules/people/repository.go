@@ -123,6 +123,53 @@ type guardianReader struct{ queries *db.Queries }
 
 type guardianRepository struct{ queries *db.Queries }
 
+type nonAcademicStaffRepository struct{ queries *db.Queries }
+
+func NewNonAcademicStaffStore(pool *pgxpool.Pool) *nonAcademicStaffRepository {
+	return &nonAcademicStaffRepository{queries: db.New(pool)}
+}
+func (r *nonAcademicStaffRepository) nextStaffEmployeeNumber(c context.Context) (string, error) {
+	return r.queries.NextNonAcademicEmployeeNumber(c)
+}
+func (r *nonAcademicStaffRepository) createStaff(c context.Context, p staffCreate) (any, error) {
+	var house pgtype.UUID
+	if p.HouseID != nil {
+		house = pgtype.UUID{Bytes: *p.HouseID, Valid: true}
+	}
+	return r.queries.CreateNonAcademicStaff(c, db.CreateNonAcademicStaffParams{FullName: p.FullName, EmployeeNumber: p.EmployeeNumber, Designation: p.Designation, Phone: pgtype.Text{String: p.Phone, Valid: p.Phone != ""}, JoinedDate: pgtype.Date{Time: p.JoinedDate, Valid: true}, Gender: pgtype.Text{String: p.Gender, Valid: p.Gender != ""}, HouseID: house})
+}
+func (r *nonAcademicStaffRepository) getStaff(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.GetNonAcademicStaffByID(c, id)
+}
+func (r *nonAcademicStaffRepository) staffRecord(c context.Context, id uuid.UUID) (staffRecord, error) {
+	value, err := r.queries.GetNonAcademicStaffByID(c, id)
+	var house *uuid.UUID
+	if value.HouseID.Valid {
+		id := uuid.UUID(value.HouseID.Bytes)
+		house = &id
+	}
+	return staffRecord{HouseID: house}, err
+}
+func (r *nonAcademicStaffRepository) listStaff(c context.Context, search, designation string) (any, error) {
+	return r.queries.ListNonAcademicStaff(c, db.ListNonAcademicStaffParams{Search: pgtype.Text{String: search, Valid: search != ""}, Designation: pgtype.Text{String: designation, Valid: designation != ""}})
+}
+func (r *nonAcademicStaffRepository) updateStaff(c context.Context, id uuid.UUID, p staffUpdate) (any, error) {
+	return r.queries.UpdateNonAcademicStaff(c, db.UpdateNonAcademicStaffParams{ID: id, FullName: p.FullName, Designation: p.Designation, Phone: pgtype.Text{String: p.Phone, Valid: p.Phone != ""}, Gender: pgtype.Text{String: p.Gender, Valid: p.Gender != ""}})
+}
+func (r *nonAcademicStaffRepository) updateStaffStatus(c context.Context, id uuid.UUID, status string) (any, error) {
+	return r.queries.UpdateNonAcademicStaffEmploymentStatus(c, db.UpdateNonAcademicStaffEmploymentStatusParams{ID: id, EmploymentStatus: status})
+}
+func (r *nonAcademicStaffRepository) updateStaffHouse(c context.Context, id uuid.UUID, house *uuid.UUID) (any, error) {
+	var value pgtype.UUID
+	if house != nil {
+		value = pgtype.UUID{Bytes: *house, Valid: true}
+	}
+	return r.queries.UpdateNonAcademicStaffHouse(c, db.UpdateNonAcademicStaffHouseParams{ID: id, HouseID: value})
+}
+func (r *nonAcademicStaffRepository) deleteStaff(c context.Context, id uuid.UUID) (int64, error) {
+	return r.queries.DeleteNonAcademicStaff(c, id)
+}
+
 func NewGuardianStore(pool *pgxpool.Pool) *guardianRepository {
 	return &guardianRepository{queries: db.New(pool)}
 }
