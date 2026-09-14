@@ -2,6 +2,7 @@ package people
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -124,6 +125,74 @@ type guardianReader struct{ queries *db.Queries }
 type guardianRepository struct{ queries *db.Queries }
 
 type nonAcademicStaffRepository struct{ queries *db.Queries }
+
+type portfolioRepository struct{ queries *db.Queries }
+
+func NewStudentPortfolioStore(pool *pgxpool.Pool) *portfolioRepository {
+	return &portfolioRepository{queries: db.New(pool)}
+}
+func nullableUUID(id *uuid.UUID) pgtype.UUID {
+	if id == nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: *id, Valid: true}
+}
+func nullableText(value string) pgtype.Text { return pgtype.Text{String: value, Valid: value != ""} }
+func (r *portfolioRepository) teacherProfileID(c context.Context, user uuid.UUID) (uuid.UUID, error) {
+	value, err := r.queries.GetTeacherByUserID(c, user)
+	return value.ID, err
+}
+func (r *portfolioRepository) createProgress(c context.Context, student, term uuid.UUID, narrative string, writer *uuid.UUID) (any, error) {
+	return r.queries.CreateProgressReport(c, db.CreateProgressReportParams{StudentID: student, TermID: term, Narrative: narrative, WrittenBy: nullableUUID(writer)})
+}
+func (r *portfolioRepository) listProgress(c context.Context, student uuid.UUID) (any, error) {
+	return r.queries.ListProgressReportsByStudent(c, student)
+}
+func (r *portfolioRepository) updateProgress(c context.Context, id, student uuid.UUID, narrative string) (any, error) {
+	return r.queries.UpdateProgressReport(c, db.UpdateProgressReportParams{ID: id, StudentID: student, Narrative: narrative})
+}
+func (r *portfolioRepository) deleteProgress(c context.Context, id, student uuid.UUID) (int64, error) {
+	return r.queries.DeleteProgressReport(c, db.DeleteProgressReportParams{ID: id, StudentID: student})
+}
+func (r *portfolioRepository) createActivity(c context.Context, student, year uuid.UUID, category, name, role, achievement string) (any, error) {
+	return r.queries.CreateStudentActivity(c, db.CreateStudentActivityParams{StudentID: student, AcademicYearID: year, Category: category, Name: name, Role: nullableText(role), Achievement: nullableText(achievement)})
+}
+func (r *portfolioRepository) listActivities(c context.Context, student uuid.UUID) (any, error) {
+	return r.queries.ListStudentActivitiesByStudent(c, student)
+}
+func (r *portfolioRepository) updateActivity(c context.Context, id, student uuid.UUID, category, name, role, achievement string) (any, error) {
+	return r.queries.UpdateStudentActivity(c, db.UpdateStudentActivityParams{ID: id, StudentID: student, Category: category, Name: name, Role: nullableText(role), Achievement: nullableText(achievement)})
+}
+func (r *portfolioRepository) deleteActivity(c context.Context, id, student uuid.UUID) (int64, error) {
+	return r.queries.DeleteStudentActivity(c, db.DeleteStudentActivityParams{ID: id, StudentID: student})
+}
+func (r *portfolioRepository) createLeadership(c context.Context, student, year uuid.UUID, title, scope string) (any, error) {
+	return r.queries.CreateStudentLeadershipRole(c, db.CreateStudentLeadershipRoleParams{StudentID: student, AcademicYearID: year, Title: title, Scope: nullableText(scope)})
+}
+func (r *portfolioRepository) listLeadership(c context.Context, student uuid.UUID) (any, error) {
+	return r.queries.ListStudentLeadershipRolesByStudent(c, student)
+}
+func (r *portfolioRepository) deleteLeadership(c context.Context, id, student uuid.UUID) (int64, error) {
+	return r.queries.DeleteStudentLeadershipRole(c, db.DeleteStudentLeadershipRoleParams{ID: id, StudentID: student})
+}
+func (r *portfolioRepository) createAward(c context.Context, student, year uuid.UUID, title, category string, date time.Time, description string) (any, error) {
+	return r.queries.CreateStudentAward(c, db.CreateStudentAwardParams{StudentID: student, AcademicYearID: year, Title: title, Category: nullableText(category), AwardedDate: pgtype.Date{Time: date, Valid: true}, Description: nullableText(description)})
+}
+func (r *portfolioRepository) listAwards(c context.Context, student uuid.UUID) (any, error) {
+	return r.queries.ListStudentAwardsByStudent(c, student)
+}
+func (r *portfolioRepository) deleteAward(c context.Context, id, student uuid.UUID) (int64, error) {
+	return r.queries.DeleteStudentAward(c, db.DeleteStudentAwardParams{ID: id, StudentID: student})
+}
+func (r *portfolioRepository) createDiscipline(c context.Context, student, year uuid.UUID, date time.Time, description, action, severity string, recorder *uuid.UUID) (any, error) {
+	return r.queries.CreateDisciplinaryRecord(c, db.CreateDisciplinaryRecordParams{StudentID: student, AcademicYearID: year, IncidentDate: pgtype.Date{Time: date, Valid: true}, Description: description, ActionTaken: nullableText(action), Severity: severity, RecordedBy: nullableUUID(recorder)})
+}
+func (r *portfolioRepository) listDiscipline(c context.Context, student uuid.UUID) (any, error) {
+	return r.queries.ListDisciplinaryRecordsByStudent(c, student)
+}
+func (r *portfolioRepository) deleteDiscipline(c context.Context, id, student uuid.UUID) (int64, error) {
+	return r.queries.DeleteDisciplinaryRecord(c, db.DeleteDisciplinaryRecordParams{ID: id, StudentID: student})
+}
 
 func NewNonAcademicStaffStore(pool *pgxpool.Pool) *nonAcademicStaffRepository {
 	return &nonAcademicStaffRepository{queries: db.New(pool)}

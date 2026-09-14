@@ -1,22 +1,43 @@
-package handlers
+package people
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
-	"github.com/openschool-org/openschool/internal/services"
 )
+
+type studentPortfolioService interface {
+	TeacherProfileIDForUser(context.Context, uuid.UUID) *uuid.UUID
+	CreateProgressReport(context.Context, uuid.UUID, models.CreateProgressReportRequest, *uuid.UUID) (any, error)
+	ListProgressReports(context.Context, uuid.UUID) (any, error)
+	UpdateProgressReport(context.Context, uuid.UUID, uuid.UUID, models.UpdateProgressReportRequest) (any, error)
+	DeleteProgressReport(context.Context, uuid.UUID, uuid.UUID) error
+	CreateActivity(context.Context, uuid.UUID, models.CreateActivityRequest) (any, error)
+	ListActivities(context.Context, uuid.UUID) (any, error)
+	UpdateActivity(context.Context, uuid.UUID, uuid.UUID, models.UpdateActivityRequest) (any, error)
+	DeleteActivity(context.Context, uuid.UUID, uuid.UUID) error
+	CreateLeadershipRole(context.Context, uuid.UUID, models.CreateLeadershipRoleRequest) (any, error)
+	ListLeadershipRoles(context.Context, uuid.UUID) (any, error)
+	DeleteLeadershipRole(context.Context, uuid.UUID, uuid.UUID) error
+	CreateAward(context.Context, uuid.UUID, models.CreateAwardRequest) (any, error)
+	ListAwards(context.Context, uuid.UUID) (any, error)
+	DeleteAward(context.Context, uuid.UUID, uuid.UUID) error
+	CreateDisciplinaryRecord(context.Context, uuid.UUID, models.CreateDisciplinaryRecordRequest, *uuid.UUID) (any, error)
+	ListDisciplinaryRecords(context.Context, uuid.UUID) (any, error)
+	DeleteDisciplinaryRecord(context.Context, uuid.UUID, uuid.UUID) error
+}
 
 // StudentPortfolioHandler exposes HTTP endpoints for a student's activities, awards, and disciplinary records.
 type StudentPortfolioHandler struct {
-	service *services.StudentPortfolioService
+	service studentPortfolioService
 }
 
 // NewStudentPortfolioHandler constructs a StudentPortfolioHandler with its service dependency.
-func NewStudentPortfolioHandler(service *services.StudentPortfolioService) *StudentPortfolioHandler {
+func NewStudentPortfolioHandler(service studentPortfolioService) *StudentPortfolioHandler {
 	return &StudentPortfolioHandler{service: service}
 }
 
@@ -358,4 +379,26 @@ func (h *StudentPortfolioHandler) DeleteDisciplinaryRecord(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "disciplinary record deleted"})
+}
+
+// RegisterStudentPortfolioRoutes owns all student portfolio HTTP endpoints.
+func RegisterStudentPortfolioRoutes(teacherOrAdmin, studentAccess *gin.RouterGroup, service *StudentPortfolioService) {
+	handler := NewStudentPortfolioHandler(service)
+	teacherOrAdmin.POST("/students/:id/progress-reports", handler.CreateProgressReport)
+	studentAccess.GET("/students/:id/progress-reports", handler.ListProgressReports)
+	teacherOrAdmin.PUT("/students/:id/progress-reports/:record_id", handler.UpdateProgressReport)
+	teacherOrAdmin.DELETE("/students/:id/progress-reports/:record_id", handler.DeleteProgressReport)
+	teacherOrAdmin.POST("/students/:id/activities", handler.CreateActivity)
+	studentAccess.GET("/students/:id/activities", handler.ListActivities)
+	teacherOrAdmin.PUT("/students/:id/activities/:record_id", handler.UpdateActivity)
+	teacherOrAdmin.DELETE("/students/:id/activities/:record_id", handler.DeleteActivity)
+	teacherOrAdmin.POST("/students/:id/leadership-roles", handler.CreateLeadershipRole)
+	studentAccess.GET("/students/:id/leadership-roles", handler.ListLeadershipRoles)
+	teacherOrAdmin.DELETE("/students/:id/leadership-roles/:record_id", handler.DeleteLeadershipRole)
+	teacherOrAdmin.POST("/students/:id/awards", handler.CreateAward)
+	studentAccess.GET("/students/:id/awards", handler.ListAwards)
+	teacherOrAdmin.DELETE("/students/:id/awards/:record_id", handler.DeleteAward)
+	teacherOrAdmin.POST("/students/:id/disciplinary-records", handler.CreateDisciplinaryRecord)
+	studentAccess.GET("/students/:id/disciplinary-records", handler.ListDisciplinaryRecords)
+	teacherOrAdmin.DELETE("/students/:id/disciplinary-records/:record_id", handler.DeleteDisciplinaryRecord)
 }
