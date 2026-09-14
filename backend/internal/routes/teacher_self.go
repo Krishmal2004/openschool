@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
+	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/services"
@@ -12,10 +13,9 @@ import (
 // RegisterTeacherSelfRoutes wires the signed-in teacher's self-service
 // endpoints. It receives the timetable module's read contract so this
 // aggregate does not depend on the legacy timetable service.
-func RegisterTeacherSelfRoutes(teacher *gin.RouterGroup, pool *pgxpool.Pool, timetableService *timetablemodule.Reader) {
+func RegisterTeacherSelfRoutes(teacher *gin.RouterGroup, pool *pgxpool.Pool, timetableService *timetablemodule.Reader, positionService *leadershipmodule.Service) {
 	teacherRepo := repositories.NewTeacherRepository(pool)
 	schoolRepo := repositories.NewSchoolRepository(pool)
-	positionService := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	societyService := services.NewSocietyService(repositories.NewSocietyRepository(pool), teacherRepo)
 	dashboardService := services.NewDashboardService(repositories.NewDashboardRepository(pool))
 	handler := handlers.NewTeacherSelfHandler(services.NewTeacherSelfService(teacherRepo), schoolRepo, positionService, societyService, dashboardService, timetableService)

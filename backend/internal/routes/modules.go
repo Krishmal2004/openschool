@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/jobs"
+	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
@@ -34,9 +35,9 @@ func RegisterSelfServiceModule(student *gin.RouterGroup, pool *pgxpool.Pool) {
 	RegisterStudentSelfRoutes(student, pool)
 }
 
-func RegisterParentAndTeacherSelfModule(parent, teacher *gin.RouterGroup, timetableService *timetablemodule.Reader, pool *pgxpool.Pool) {
+func RegisterParentAndTeacherSelfModule(parent, teacher *gin.RouterGroup, timetableService *timetablemodule.Reader, leadershipService *leadershipmodule.Service, pool *pgxpool.Pool) {
 	RegisterParentRoutes(parent, timetableService, pool)
-	RegisterTeacherSelfRoutes(teacher, pool, timetableService)
+	RegisterTeacherSelfRoutes(teacher, pool, timetableService, leadershipService)
 }
 
 func RegisterAutomationModule(admin *gin.RouterGroup, pool *pgxpool.Pool) *jobs.Scheduler {
@@ -48,7 +49,6 @@ func RegisterAutomationModule(admin *gin.RouterGroup, pool *pgxpool.Pool) *jobs.
 func RegisterAdminOperationsModule(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, pool *pgxpool.Pool) {
 	RegisterPrefectRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterSocietyRoutes(admin, teacherOrAdmin, studentAccess, pool)
-	RegisterPositionRoutes(admin, teacherOrAdmin, pool)
 	RegisterIdentityReconciliationRoutes(admin, pool)
 	RegisterDashboardRoutes(admin, pool)
 	RegisterReportExportRoutes(admin, pool)

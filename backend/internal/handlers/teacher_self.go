@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
+	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/services"
@@ -16,7 +17,7 @@ import (
 type TeacherSelfHandler struct {
 	teacherSelf *services.TeacherSelfService
 	school      ports.CurrentAcademicYearReader
-	positions   *services.PositionService
+	positions   *leadershipmodule.Service
 	societies   *services.SocietyService
 	dashboard   *services.DashboardService
 	timetables  *timetablemodule.Reader
@@ -26,7 +27,7 @@ type TeacherSelfHandler struct {
 func NewTeacherSelfHandler(
 	teacherSelf *services.TeacherSelfService,
 	school ports.CurrentAcademicYearReader,
-	positions *services.PositionService,
+	positions *leadershipmodule.Service,
 	societies *services.SocietyService,
 	dashboard *services.DashboardService,
 	timetables *timetablemodule.Reader,
@@ -175,7 +176,7 @@ func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 
 	overview, err := h.positions.LeadershipOverview(c.Request.Context(), teacherID, yearID)
 	if err != nil {
-		if errors.Is(err, services.ErrInsufficientRank) {
+		if errors.Is(err, leadershipmodule.ErrInsufficientRank) {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
