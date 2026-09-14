@@ -77,19 +77,24 @@ cmd/api
 | DONE | Period generation | Migrated settings-based period generation, fallback generation, and regeneration | `internal/modules/timetable` |
 | DONE | Timetable entries | Migrated timetable entry listing, draft-only save, and entry clearing | `internal/modules/timetable` |
 | DONE | Timetable validation | Migrated conflict, availability, assignment, requirement, and reviewer validation | `internal/modules/timetable` |
+| DONE | Timetable CRUD | Migrated timetable create, copy, revision, read, listing, deletion, and archive endpoints | `internal/modules/timetable` |
+| DONE | Timetable status history | Migrated timetable status-history reads | `internal/modules/timetable` |
+| DONE | Timetable review workflow | Migrated submit, approve, reject, publish, and reviewer queue endpoints | `internal/modules/timetable` |
+| DONE | Timetable portal views | Migrated teacher schedule, student timetable, and published class timetable endpoints | `internal/modules/timetable` |
+| DONE | Timetable generation | Migrated grade-section automatic generation and draft entry persistence | `internal/modules/timetable` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Twelve have now been migrated out of the legacy service layer.
+sqlc. Fourteen have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 12 |
-| Remaining legacy sqlc service files | 23 |
+| Migrated legacy sqlc service files | 14 |
+| Remaining legacy sqlc service files | 21 |
 | Foundation and composition work | DONE |
 | Feature migration estimate | Approximately 30% |
 
@@ -119,7 +124,6 @@ sqlc. Twelve have now been migrated out of the legacy service layer.
 | TODO | Teacher self-service | Teacher-facing timetable and workload endpoints | Depends on timetable engine and teacher module |
 | TODO | Student attendance | Attendance sessions and student attendance records | Includes lock and correction rules |
 | TODO | Staff attendance | Staff attendance records and reporting | Includes date-based operations |
-| TODO | Timetable engine | Timetable CRUD, automatic generation, review, conflict detection, assignment, and publication | Entry editing and validation are already migrated; this is the remaining engine and workflow |
 | TODO | Notifications | Notifications, unread counts, and delivery behavior | Includes timetable and people dependencies |
 | TODO | Positions | Teacher positions and scoped notifications | Check existing ADR before changing semantics |
 | TODO | Section heads | Section-head assignments and access rules | Related to grade sections and teacher roles |
@@ -135,9 +139,8 @@ sqlc. Twelve have now been migrated out of the legacy service layer.
 
 These are intentionally retained until their consumers are migrated:
 
-- Legacy repositories used by the timetable generation engine.
-- Legacy timetable service still used for timetable CRUD, validation, workflow,
-  portal views, and automatic generation.
+- Legacy timetable repositories used by attendance, notifications, parent and
+  student views, teacher self-service, and jobs.
 - Legacy grade-section repository used by attendance, notifications, parent and
   student views, teacher self-service, and jobs.
 - Legacy classroom repository used for subject-specific lab-room lookup.

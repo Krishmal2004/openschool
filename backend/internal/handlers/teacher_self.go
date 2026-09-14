@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
+	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/services"
-	timetableservices "github.com/openschool-org/openschool/internal/services/timetable"
 )
 
 // TeacherSelfHandler resolves a signed-in teacher's own profile ID for the existing teacherOrAdmin routes to use.
@@ -20,7 +20,7 @@ type TeacherSelfHandler struct {
 	positions       *services.PositionService
 	societies       *services.SocietyService
 	dashboard       *services.DashboardService
-	timetables      *timetableservices.TimetableService
+	timetables      *timetablemodule.Reader
 	staffAttendance *services.StaffAttendanceService
 }
 
@@ -31,7 +31,7 @@ func NewTeacherSelfHandler(
 	positions *services.PositionService,
 	societies *services.SocietyService,
 	dashboard *services.DashboardService,
-	timetables *timetableservices.TimetableService,
+	timetables *timetablemodule.Reader,
 	staffAttendance *services.StaffAttendanceService,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{

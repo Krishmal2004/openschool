@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
+	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/services"
-	timetableservices "github.com/openschool-org/openschool/internal/services/timetable"
 )
 
 // ParentHandler serves a signed-in guardian's own-children endpoints, always re-deriving identity from the token.
@@ -15,11 +15,11 @@ type ParentHandler struct {
 	guardians  *services.GuardianService
 	attendance *services.AttendanceService
 	marks      *services.TermMarkService
-	timetables *timetableservices.TimetableService
+	timetables *timetablemodule.Reader
 }
 
 // NewParentHandler constructs a ParentHandler with its service dependencies.
-func NewParentHandler(guardians *services.GuardianService, attendance *services.AttendanceService, marks *services.TermMarkService, timetables *timetableservices.TimetableService) *ParentHandler {
+func NewParentHandler(guardians *services.GuardianService, attendance *services.AttendanceService, marks *services.TermMarkService, timetables *timetablemodule.Reader) *ParentHandler {
 	return &ParentHandler{guardians: guardians, attendance: attendance, marks: marks, timetables: timetables}
 }
 

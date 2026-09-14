@@ -4,15 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
+	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
 	notificationsrepositories "github.com/openschool-org/openschool/internal/repositories/notifications"
 	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
 	"github.com/openschool-org/openschool/internal/services"
 	notificationsservices "github.com/openschool-org/openschool/internal/services/notifications"
-	timetableservices "github.com/openschool-org/openschool/internal/services/timetable"
 )
 
-func RegisterParentRoutes(parent *gin.RouterGroup, timetables *timetableservices.TimetableService, pool *pgxpool.Pool) {
+func RegisterParentRoutes(parent *gin.RouterGroup, timetables *timetablemodule.Reader, pool *pgxpool.Pool) {
 	guardianRepo := repositories.NewGuardianRepository(pool)
 	notifications := notificationsservices.NewNotificationService(
 		notificationsrepositories.NewNotificationRepository(pool),
