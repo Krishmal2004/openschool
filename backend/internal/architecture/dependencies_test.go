@@ -16,7 +16,7 @@ const modulePath = "github.com/openschool-org/openschool/"
 // sqlcServiceDebt is a ratchet: existing files may be migrated away from sqlc,
 // but new service-layer imports are rejected. Remove entries as modules move.
 var sqlcServiceDebt = map[string]bool{
-	"services/attendance.go": true, "services/audit.go": true, "services/class.go": true,
+	"services/audit.go": true, "services/class.go": true,
 	"services/curriculum.go": true, "services/curriculum_preset.go": true,
 	"services/notifications/notification.go": true, "services/position.go": true,
 	"services/prefect.go": true, "services/promotion.go": true, "services/report_export.go": true,

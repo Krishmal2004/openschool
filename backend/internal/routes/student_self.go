@@ -5,35 +5,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
+	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	"github.com/openschool-org/openschool/internal/repositories"
-	notificationsrepositories "github.com/openschool-org/openschool/internal/repositories/notifications"
-	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
 	"github.com/openschool-org/openschool/internal/services"
-	notificationsservices "github.com/openschool-org/openschool/internal/services/notifications"
 )
 
 func RegisterStudentSelfRoutes(student *gin.RouterGroup, pool *pgxpool.Pool) {
 	studentsRepo := repositories.NewStudentRepository(pool)
-	classRepo := repositories.NewClassRepository(pool)
-	teacherRepo := repositories.NewTeacherRepository(pool)
-	guardianRepo := repositories.NewGuardianRepository(pool)
-	notifications := notificationsservices.NewNotificationService(
-		notificationsrepositories.NewNotificationRepository(pool),
-		classRepo,
-		timetablerepositories.NewGradeSectionRepository(pool),
-		repositories.NewSectionHeadRepository(pool),
-		teacherRepo,
-		studentsRepo,
-		guardianRepo,
-		repositories.NewSchoolRepository(pool),
-		repositories.NewPositionRepository(pool),
-	)
-	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
-	positionSvc := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
-	attendanceService := services.NewAttendanceService(repositories.NewAttendanceRepository(pool), repositories.NewUserRepository(pool), teacherRepo, classRepo, studentsRepo, guardianRepo, notifications, auditSvc, positionSvc, repositories.NewSchoolRepository(pool))
+	attendanceReader := attendancemodule.NewReader(attendancemodule.NewRepository(pool))
 	enrollmentService := academicsmodule.NewStudentEnrollment(academicsmodule.NewEnrollmentRepository(pool))
 
-	handler := handlers.NewStudentSelfHandler(services.NewStudentSelfService(studentsRepo), attendanceService, newTermMarkRunner(pool), enrollmentService)
+	handler := handlers.NewStudentSelfHandler(services.NewStudentSelfService(studentsRepo), attendanceReader, newTermMarkRunner(pool), enrollmentService)
 
 	student.GET("/me/student", handler.Profile)
 	student.GET("/me/student/attendance", handler.Attendance)

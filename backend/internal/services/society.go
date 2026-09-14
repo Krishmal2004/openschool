@@ -25,6 +25,15 @@ type SocietyService struct {
 	teacherRepo *repositories.TeacherRepository
 }
 
+// Actor is the authenticated caller used by the remaining legacy Society
+// service. Attendance owns its equivalent inside the Attendance module.
+type Actor struct {
+	ID       uuid.UUID
+	Email    string
+	FullName string
+	Role     string
+}
+
 func NewSocietyService(repo *repositories.SocietyRepository, teacherRepo *repositories.TeacherRepository) *SocietyService {
 	return &SocietyService{repo: repo, teacherRepo: teacherRepo}
 }

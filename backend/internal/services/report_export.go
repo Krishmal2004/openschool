@@ -11,12 +11,13 @@ import (
 	"github.com/jung-kurt/gofpdf"
 	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/models"
+	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // ReportExportService renders fixed report templates (attendance, marks) to PDF via gofpdf, with an optional column subset per request — server-side rather than a client-side template builder.
 type ReportExportService struct {
-	attendance *repositories.AttendanceRepository
+	attendance attendancemodule.ReportReader
 	termMark   *repositories.TermMarkRepository
 	class      *repositories.ClassRepository
 	term       *repositories.TermRepository
@@ -24,7 +25,7 @@ type ReportExportService struct {
 }
 
 func NewReportExportService(
-	attendance *repositories.AttendanceRepository,
+	attendance attendancemodule.ReportReader,
 	termMark *repositories.TermMarkRepository,
 	class *repositories.ClassRepository,
 	term *repositories.TermRepository,

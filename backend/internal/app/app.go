@@ -11,6 +11,7 @@ import (
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
+	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
@@ -74,6 +75,9 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterAcademicModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, pool)
 	routes.RegisterPeopleModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, houseService, pool)
 	routes.RegisterSelfServiceModule(groups.Student, pool)
+	positionService := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
+	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), newTimetableNotifier(pool), auditService, attendanceLeadership{positions: positionService})
+	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
 	routes.RegisterAdminOperationsModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, pool)
 
 	timetableReader := timetablemodule.NewReader(pool)
