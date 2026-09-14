@@ -8,19 +8,20 @@ import (
 	"github.com/openschool-org/openschool/internal/middleware"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/services"
 )
 
 // ParentHandler serves a signed-in guardian's own-children endpoints, always re-deriving identity from the token.
 type ParentHandler struct {
-	guardians  *services.GuardianService
+	guardians  ports.GuardianAccess
 	attendance *services.AttendanceService
 	marks      academicsmodule.TermMarkReader
 	timetables *timetablemodule.Reader
 }
 
 // NewParentHandler constructs a ParentHandler with its service dependencies.
-func NewParentHandler(guardians *services.GuardianService, attendance *services.AttendanceService, marks academicsmodule.TermMarkReader, timetables *timetablemodule.Reader) *ParentHandler {
+func NewParentHandler(guardians ports.GuardianAccess, attendance *services.AttendanceService, marks academicsmodule.TermMarkReader, timetables *timetablemodule.Reader) *ParentHandler {
 	return &ParentHandler{guardians: guardians, attendance: attendance, marks: marks, timetables: timetables}
 }
 
@@ -55,7 +56,7 @@ func (h *ParentHandler) ListChildren(c *gin.Context) {
 		return
 	}
 
-	children, err := h.guardians.GetChildrenForUser(c.Request.Context(), callerID)
+	children, err := h.guardians.ChildrenForUser(c.Request.Context(), callerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

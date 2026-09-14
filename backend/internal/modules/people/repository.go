@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/ports"
 )
 
 type studentRepository struct{ queries *db.Queries }
@@ -116,6 +117,70 @@ func (r *studentRepository) SetActive(c context.Context, id uuid.UUID, active bo
 }
 
 type teacherReader struct{ queries *db.Queries }
+
+type guardianReader struct{ queries *db.Queries }
+
+func NewGuardianReader(pool *pgxpool.Pool) GuardianReader {
+	return &guardianReader{queries: db.New(pool)}
+}
+func (r *guardianReader) Get(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.GetGuardianByID(c, id)
+}
+func (r *guardianReader) List(c context.Context, search string, orphans bool) (any, error) {
+	return r.queries.ListGuardians(c, db.ListGuardiansParams{Search: pgtype.Text{String: search, Valid: search != ""}, OrphansOnly: pgtype.Bool{Bool: orphans, Valid: orphans}})
+}
+func (r *guardianReader) Students(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.ListStudentsByGuardianID(c, id)
+}
+func (r *guardianReader) ByStudent(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.ListGuardiansByStudent(c, id)
+}
+
+type guardianAccess struct{ queries *db.Queries }
+
+func NewGuardianAccess(pool *pgxpool.Pool) ports.GuardianAccess {
+	return &guardianAccess{queries: db.New(pool)}
+}
+func (r *guardianAccess) ChildrenForUser(c context.Context, id uuid.UUID) (any, error) {
+	return r.queries.ListStudentsByGuardianUserID(c, pgtype.UUID{Bytes: id, Valid: true})
+}
+func (r *guardianAccess) IsGuardianOfStudent(c context.Context, user, student uuid.UUID) (bool, error) {
+	return r.queries.IsGuardianOfStudent(c, db.IsGuardianOfStudentParams{UserID: pgtype.UUID{Bytes: user, Valid: true}, StudentID: student})
+}
+
+type guardianAuthenticator struct{ queries *db.Queries }
+
+func NewGuardianAuthenticator(pool *pgxpool.Pool) ports.GuardianAuthenticator {
+	return &guardianAuthenticator{queries: db.New(pool)}
+}
+func (r *guardianAuthenticator) VerifyCredentials(c context.Context, user uuid.UUID, nic string) error {
+	_, err := r.queries.GetGuardianByUserIDAndNIC(c, db.GetGuardianByUserIDAndNICParams{UserID: pgtype.UUID{Bytes: user, Valid: true}, NicNumber: nic})
+	return err
+}
+
+type guardianNotificationReader struct{ queries *db.Queries }
+
+func NewGuardianNotificationReader(pool *pgxpool.Pool) GuardianNotificationReader {
+	return &guardianNotificationReader{queries: db.New(pool)}
+}
+func (r *guardianNotificationReader) Notifications(c context.Context, guardianID uuid.UUID) (any, error) {
+	g, err := r.queries.GetGuardianByID(c, guardianID)
+	if err != nil {
+		return nil, err
+	}
+	if !g.UserID.Valid {
+		return []any{}, nil
+	}
+	rows, err := r.queries.ListMyNotifications(c, uuid.UUID(g.UserID.Bytes))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]map[string]any, len(rows))
+	for i, v := range rows {
+		out[i] = map[string]any{"recipient_id": v.RecipientID, "notification_id": v.NotificationID, "title": v.Title, "message": v.Message, "category": v.Category, "priority": v.Priority, "sender_name": v.SenderName, "sent_at": v.SentAt, "is_read": v.IsRead, "is_archived": v.IsArchived}
+	}
+	return out, nil
+}
 
 func NewTeacherReader(pool *pgxpool.Pool) TeacherReader { return &teacherReader{queries: db.New(pool)} }
 func (r *teacherReader) Get(c context.Context, id uuid.UUID) (any, error) {

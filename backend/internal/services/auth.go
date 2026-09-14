@@ -13,6 +13,7 @@ import (
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/mailer"
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
@@ -31,7 +32,7 @@ type AuthService struct {
 	users     *repositories.UserRepository
 	teachers  *repositories.TeacherRepository
 	students  *repositories.StudentRepository
-	guardians *repositories.GuardianRepository
+	guardians ports.GuardianAuthenticator
 	tokens    *repositories.AuthRepository
 	idp       identity.Provider
 	mailer    mailer.Mailer
@@ -41,7 +42,7 @@ func NewAuthService(
 	users *repositories.UserRepository,
 	teachers *repositories.TeacherRepository,
 	students *repositories.StudentRepository,
-	guardians *repositories.GuardianRepository,
+	guardians ports.GuardianAuthenticator,
 	tokens *repositories.AuthRepository,
 	idp identity.Provider,
 	mailSender mailer.Mailer,
@@ -67,7 +68,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, req models.ForgotPassw
 			return models.ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	case models.RoleParent:
-		if _, err := s.guardians.GetByUserIDAndNIC(ctx, user.ID, req.Secret); err != nil {
+		if err := s.guardians.VerifyCredentials(ctx, user.ID, req.Secret); err != nil {
 			return models.ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	default:

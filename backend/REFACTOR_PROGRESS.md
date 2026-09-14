@@ -95,6 +95,11 @@ cmd/api
 | DONE | Students | Migrated student profile CRUD, enrollment status, house assignment, identity provisioning, rollback, and lifecycle operations | `internal/modules/people` |
 | DONE | Teacher read slice | Migrated teacher profile, subject, workload, and subject-qualified teacher reads into People-owned repository contracts | `internal/modules/people` |
 | DONE | Teacher route boundary | Migrated all teacher administration HTTP route registration into the People module | `internal/modules/people` |
+| DONE | Guardian read slice | Migrated guardian directory, child, and student-linked guardian reads into People-owned repository contracts | `internal/modules/people` |
+| DONE | Guardian route boundary | Migrated guardian administration write route registration into the People module | `internal/modules/people` |
+| DONE | Guardian parent-access contract | Migrated parent child listing and guardian ownership checks to a narrow People port | `internal/ports`, `internal/modules/people` |
+| DONE | Guardian authentication contract | Migrated guardian NIC credential verification behind a People-owned authentication port | `internal/ports`, `internal/modules/people` |
+| DONE | Guardian notification access | Migrated guardian notification history reads into a People-owned repository adapter | `internal/modules/people` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -129,7 +134,7 @@ sqlc. Twenty have now been migrated out of the legacy service layer.
 | TODO | Term marks | None for the mark workflows | Reports still use the compatibility repository until Reports is migrated |
 | DONE | Students | None for student profile CRUD and lifecycle | Identity provisioning, rollback, house assignment, and deletion are migrated |
 | DONE | Teachers | None for teacher profile and qualification workflows | Identity provisioning, rollback, lifecycle, house, and subject operations are migrated |
-| TODO | Guardians | Guardian profiles and student relationships | Includes parent access behavior |
+| TODO | Guardians | Move guardian administration write logic and provisioning out of the compatibility adapter | Parent access, authentication, notifications, reads, and route ownership are migrated |
 | TODO | Non-academic staff | Staff profile and house operations | House reassignment currently remains in the legacy service |
 | TODO | Student portfolio | Portfolio records and student access | Requires narrow student-access contracts |
 | TODO | Student self-service | Student-facing profile, timetable, and academic endpoints | Some endpoints currently depend on legacy timetable repositories |

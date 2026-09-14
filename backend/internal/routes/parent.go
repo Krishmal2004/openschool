@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
+	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
 	notificationsrepositories "github.com/openschool-org/openschool/internal/repositories/notifications"
@@ -25,11 +26,10 @@ func RegisterParentRoutes(parent *gin.RouterGroup, timetables *timetablemodule.R
 		repositories.NewSchoolRepository(pool),
 		repositories.NewPositionRepository(pool),
 	)
-	guardianService := services.NewGuardianService(guardianRepo, repositories.NewUserRepository(pool), newIdentityProvider(), notifications, nil)
 	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
 	positionSvc := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	attendanceService := services.NewAttendanceService(repositories.NewAttendanceRepository(pool), repositories.NewUserRepository(pool), repositories.NewTeacherRepository(pool), repositories.NewClassRepository(pool), repositories.NewStudentRepository(pool), guardianRepo, notifications, auditSvc, positionSvc, repositories.NewSchoolRepository(pool))
-	handler := handlers.NewParentHandler(guardianService, attendanceService, newTermMarkRunner(pool), timetables)
+	handler := handlers.NewParentHandler(peoplemodule.NewGuardianAccess(pool), attendanceService, newTermMarkRunner(pool), timetables)
 
 	parent.GET("/me/children", handler.ListChildren)
 	parent.GET("/me/children/:id/attendance", handler.ChildAttendance)

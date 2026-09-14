@@ -6,6 +6,7 @@ import (
 	"github.com/openschool-org/openschool/internal/handlers"
 	"github.com/openschool-org/openschool/internal/mailer"
 	"github.com/openschool-org/openschool/internal/middleware"
+	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/services"
 )
@@ -19,7 +20,7 @@ func RegisterAuthRoutes(public *gin.RouterGroup, protected *gin.RouterGroup, poo
 		repositories.NewUserRepository(pool),
 		repositories.NewTeacherRepository(pool),
 		repositories.NewStudentRepository(pool),
-		repositories.NewGuardianRepository(pool),
+		peoplemodule.NewGuardianAuthenticator(pool),
 		repositories.NewAuthRepository(pool),
 		newIdentityProvider(),
 		mailer.NewFromEnv(),
