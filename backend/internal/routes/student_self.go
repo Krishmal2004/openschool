@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/internal/handlers"
+	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	"github.com/openschool-org/openschool/internal/repositories"
 	notificationsrepositories "github.com/openschool-org/openschool/internal/repositories/notifications"
 	timetablerepositories "github.com/openschool-org/openschool/internal/repositories/timetable"
@@ -30,7 +31,7 @@ func RegisterStudentSelfRoutes(student *gin.RouterGroup, pool *pgxpool.Pool) {
 	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
 	positionSvc := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	attendanceService := services.NewAttendanceService(repositories.NewAttendanceRepository(pool), repositories.NewUserRepository(pool), teacherRepo, classRepo, studentsRepo, guardianRepo, notifications, auditSvc, positionSvc, repositories.NewSchoolRepository(pool))
-	enrollmentService := services.NewEnrollmentService(repositories.NewEnrollmentRepository(pool), repositories.NewCurriculumRepository(pool))
+	enrollmentService := academicsmodule.NewStudentEnrollment(academicsmodule.NewEnrollmentRepository(pool))
 
 	handler := handlers.NewStudentSelfHandler(services.NewStudentSelfService(studentsRepo), attendanceService, newTermMarkRunner(pool), enrollmentService)
 

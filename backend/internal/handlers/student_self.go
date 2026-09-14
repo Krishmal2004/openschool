@@ -17,11 +17,11 @@ type StudentSelfHandler struct {
 	studentSelf *services.StudentSelfService
 	attendance  *services.AttendanceService
 	marks       academicsmodule.TermMarkReader
-	enrollments *services.EnrollmentService
+	enrollments academicsmodule.StudentEnrollment
 }
 
 // NewStudentSelfHandler constructs a StudentSelfHandler with its service dependencies.
-func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance *services.AttendanceService, marks academicsmodule.TermMarkReader, enrollments *services.EnrollmentService) *StudentSelfHandler {
+func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance *services.AttendanceService, marks academicsmodule.TermMarkReader, enrollments academicsmodule.StudentEnrollment) *StudentSelfHandler {
 	return &StudentSelfHandler{studentSelf: studentSelf, attendance: attendance, marks: marks, enrollments: enrollments}
 }
 
@@ -142,11 +142,11 @@ func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 	validationErrs, err := h.enrollments.Submit(c.Request.Context(), studentID, req)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrEnrollmentInvalid):
+		case errors.Is(err, academicsmodule.ErrEnrollmentInvalid):
 			c.JSON(http.StatusUnprocessableEntity, models.EnrollmentValidationResponse{Valid: false, Errors: validationErrs})
-		case errors.Is(err, services.ErrEnrollmentLocked):
+		case errors.Is(err, academicsmodule.ErrEnrollmentLocked):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		case errors.Is(err, services.ErrLevelHasNoGroups):
+		case errors.Is(err, academicsmodule.ErrLevelHasNoGroups):
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

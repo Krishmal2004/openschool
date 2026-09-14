@@ -1,28 +1,23 @@
 package routes
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/openschool-org/openschool/internal/handlers"
+	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/services"
 )
 
 func RegisterStudentRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterGroup, houseAssignments ports.HouseAssignments, pool *pgxpool.Pool) {
-	repo := repositories.NewStudentRepository(pool)
 	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
-	service := services.NewStudentService(repo, newIdentityProvider(), houseAssignments, auditSvc, repositories.NewSchoolRepository(pool))
-	handler := handlers.NewStudentHandler(service)
-
-	admin.POST("/students", handler.Create)
-	teacherOrAdmin.GET("/students", handler.List)
-	teacherOrAdmin.GET("/students/:id", handler.GetByID)
-	teacherOrAdmin.GET("/students/:id/class", handler.GetWithClass)
-	admin.PUT("/students/:id", handler.Update)
-	admin.PUT("/students/:id/house", handler.UpdateHouse)
-	admin.PUT("/students/:id/enrollment-status", handler.UpdateEnrollmentStatus)
-	admin.DELETE("/students/:id", handler.Delete)
-
-	teacherOrAdmin.GET("/classes/:id/students", handler.ListByClass)
+	studentStore := peoplemodule.NewStudentStore(pool)
+	schoolRepo := repositories.NewSchoolRepository(pool)
+	service := peoplemodule.NewStudentService(studentStore, newIdentityProvider(), houseAssignments, auditSvc, func(ctx context.Context) (string, error) {
+		school, err := schoolRepo.Get(ctx)
+		return school.SchoolType, err
+	})
+	peoplemodule.RegisterStudentRoutes(admin, teacherOrAdmin, service, studentStore, service)
 }

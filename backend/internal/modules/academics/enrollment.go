@@ -16,6 +16,7 @@ var (
 	ErrEnrollmentInvalid   = errors.New("enrollment picks failed validation")
 	ErrEnrollmentLocked    = errors.New("subject selection is locked and can no longer be changed — ask an admin to unlock it")
 	ErrEnrollmentNotLocked = errors.New("subject selection is not locked")
+	ErrEnrollmentEmpty     = errors.New("submit at least one pick before confirming")
 )
 
 type enrollmentGroup struct {
@@ -28,6 +29,7 @@ type enrollmentStore interface {
 	groups(context.Context, uuid.UUID) ([]enrollmentGroup, error)
 	replace(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, []models.EnrollmentPick) error
 	locked(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (bool, error)
+	lock(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
 	unlock(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (int64, error)
 	remove(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) error
 	groupLevel(context.Context, uuid.UUID) (uuid.UUID, error)
@@ -36,6 +38,52 @@ type enrollmentStore interface {
 	byGroup(context.Context, uuid.UUID, uuid.UUID) ([]models.EnrolledStudentResponse, error)
 }
 type enrollmentService struct{ store enrollmentStore }
+
+// StudentEnrollment exposes only the enrollment operations needed by the
+// signed-in student's self-service endpoints.
+type StudentEnrollment interface {
+	ListByStudentAndLevel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) ([]models.EnrollmentResponse, error)
+	IsLocked(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (bool, error)
+	Submit(context.Context, uuid.UUID, models.SubmitEnrollmentRequest) ([]models.GroupValidationError, error)
+	Confirm(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
+}
+
+func NewStudentEnrollment(store enrollmentStore) StudentEnrollment {
+	return &enrollmentService{store: store}
+}
+
+func (s *enrollmentService) ListByStudentAndLevel(ctx context.Context, student, level, year uuid.UUID) ([]models.EnrollmentResponse, error) {
+	rows, err := s.store.list(ctx, student, year)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]models.EnrollmentResponse, 0, len(rows))
+	for _, row := range rows {
+		if row.LevelID == level.String() {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+func (s *enrollmentService) IsLocked(ctx context.Context, student, level, year uuid.UUID) (bool, error) {
+	return s.store.locked(ctx, student, level, year)
+}
+
+func (s *enrollmentService) Submit(ctx context.Context, student uuid.UUID, req models.SubmitEnrollmentRequest) ([]models.GroupValidationError, error) {
+	return s.submit(ctx, student, req)
+}
+
+func (s *enrollmentService) Confirm(ctx context.Context, student, level, year uuid.UUID) error {
+	picks, err := s.ListByStudentAndLevel(ctx, student, level, year)
+	if err != nil {
+		return err
+	}
+	if len(picks) == 0 {
+		return ErrEnrollmentEmpty
+	}
+	return s.store.lock(ctx, student, level, year)
+}
 
 func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks []models.EnrollmentPick) ([]models.GroupValidationError, error) {
 	groups, err := s.store.groups(ctx, level)

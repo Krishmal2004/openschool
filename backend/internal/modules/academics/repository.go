@@ -392,6 +392,9 @@ func (r *enrollmentRepository) replace(ctx context.Context, student, year, level
 func (r *enrollmentRepository) locked(ctx context.Context, student, level, year uuid.UUID) (bool, error) {
 	return r.queries.IsStudentEnrollmentLocked(ctx, db.IsStudentEnrollmentLockedParams{StudentID: student, LevelID: level, AcademicYearID: year})
 }
+func (r *enrollmentRepository) lock(ctx context.Context, student, level, year uuid.UUID) error {
+	return r.queries.LockStudentEnrollment(ctx, db.LockStudentEnrollmentParams{StudentID: student, LevelID: level, AcademicYearID: year})
+}
 func (r *enrollmentRepository) unlock(ctx context.Context, student, level, year uuid.UUID) (int64, error) {
 	return r.queries.UnlockStudentEnrollment(ctx, db.UnlockStudentEnrollmentParams{StudentID: student, LevelID: level, AcademicYearID: year})
 }
