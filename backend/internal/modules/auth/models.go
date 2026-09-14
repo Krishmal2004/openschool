@@ -1,4 +1,6 @@
-package models
+package auth
+
+import "github.com/google/uuid"
 
 // ForgotPasswordRequest identifies the caller by their login identifier
 // (email — every role that can self-serve a reset has one on file) plus a
@@ -32,4 +34,14 @@ type ResetPasswordRequest struct {
 // reset token.
 type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+type userAccount struct {
+	ID    uuid.UUID
+	Email string
+	Role  string
+}
+
+type resetToken struct {
+	UserID uuid.UUID
 }

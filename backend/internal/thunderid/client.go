@@ -18,6 +18,10 @@ import (
 	"github.com/openschool-org/openschool/internal/identity"
 )
 
+// requestTimeout bounds token and management API calls when the caller does
+// not already provide a shorter context deadline.
+const requestTimeout = 15 * time.Second
+
 // idpError logs the raw ThunderID response server-side and returns a sanitized error safe to surface to an HTTP caller (the raw body can leak internals; see audit.md M-6).
 func idpError(op string, statusCode int, body []byte) error {
 	log.Printf("thunderid: %s failed (status %d): %s", op, statusCode, string(body))
@@ -46,7 +50,7 @@ func NewClient() *Client {
 	return &Client{
 		baseUrl:    os.Getenv("THUNDERID_BASE_URL"),
 		ouID:       os.Getenv("THUNDERID_OU_ID"),
-		httpClient: &http.Client{Transport: transport},
+		httpClient: &http.Client{Transport: transport, Timeout: requestTimeout},
 	}
 }
 
@@ -117,7 +121,7 @@ func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("thunderid token error (%d): %s", resp.StatusCode, string(bodyBytes))
+		return "", idpError("GetAccessToken", resp.StatusCode, bodyBytes)
 	}
 
 	var result struct {

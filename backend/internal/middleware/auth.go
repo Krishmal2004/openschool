@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -96,6 +97,12 @@ func (t *stripX5CTransport) RoundTrip(req *http.Request) (*http.Response, error)
 
 // InitJWKS fetches and caches the JWKS key set at jwksURL, with a transport that skips TLS verification in development and strips x5c from every response.
 func InitJWKS(jwksURL string) error {
+	if strings.TrimSpace(jwksURL) == "" {
+		return errors.New("THUNDERID_JWKS_URL is required")
+	}
+	if strings.TrimSpace(identity.Issuer()) == "" {
+		return errors.New("THUNDERID_ISSUER is required")
+	}
 	baseTransport := http.DefaultTransport
 	if os.Getenv("APP_ENV") == "development" {
 		baseTransport = &http.Transport{

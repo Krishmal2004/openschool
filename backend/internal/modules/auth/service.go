@@ -1,4 +1,5 @@
-package services
+// Package auth owns OpenSchool's password lifecycle and ThunderID password updates.
+package auth
 
 import (
 	"context"
@@ -7,14 +8,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/mailer"
 	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 var (
@@ -28,78 +28,91 @@ var (
 // passwordResetTokenTTL bounds how long an emailed reset link stays valid.
 const passwordResetTokenTTL = 15 * time.Minute
 
-type AuthService struct {
-	users     *repositories.UserRepository
-	teachers  *repositories.TeacherRepository
-	students  *repositories.StudentRepository
-	guardians ports.GuardianAuthenticator
-	tokens    *repositories.AuthRepository
-	idp       identity.Provider
-	mailer    mailer.Mailer
+type authStore interface {
+	userByEmail(context.Context, string) (userAccount, error)
+	userByID(context.Context, uuid.UUID) (userAccount, error)
+	teacherCredentialsMatch(context.Context, uuid.UUID, string) bool
+	studentCredentialsMatch(context.Context, uuid.UUID, string) bool
+	createResetToken(context.Context, uuid.UUID, string, time.Time) error
+	consumeResetToken(context.Context, string) (resetToken, error)
+	setMustChangePassword(context.Context, uuid.UUID, bool) error
 }
 
-func NewAuthService(
-	users *repositories.UserRepository,
-	teachers *repositories.TeacherRepository,
-	students *repositories.StudentRepository,
+// PasswordUpdater is the narrow identity-provider operation needed by Auth.
+type PasswordUpdater interface {
+	UpdateUser(context.Context, string, string, map[string]any) error
+}
+
+// Service implements the password lifecycle without exposing raw reset tokens
+// to persistence or generated database types to application code.
+type Service struct {
+	store     authStore
+	guardians ports.GuardianAuthenticator
+	idp       PasswordUpdater
+	mailer    mailer.Mailer
+	random    io.Reader
+	now       func() time.Time
+	frontend  func() string
+}
+
+func NewService(
+	store authStore,
 	guardians ports.GuardianAuthenticator,
-	tokens *repositories.AuthRepository,
-	idp identity.Provider,
+	idp PasswordUpdater,
 	mailSender mailer.Mailer,
-) *AuthService {
-	return &AuthService{users: users, teachers: teachers, students: students, guardians: guardians, tokens: tokens, idp: idp, mailer: mailSender}
+) *Service {
+	return &Service{store: store, guardians: guardians, idp: idp, mailer: mailSender, random: rand.Reader, now: time.Now, frontend: mailer.FrontendURL}
 }
 
 // ForgotPassword verifies the caller knows a user's login identifier and initial-password secret, then mints a short-lived one-time token and emails a reset link — hand-rolled since ThunderID exposes no reset primitive. The token is never returned in the response: NIC/index numbers appear on ID cards/report cards, so aren't secret enough to also hand over the takeover token (see docs audit C-1).
-func (s *AuthService) ForgotPassword(ctx context.Context, req models.ForgotPasswordRequest) (models.ForgotPasswordResponse, error) {
-	user, err := s.users.GetByEmail(ctx, req.Identifier)
+func (s *Service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest) (ForgotPasswordResponse, error) {
+	user, err := s.store.userByEmail(ctx, req.Identifier)
 	if err != nil || user.Role != req.Role {
-		return models.ForgotPasswordResponse{}, ErrInvalidCredentials
+		return ForgotPasswordResponse{}, ErrInvalidCredentials
 	}
 
 	switch req.Role {
 	case models.RoleTeacher:
-		if _, err := s.teachers.GetByUserIDAndNIC(ctx, user.ID, req.Secret); err != nil {
-			return models.ForgotPasswordResponse{}, ErrInvalidCredentials
+		if !s.store.teacherCredentialsMatch(ctx, user.ID, req.Secret) {
+			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	case models.RoleStudent:
-		student, err := s.students.GetByUserID(ctx, user.ID)
-		if err != nil || student.IndexNumber != req.Secret {
-			return models.ForgotPasswordResponse{}, ErrInvalidCredentials
+		if !s.store.studentCredentialsMatch(ctx, user.ID, req.Secret) {
+			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	case models.RoleParent:
 		if err := s.guardians.VerifyCredentials(ctx, user.ID, req.Secret); err != nil {
-			return models.ForgotPasswordResponse{}, ErrInvalidCredentials
+			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	default:
-		// Unreachable — models.ForgotPasswordRequest.Role is already
+		// Unreachable — ForgotPasswordRequest.Role is already
 		// constrained to teacher/student/parent by its binding tag.
-		return models.ForgotPasswordResponse{}, ErrInvalidCredentials
+		return ForgotPasswordResponse{}, ErrInvalidCredentials
 	}
 
 	if err := s.issueAndEmailResetToken(ctx, user.ID, user.Email); err != nil {
-		return models.ForgotPasswordResponse{}, err
+		return ForgotPasswordResponse{}, err
 	}
 
-	return models.ForgotPasswordResponse{
+	return ForgotPasswordResponse{
 		Message: "If those details match an account, a password reset link has been sent to the email on file.",
 	}, nil
 }
 
-func (s *AuthService) issueAndEmailResetToken(ctx context.Context, userID uuid.UUID, email string) error {
+func (s *Service) issueAndEmailResetToken(ctx context.Context, userID uuid.UUID, email string) error {
 	raw := make([]byte, 32)
-	if _, err := rand.Read(raw); err != nil {
+	if _, err := io.ReadFull(s.random, raw); err != nil {
 		return fmt.Errorf("failed to generate reset token: %w", err)
 	}
 	token := hex.EncodeToString(raw)
 	hash := hashResetToken(token)
-	expiresAt := time.Now().Add(passwordResetTokenTTL)
+	expiresAt := s.now().Add(passwordResetTokenTTL)
 
-	if _, err := s.tokens.CreatePasswordResetToken(ctx, userID, hash, expiresAt); err != nil {
+	if err := s.store.createResetToken(ctx, userID, hash, expiresAt); err != nil {
 		return fmt.Errorf("failed to create reset token: %w", err)
 	}
 
-	resetLink := fmt.Sprintf("%s/reset-password?token=%s", mailer.FrontendURL(), token)
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", s.frontend(), token)
 	body := fmt.Sprintf(
 		"A password reset was requested for your OpenSchool account.\n\n"+
 			"Reset your password using the link below. It expires in %d minutes and can only be used once.\n\n%s\n\n"+
@@ -115,45 +128,38 @@ func (s *AuthService) issueAndEmailResetToken(ctx context.Context, userID uuid.U
 
 // ResetPassword is the unauthenticated counterpart to ChangePassword — it
 // trusts the one-time token from ForgotPassword instead of a JWT.
-func (s *AuthService) ResetPassword(ctx context.Context, req models.ResetPasswordRequest) error {
-	record, err := s.tokens.GetPasswordResetTokenByHash(ctx, hashResetToken(req.Token))
+func (s *Service) ResetPassword(ctx context.Context, req ResetPasswordRequest) error {
+	// Consume first: only one concurrent request may proceed to ThunderID.
+	record, err := s.store.consumeResetToken(ctx, hashResetToken(req.Token))
 	if err != nil {
 		return ErrResetTokenInvalid
 	}
-	if record.UsedAt.Valid || time.Now().After(record.ExpiresAt.Time) {
-		return ErrResetTokenInvalid
-	}
-
-	if err := s.setPassword(ctx, record.UserID, req.NewPassword); err != nil {
-		return err
-	}
-
-	return s.tokens.MarkPasswordResetTokenUsed(ctx, record.ID)
+	return s.setPassword(ctx, record.UserID, req.NewPassword)
 }
 
 // ChangePassword is used by an already-authenticated caller (profile action or first-login "Set a new password") — a verified session already exists, so no reset token is needed.
-func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
+func (s *Service) ChangePassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
 	return s.setPassword(ctx, userID, newPassword)
 }
 
 // KeepDefaultPassword clears the must-change flag without touching the password — the first-login "Keep this password" choice.
-func (s *AuthService) KeepDefaultPassword(ctx context.Context, userID uuid.UUID) error {
-	return s.users.SetMustChangePassword(ctx, userID, false)
+func (s *Service) KeepDefaultPassword(ctx context.Context, userID uuid.UUID) error {
+	return s.store.setMustChangePassword(ctx, userID, false)
 }
 
-func (s *AuthService) setPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
-	user, err := s.users.GetByID(ctx, userID)
+func (s *Service) setPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
+	user, err := s.store.userByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
 	}
 
-	if err := s.idp.UpdateUser(ctx, userID.String(), user.Role, map[string]interface{}{
+	if err := s.idp.UpdateUser(ctx, userID.String(), user.Role, map[string]any{
 		"password": newPassword,
 	}); err != nil {
 		return fmt.Errorf("failed to update identity provider password: %w", err)
 	}
 
-	return s.users.SetMustChangePassword(ctx, userID, false)
+	return s.store.setMustChangePassword(ctx, userID, false)
 }
 
 func hashResetToken(token string) string {

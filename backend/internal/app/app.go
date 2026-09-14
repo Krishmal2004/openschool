@@ -12,6 +12,7 @@ import (
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
+	authmodule "github.com/openschool-org/openschool/internal/modules/auth"
 	automationmodule "github.com/openschool-org/openschool/internal/modules/automation"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
@@ -51,7 +52,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 	setupmodule.RegisterRoutes(groups.API, setupmodule.NewService(setupmodule.NewRepository(pool), thunderid.NewClient()))
-	routes.RegisterAuthRoutes(groups.API, groups.Protected, pool)
+	authmodule.RegisterRoutes(groups.API, groups.Protected, pool, peoplemodule.NewGuardianAuthenticator(pool), thunderid.NewClient())
 	identitymodule.Register(groups.Protected, pool)
 	routes.RegisterCoreModule(groups.Admin, groups.Protected, pool)
 	curriculummodule.RegisterMediumRoutes(groups.Admin, groups.Protected, pool)

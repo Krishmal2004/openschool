@@ -432,7 +432,7 @@ annotations - handlers now carry one plain comment line instead of
 
 `internal/mailer` sends the one email OpenSchool generates itself: the
 self-service password-reset link (`adr/0005`), triggered from
-`AuthService.ForgotPassword` and rendered end-to-end by the frontend's
+`auth.Service.ForgotPassword` and rendered end-to-end by the frontend's
 `ForgotPassword.tsx`/`ResetPassword.tsx` pages. It speaks SMTP directly
 (Go's standard library `net/smtp`, no third-party mail API/SDK) and
 supports both submission-port STARTTLS (587/25, upgrading the connection
@@ -461,8 +461,8 @@ notification channel - see
   ThunderID.
 - Self-service password-reset tokens (the one credential-like thing
   OpenSchool stores itself) are hashed (SHA-256), single-use, and expire
-  in 15 minutes - see `adr/0005` for why this exists and its known
-  weakness (tracked as `audit.md`'s C-1 finding).
+  in 15 minutes. Token consumption is an atomic conditional update, so one
+  reset link cannot be claimed by concurrent requests - see `adr/0005`.
 - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
   `Referrer-Policy: same-origin` are set on every response; no CSP, since
   this is a JSON-only API that never serves HTML.

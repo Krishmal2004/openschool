@@ -16,11 +16,8 @@ const modulePath = "github.com/openschool-org/openschool/"
 // legacyRepositoryDebt is a ratchet for the horizontal repository package.
 // Entries are removed as their remaining feature consumers migrate to modules.
 var legacyRepositoryDebt = map[string]bool{
-	"repositories/auth.go":    true,
-	"repositories/school.go":  true,
-	"repositories/student.go": true,
-	"repositories/teacher.go": true,
-	"repositories/user.go":    true,
+	"repositories/school.go": true,
+	"repositories/user.go":   true,
 }
 
 func TestDependencyBoundaries(t *testing.T) {

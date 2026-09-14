@@ -113,12 +113,14 @@ cmd/api
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
-| DONE | Dead repository cleanup | Removed eighteen superseded repository adapters, including the Automation check and scheduler repositories | Module repository adapters |
-| DONE | Repository debt guard | Reduced the exact allowlist to the five active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
+| DONE | Dead repository cleanup | Removed twenty-one superseded repository adapters, including Automation and Authentication compatibility repositories | Module repository adapters |
+| DONE | Repository debt guard | Reduced the exact allowlist to the two active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
 | DONE | Dashboard | Migrated student, staff, academic, school, and timetable aggregates plus admin and teacher analytics consumers | `internal/modules/dashboard` |
 | DONE | Global search | Migrated categorized student, teacher, guardian, and non-academic staff search plus HTTP ownership | `internal/modules/search` |
 | DONE | Automation | Migrated scheduler lifecycle, settings, run history, admin endpoints, notifications, and five isolated checking algorithms | `internal/modules/automation` |
 | DONE | Self-service portals | Migrated student, parent, and teacher profile resolution and HTTP ownership behind narrow module contracts | `internal/modules/selfservice` |
+| DONE | Authentication | Migrated forgot/reset/change/default-password flows, role-specific credential checks, ThunderID password updates, and routes | `internal/modules/auth` |
+| DONE | Authentication hardening | Added atomic one-time reset-token consumption, JWT contract tests, required issuer/JWKS validation, bounded provider calls, and sanitized provider errors | Auth module, middleware, and ThunderID adapter |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -133,7 +135,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 98% |
+| Feature migration estimate | Approximately 99% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -142,7 +144,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 | Status | Domain | Remaining work | Notes |
 |---|---|---|---|
-| TODO | Authentication | Login/setup lifecycle, password lifecycle, and related identity operations | ThunderID remains the identity provider |
+| DONE | Authentication | None | Password lifecycle is module-owned; ThunderID remains the identity provider and JWT verification remains cross-cutting middleware |
 | TODO | Identity reconciliation | Admin reconciliation and identity-provider/local-user consistency operations | Keep provider calls behind `internal/identity` |
 | DONE | School setup | None | Setup status, one-time admin provisioning, role assignment, and rollbacks are module-owned |
 | DONE | Curriculum | None | Levels, groups, subjects, tree, and mediums are module-owned |
@@ -176,15 +178,15 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 These are intentionally retained until their active consumers are migrated:
 
-- Five horizontal repository files used by Authentication, Identity
-  Reconciliation, and the remaining Student composition bridge.
-- Legacy handlers and services for Authentication and Identity Reconciliation.
+- Two horizontal repository files used by Identity Reconciliation and the
+  remaining Student composition bridge.
+- Legacy handlers and services for Identity Reconciliation only.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
 
-Eighteen superseded repositories for School, Academics, Curriculum, People,
-Timetable, Dashboard, Search, and Automation have been deleted. The
-architecture guard rejects any new file outside the exact five-file
-compatibility allowlist.
+Twenty-one superseded repositories for School, Academics, Curriculum, People,
+Timetable, Dashboard, Search, Automation, and Authentication have been
+deleted. The architecture guard rejects any new file outside the exact
+two-file compatibility allowlist.
 
 These are migration debt, not new architecture targets. No new feature should
 be added to them unless it is required to keep an unmigrated consumer working.
@@ -221,8 +223,9 @@ The architecture test also verifies:
 7. Notifications, Audit, Report Export, Dashboard, Search, and Automation are
    complete.
 8. Positions, Section Heads, Prefects, and Societies are complete.
-9. School Setup and Report Export are complete; remove compatibility
-   repositories and the legacy route bridge.
+9. School Setup, Authentication, and Report Export are complete; migrate
+   Identity Reconciliation, then remove compatibility repositories and the
+   legacy route bridge.
 10. Run full integration/API tests and update this document before deleting it.
 
 ## 9. Definition of complete

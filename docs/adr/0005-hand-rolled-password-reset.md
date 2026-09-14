@@ -25,12 +25,16 @@ integration:
   full-page frontend interstitial.
 - **Self-service reset** - `password_reset_tokens` stores only a SHA-256
   hash of a short-lived (15 min), single-use token.
-  `AuthService.ForgotPassword` identifies the requester by login email
+  `auth.Service.ForgotPassword` identifies the requester by login email
   plus their on-file secret (NIC for teacher/parent, index number for
   student - administrators are excluded, since they have no secondary
   secret on file) before issuing a token and emailing a reset link
   containing it to the address on file (`internal/mailer`) - the token
   itself is never returned in the API response.
+- **Single-use enforcement** - reset execution atomically updates the token
+  from unused to used only when it is still within its expiry window. The
+  ThunderID password update starts only after that claim succeeds, so two
+  concurrent requests cannot both use the same reset link.
 
 ## Consequences
 
@@ -51,3 +55,6 @@ integration:
 - **Administrators cannot use self-service reset** - by design, since
   they have no NIC/index-number-equivalent secret on file. An admin who
   forgets their password needs direct database/operator intervention.
+- **A claimed token is not restored if ThunderID is temporarily unavailable.**
+  This fail-closed behavior prevents token reuse; the user must request a new
+  reset email after the provider recovers.
