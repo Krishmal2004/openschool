@@ -1,4 +1,5 @@
-package handlers
+// Package selfservice owns authenticated student, parent, and teacher portal endpoints.
+package selfservice
 
 import (
 	"errors"
@@ -10,19 +11,18 @@ import (
 	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
-	"github.com/openschool-org/openschool/internal/services"
 )
 
 // StudentSelfHandler serves a signed-in student's own profile/attendance/marks endpoints, resolved from their token.
 type StudentSelfHandler struct {
-	studentSelf *services.StudentSelfService
+	studentSelf *StudentProfiles
 	attendance  attendancemodule.Reader
 	marks       academicsmodule.TermMarkReader
 	enrollments academicsmodule.StudentEnrollment
 }
 
 // NewStudentSelfHandler constructs a StudentSelfHandler with its service dependencies.
-func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance attendancemodule.Reader, marks academicsmodule.TermMarkReader, enrollments academicsmodule.StudentEnrollment) *StudentSelfHandler {
+func NewStudentSelfHandler(studentSelf *StudentProfiles, attendance attendancemodule.Reader, marks academicsmodule.TermMarkReader, enrollments academicsmodule.StudentEnrollment) *StudentSelfHandler {
 	return &StudentSelfHandler{studentSelf: studentSelf, attendance: attendance, marks: marks, enrollments: enrollments}
 }
 

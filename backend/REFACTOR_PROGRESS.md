@@ -118,6 +118,7 @@ cmd/api
 | DONE | Dashboard | Migrated student, staff, academic, school, and timetable aggregates plus admin and teacher analytics consumers | `internal/modules/dashboard` |
 | DONE | Global search | Migrated categorized student, teacher, guardian, and non-academic staff search plus HTTP ownership | `internal/modules/search` |
 | DONE | Automation | Migrated scheduler lifecycle, settings, run history, admin endpoints, notifications, and five isolated checking algorithms | `internal/modules/automation` |
+| DONE | Self-service portals | Migrated student, parent, and teacher profile resolution and HTTP ownership behind narrow module contracts | `internal/modules/selfservice` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -132,7 +133,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 97% |
+| Feature migration estimate | Approximately 98% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -155,9 +156,9 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | DONE | Guardians | None | CRUD, relationships, provisioning and rollback, parent access, authentication, notifications, reads, and routes are migrated |
 | DONE | Non-academic staff | None | CRUD, employee numbering, employment status, and audited house assignment are migrated |
 | DONE | Student portfolio | None | Business logic, persistence, handlers, and route ownership are migrated |
-| TODO | Student self-service | Move the remaining profile resolver and HTTP ownership into a module | Attendance, marks, and enrollments already use module contracts |
-| TODO | Parent self-service | Move the remaining HTTP ownership into a module | Guardian, attendance, marks, and timetable reads already use module contracts |
-| TODO | Teacher self-service | Move the remaining profile resolver and HTTP ownership into a module | Leadership, society, and timetable reads already use module contracts |
+| DONE | Student self-service | None | Profile resolution, attendance, marks, and enrollment endpoints are module-owned |
+| DONE | Parent self-service | None | Guardian ownership, child attendance, marks, and timetable endpoints are module-owned |
+| DONE | Teacher self-service | None | Profile, attendance, position, society, leadership, analytics, and timetable endpoints are module-owned |
 | DONE | Student attendance | None | Sessions, records, scoped authorization, lock/correction rules, notifications, self/parent reads, and report reads are module-owned |
 | DONE | Staff attendance | None | Admin marking, date views, monthly summaries, histories, and teacher self-service are module-owned |
 | DONE | Notifications | None | Composer, scoped recipients, drafts, delivery, inbox state, and system-triggered delivery are module-owned |
@@ -176,8 +177,8 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 These are intentionally retained until their active consumers are migrated:
 
 - Five horizontal repository files used by Authentication, Identity
-  Reconciliation, and self-service.
-- Legacy handlers and services for those same remaining capabilities.
+  Reconciliation, and the remaining Student composition bridge.
+- Legacy handlers and services for Authentication and Identity Reconciliation.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
 
 Eighteen superseded repositories for School, Academics, Curriculum, People,
@@ -215,7 +216,7 @@ The architecture test also verifies:
    workflow group.
 4. Migrate Students, Teachers, Guardians, Non-academic Staff, and portfolios
    as the People module.
-5. Migrate Student, Parent, and Teacher self-service endpoints.
+5. Student, Parent, and Teacher self-service endpoints are complete.
 6. Student and Staff Attendance are complete.
 7. Notifications, Audit, Report Export, Dashboard, Search, and Automation are
    complete.

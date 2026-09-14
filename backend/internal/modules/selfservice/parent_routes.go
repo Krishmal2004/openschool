@@ -1,17 +1,17 @@
-package routes
+package selfservice
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/openschool-org/openschool/internal/handlers"
+	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
-	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
-	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
+	"github.com/openschool-org/openschool/internal/ports"
 )
 
-func RegisterParentRoutes(parent *gin.RouterGroup, timetables *timetablemodule.Reader, pool *pgxpool.Pool) {
+func registerParentRoutes(parent *gin.RouterGroup, guardians ports.GuardianAccess, timetables TimetableReader, pool *pgxpool.Pool) {
 	attendanceReader := attendancemodule.NewReader(attendancemodule.NewRepository(pool))
-	handler := handlers.NewParentHandler(peoplemodule.NewGuardianAccess(pool), attendanceReader, newTermMarkRunner(pool), timetables)
+	marks := academicsmodule.NewTermMarkService(academicsmodule.NewTermMarkRepository(pool))
+	handler := NewParentHandler(guardians, attendanceReader, marks, timetables)
 
 	parent.GET("/me/children", handler.ListChildren)
 	parent.GET("/me/children/:id/attendance", handler.ChildAttendance)

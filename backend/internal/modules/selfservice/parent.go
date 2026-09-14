@@ -1,4 +1,4 @@
-package handlers
+package selfservice
 
 import (
 	"net/http"
@@ -8,7 +8,6 @@ import (
 	"github.com/openschool-org/openschool/internal/middleware"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
-	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -17,11 +16,11 @@ type ParentHandler struct {
 	guardians  ports.GuardianAccess
 	attendance attendancemodule.Reader
 	marks      academicsmodule.TermMarkReader
-	timetables *timetablemodule.Reader
+	timetables TimetableReader
 }
 
 // NewParentHandler constructs a ParentHandler with its service dependencies.
-func NewParentHandler(guardians ports.GuardianAccess, attendance attendancemodule.Reader, marks academicsmodule.TermMarkReader, timetables *timetablemodule.Reader) *ParentHandler {
+func NewParentHandler(guardians ports.GuardianAccess, attendance attendancemodule.Reader, marks academicsmodule.TermMarkReader, timetables TimetableReader) *ParentHandler {
 	return &ParentHandler{guardians: guardians, attendance: attendance, marks: marks, timetables: timetables}
 }
 

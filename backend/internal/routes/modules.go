@@ -3,10 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
-	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
-	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
-	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -28,13 +24,4 @@ func RegisterPeopleModule(admin, teacherOrAdmin, studentAccess *gin.RouterGroup,
 	RegisterGuardianRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin, pool)
 	RegisterStudentPortfolioRoutes(teacherOrAdmin, studentAccess, pool)
-}
-
-func RegisterSelfServiceModule(student *gin.RouterGroup, pool *pgxpool.Pool) {
-	RegisterStudentSelfRoutes(student, pool)
-}
-
-func RegisterParentAndTeacherSelfModule(parent, teacher *gin.RouterGroup, timetableService *timetablemodule.Reader, leadershipService *leadershipmodule.Service, studentLeadershipService *studentleadershipmodule.Service, dashboardService *dashboardmodule.Service, pool *pgxpool.Pool) {
-	RegisterParentRoutes(parent, timetableService, pool)
-	RegisterTeacherSelfRoutes(teacher, pool, timetableService, leadershipService, studentLeadershipService, dashboardService)
 }

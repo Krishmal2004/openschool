@@ -1,4 +1,4 @@
-package handlers
+package selfservice
 
 import (
 	"errors"
@@ -7,36 +7,29 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
-	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
-	"github.com/openschool-org/openschool/internal/ports"
-	"github.com/openschool-org/openschool/internal/services"
 )
 
 // TeacherSelfHandler resolves a signed-in teacher's own profile ID for the existing teacherOrAdmin routes to use.
 type TeacherSelfHandler struct {
-	teacherSelf *services.TeacherSelfService
-	school      ports.CurrentAcademicYearReader
-	positions   *leadershipmodule.Service
-	societies   *studentleadershipmodule.Service
-	dashboard   *dashboardmodule.Service
-	timetables  *timetablemodule.Reader
+	teacherSelf *TeacherProfiles
+	positions   LeadershipReader
+	societies   SocietyReader
+	dashboard   DashboardReader
+	timetables  TimetableReader
 }
 
 // NewTeacherSelfHandler constructs a TeacherSelfHandler with its service dependencies.
 func NewTeacherSelfHandler(
-	teacherSelf *services.TeacherSelfService,
-	school ports.CurrentAcademicYearReader,
-	positions *leadershipmodule.Service,
-	societies *studentleadershipmodule.Service,
-	dashboard *dashboardmodule.Service,
-	timetables *timetablemodule.Reader,
+	teacherSelf *TeacherProfiles,
+	positions LeadershipReader,
+	societies SocietyReader,
+	dashboard DashboardReader,
+	timetables TimetableReader,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{
 		teacherSelf: teacherSelf,
-		school:      school,
 		positions:   positions,
 		societies:   societies,
 		dashboard:   dashboard,
@@ -58,7 +51,7 @@ func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (uuid.UUID, bool)
 		return uuid.Nil, false
 	}
 
-	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
+	yearID, err := h.teacherSelf.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return uuid.Nil, false
@@ -108,7 +101,7 @@ func (h *TeacherSelfHandler) Position(c *gin.Context) {
 		return
 	}
 
-	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
+	yearID, err := h.teacherSelf.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
@@ -137,7 +130,7 @@ func (h *TeacherSelfHandler) Society(c *gin.Context) {
 		return
 	}
 
-	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
+	yearID, err := h.teacherSelf.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
@@ -170,7 +163,7 @@ func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 		return
 	}
 
-	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
+	yearID, err := h.teacherSelf.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
@@ -210,7 +203,7 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 		return
 	}
 
-	yearID, err := h.school.CurrentAcademicYearID(c.Request.Context())
+	yearID, err := h.teacherSelf.CurrentAcademicYearID(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no current academic year configured"})
 		return
