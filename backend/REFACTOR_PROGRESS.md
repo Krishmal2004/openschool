@@ -104,21 +104,22 @@ cmd/api
 | DONE | Student portfolio service | Migrated progress reports, activities, leadership, awards, discipline, validation, and persistence | `internal/modules/people` |
 | DONE | Student portfolio routes | Migrated all portfolio HTTP handlers and endpoint registration into People | `internal/modules/people` |
 | DONE | Student attendance | Migrated sessions, records, authorization, 24-hour locking, correction auditing, absence notifications, self-service reads, and report reads | `internal/modules/attendance` |
+| DONE | Staff attendance | Migrated daily marking, directories, monthly summaries, staff histories, and teacher self-service attendance | `internal/modules/attendance` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Twenty-six have now been migrated out of the legacy service layer.
+sqlc. Twenty-seven have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 26 |
-| Remaining legacy sqlc service files | 9 |
+| Migrated legacy sqlc service files | 27 |
+| Remaining legacy sqlc service files | 8 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 55% |
+| Feature migration estimate | Approximately 60% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -145,7 +146,7 @@ sqlc. Twenty-six have now been migrated out of the legacy service layer.
 | TODO | Parent self-service | Parent-facing student and timetable endpoints | Some endpoints currently depend on legacy repositories |
 | TODO | Teacher self-service | Teacher-facing timetable and workload endpoints | Depends on timetable engine and teacher module |
 | DONE | Student attendance | None | Sessions, records, scoped authorization, lock/correction rules, notifications, self/parent reads, and report reads are module-owned |
-| TODO | Staff attendance | Staff attendance records and reporting | Includes date-based operations |
+| DONE | Staff attendance | None | Admin marking, date views, monthly summaries, histories, and teacher self-service are module-owned |
 | TODO | Notifications | Notifications, unread counts, and delivery behavior | Includes timetable and people dependencies |
 | TODO | Positions | Teacher positions and scoped notifications | Check existing ADR before changing semantics |
 | TODO | Section heads | Section-head assignments and access rules | Related to grade sections and teacher roles |
@@ -203,7 +204,7 @@ The architecture test also verifies:
 4. Migrate Students, Teachers, Guardians, Non-academic Staff, and portfolios
    as the People module.
 5. Migrate Student, Parent, and Teacher self-service endpoints.
-6. Migrate Staff Attendance; Student Attendance is complete.
+6. Student and Staff Attendance are complete.
 7. Migrate Notifications, Audit, Reports, Dashboard, Search, and Automation.
 8. Remove compatibility repositories and the legacy route bridge.
 9. Run full integration/API tests and update this document before deleting it.

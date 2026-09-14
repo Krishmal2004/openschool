@@ -51,7 +51,6 @@ func RegisterAutomationModule(admin *gin.RouterGroup, pool *pgxpool.Pool) *jobs.
 }
 
 func RegisterAdminOperationsModule(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, pool *pgxpool.Pool) {
-	RegisterStaffAttendanceRoutes(admin, pool)
 	RegisterPrefectRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterSocietyRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterPositionRoutes(admin, teacherOrAdmin, pool)

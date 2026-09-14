@@ -195,3 +195,91 @@ func mapSession(row db.AttendanceSession) Session {
 func mapRecord(row db.AttendanceRecord) Record {
 	return Record{ID: row.ID, SessionID: row.SessionID, StudentID: row.StudentID, Status: row.Status, Note: row.Note}
 }
+
+func (r *Repository) upsertTeacher(ctx context.Context, id uuid.UUID, date time.Time, status string, markedBy uuid.UUID, note string) (StaffRecord, error) {
+	row, err := r.queries.UpsertTeacherAttendance(ctx, db.UpsertTeacherAttendanceParams{TeacherID: uuidValue(id), Date: dateValue(date), Status: status, MarkedBy: uuidValue(markedBy), Note: textValue(note)})
+	return mapStaffRecord(row), err
+}
+func (r *Repository) upsertNonAcademic(ctx context.Context, id uuid.UUID, date time.Time, status string, markedBy uuid.UUID, note string) (StaffRecord, error) {
+	row, err := r.queries.UpsertNonAcademicStaffAttendance(ctx, db.UpsertNonAcademicStaffAttendanceParams{NonAcademicStaffID: uuidValue(id), Date: dateValue(date), Status: status, MarkedBy: uuidValue(markedBy), Note: textValue(note)})
+	return mapStaffRecord(row), err
+}
+func (r *Repository) teachersByDate(ctx context.Context, date time.Time) ([]staffDirectoryRow, error) {
+	rows, err := r.queries.ListTeacherAttendanceByDate(ctx, dateValue(date))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]staffDirectoryRow, len(rows))
+	for i, row := range rows {
+		out[i] = mapStaffDirectory(row.TeacherID, row.FullName, row.EmployeeNumber, row.RecordID, row.Status, row.Note)
+	}
+	return out, nil
+}
+func (r *Repository) nonAcademicByDate(ctx context.Context, date time.Time) ([]staffDirectoryRow, error) {
+	rows, err := r.queries.ListNonAcademicStaffAttendanceByDate(ctx, dateValue(date))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]staffDirectoryRow, len(rows))
+	for i, row := range rows {
+		out[i] = mapStaffDirectory(row.StaffID, row.FullName, row.EmployeeNumber, row.RecordID, row.Status, row.Note)
+	}
+	return out, nil
+}
+func (r *Repository) teacherSummary(ctx context.Context, from, to time.Time) ([]staffSummaryRow, error) {
+	rows, err := r.queries.MonthlyTeacherAttendanceSummary(ctx, db.MonthlyTeacherAttendanceSummaryParams{Date: dateValue(from), Date_2: dateValue(to)})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]staffSummaryRow, len(rows))
+	for i, row := range rows {
+		out[i] = staffSummaryRow{ID: row.TeacherID, FullName: row.FullName, PresentCount: row.PresentCount, LateCount: row.LateCount, AbsentCount: row.AbsentCount, LeaveCount: row.LeaveCount}
+	}
+	return out, nil
+}
+func (r *Repository) nonAcademicSummary(ctx context.Context, from, to time.Time) ([]staffSummaryRow, error) {
+	rows, err := r.queries.MonthlyNonAcademicStaffAttendanceSummary(ctx, db.MonthlyNonAcademicStaffAttendanceSummaryParams{Date: dateValue(from), Date_2: dateValue(to)})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]staffSummaryRow, len(rows))
+	for i, row := range rows {
+		out[i] = staffSummaryRow{ID: row.StaffID, FullName: row.FullName, PresentCount: row.PresentCount, LateCount: row.LateCount, AbsentCount: row.AbsentCount, LeaveCount: row.LeaveCount}
+	}
+	return out, nil
+}
+func (r *Repository) teacherHistory(ctx context.Context, id uuid.UUID, from, to time.Time) ([]StaffRecord, error) {
+	rows, err := r.queries.ListTeacherAttendanceHistory(ctx, db.ListTeacherAttendanceHistoryParams{TeacherID: uuidValue(id), Date: dateValue(from), Date_2: dateValue(to)})
+	return mapStaffRecords(rows, err)
+}
+func (r *Repository) nonAcademicHistory(ctx context.Context, id uuid.UUID, from, to time.Time) ([]StaffRecord, error) {
+	rows, err := r.queries.ListNonAcademicStaffAttendanceHistory(ctx, db.ListNonAcademicStaffAttendanceHistoryParams{NonAcademicStaffID: uuidValue(id), Date: dateValue(from), Date_2: dateValue(to)})
+	return mapStaffRecords(rows, err)
+}
+func uuidValue(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
+func mapStaffRecord(row db.StaffAttendanceRecord) StaffRecord {
+	return StaffRecord{ID: row.ID, TeacherID: row.TeacherID, NonAcademicStaffID: row.NonAcademicStaffID, Date: row.Date, Status: row.Status, MarkedBy: row.MarkedBy, Note: row.Note, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
+}
+func mapStaffRecords(rows []db.StaffAttendanceRecord, err error) ([]StaffRecord, error) {
+	if err != nil {
+		return nil, err
+	}
+	out := make([]StaffRecord, len(rows))
+	for i, row := range rows {
+		out[i] = mapStaffRecord(row)
+	}
+	return out, nil
+}
+func mapStaffDirectory(id uuid.UUID, name, employee string, recordID pgtype.UUID, status, note pgtype.Text) staffDirectoryRow {
+	row := staffDirectoryRow{ID: id, FullName: name, EmployeeNumber: employee}
+	if recordID.Valid {
+		row.RecordID = uuid.UUID(recordID.Bytes)
+	}
+	if status.Valid {
+		row.Status = status.String
+	}
+	if note.Valid {
+		row.Note = note.String
+	}
+	return row
+}

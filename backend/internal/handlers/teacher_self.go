@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,13 +14,12 @@ import (
 
 // TeacherSelfHandler resolves a signed-in teacher's own profile ID for the existing teacherOrAdmin routes to use.
 type TeacherSelfHandler struct {
-	teacherSelf     *services.TeacherSelfService
-	school          ports.CurrentAcademicYearReader
-	positions       *services.PositionService
-	societies       *services.SocietyService
-	dashboard       *services.DashboardService
-	timetables      *timetablemodule.Reader
-	staffAttendance *services.StaffAttendanceService
+	teacherSelf *services.TeacherSelfService
+	school      ports.CurrentAcademicYearReader
+	positions   *services.PositionService
+	societies   *services.SocietyService
+	dashboard   *services.DashboardService
+	timetables  *timetablemodule.Reader
 }
 
 // NewTeacherSelfHandler constructs a TeacherSelfHandler with its service dependencies.
@@ -32,16 +30,14 @@ func NewTeacherSelfHandler(
 	societies *services.SocietyService,
 	dashboard *services.DashboardService,
 	timetables *timetablemodule.Reader,
-	staffAttendance *services.StaffAttendanceService,
 ) *TeacherSelfHandler {
 	return &TeacherSelfHandler{
-		teacherSelf:     teacherSelf,
-		school:          school,
-		positions:       positions,
-		societies:       societies,
-		dashboard:       dashboard,
-		timetables:      timetables,
-		staffAttendance: staffAttendance,
+		teacherSelf: teacherSelf,
+		school:      school,
+		positions:   positions,
+		societies:   societies,
+		dashboard:   dashboard,
+		timetables:  timetables,
 	}
 }
 
@@ -224,35 +220,4 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, list)
-}
-
-// Attendance returns the signed-in teacher's own staff-attendance history for a month.
-func (h *TeacherSelfHandler) Attendance(c *gin.Context) {
-	callerID, err := middleware.UserIDFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid caller identity"})
-		return
-	}
-
-	teacherID, err := h.teacherSelf.Resolve(c.Request.Context(), callerID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "no teacher profile linked to this account"})
-		return
-	}
-
-	year, month, err := parseYearMonth(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	from := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
-	to := from.AddDate(0, 1, -1)
-
-	records, err := h.staffAttendance.TeacherHistory(c.Request.Context(), teacherID, from, to)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, records)
 }

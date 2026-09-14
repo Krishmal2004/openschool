@@ -1,0 +1,128 @@
+package attendance
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/openschool-org/openschool/internal/models"
+)
+
+var ErrStaffAttendanceAmbiguous = errors.New("exactly one of teacher_id or non_academic_staff_id is required")
+
+type StaffRecord struct {
+	ID                 uuid.UUID          `json:"id"`
+	TeacherID          pgtype.UUID        `json:"teacher_id"`
+	NonAcademicStaffID pgtype.UUID        `json:"non_academic_staff_id"`
+	Date               pgtype.Date        `json:"date"`
+	Status             string             `json:"status"`
+	MarkedBy           pgtype.UUID        `json:"marked_by"`
+	Note               pgtype.Text        `json:"note"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type staffDirectoryRow struct {
+	ID, RecordID             uuid.UUID
+	FullName, EmployeeNumber string
+	Status, Note             string
+}
+
+type staffSummaryRow struct {
+	ID                                               uuid.UUID
+	FullName                                         string
+	PresentCount, LateCount, AbsentCount, LeaveCount int64
+}
+
+type staffStore interface {
+	upsertTeacher(context.Context, uuid.UUID, time.Time, string, uuid.UUID, string) (StaffRecord, error)
+	upsertNonAcademic(context.Context, uuid.UUID, time.Time, string, uuid.UUID, string) (StaffRecord, error)
+	teachersByDate(context.Context, time.Time) ([]staffDirectoryRow, error)
+	nonAcademicByDate(context.Context, time.Time) ([]staffDirectoryRow, error)
+	teacherSummary(context.Context, time.Time, time.Time) ([]staffSummaryRow, error)
+	nonAcademicSummary(context.Context, time.Time, time.Time) ([]staffSummaryRow, error)
+	teacherHistory(context.Context, uuid.UUID, time.Time, time.Time) ([]StaffRecord, error)
+	nonAcademicHistory(context.Context, uuid.UUID, time.Time, time.Time) ([]StaffRecord, error)
+}
+
+type StaffHistoryReader interface {
+	TeacherHistory(context.Context, uuid.UUID, time.Time, time.Time) ([]StaffRecord, error)
+}
+
+type StaffService struct{ store staffStore }
+
+func NewStaffService(store staffStore) *StaffService { return &StaffService{store: store} }
+
+func (s *StaffService) Mark(ctx context.Context, req models.MarkStaffAttendanceRequest, markedBy uuid.UUID) (StaffRecord, error) {
+	hasTeacher := req.TeacherID != ""
+	hasStaff := req.NonAcademicStaffID != ""
+	if hasTeacher == hasStaff {
+		return StaffRecord{}, ErrStaffAttendanceAmbiguous
+	}
+	if hasTeacher {
+		id, err := uuid.Parse(req.TeacherID)
+		if err != nil {
+			return StaffRecord{}, fmt.Errorf("invalid teacher id")
+		}
+		return s.store.upsertTeacher(ctx, id, req.Date, req.Status, markedBy, req.Note)
+	}
+	id, err := uuid.Parse(req.NonAcademicStaffID)
+	if err != nil {
+		return StaffRecord{}, fmt.Errorf("invalid staff id")
+	}
+	return s.store.upsertNonAcademic(ctx, id, req.Date, req.Status, markedBy, req.Note)
+}
+
+func (s *StaffService) ListByDate(ctx context.Context, date time.Time) ([]models.StaffAttendanceRow, []models.StaffAttendanceRow, error) {
+	teachers, err := s.store.teachersByDate(ctx, date)
+	if err != nil {
+		return nil, nil, err
+	}
+	staff, err := s.store.nonAcademicByDate(ctx, date)
+	if err != nil {
+		return nil, nil, err
+	}
+	return mapDirectoryRows(teachers), mapDirectoryRows(staff), nil
+}
+
+func mapDirectoryRows(rows []staffDirectoryRow) []models.StaffAttendanceRow {
+	out := make([]models.StaffAttendanceRow, len(rows))
+	for i, row := range rows {
+		out[i] = models.StaffAttendanceRow{StaffID: row.ID.String(), FullName: row.FullName, EmployeeNumber: row.EmployeeNumber, Status: row.Status, Note: row.Note}
+		if row.RecordID != uuid.Nil {
+			out[i].RecordID = row.RecordID.String()
+		}
+	}
+	return out
+}
+
+func (s *StaffService) MonthlySummary(ctx context.Context, from, to time.Time) ([]models.StaffAttendanceSummaryRow, []models.StaffAttendanceSummaryRow, error) {
+	teachers, err := s.store.teacherSummary(ctx, from, to)
+	if err != nil {
+		return nil, nil, err
+	}
+	staff, err := s.store.nonAcademicSummary(ctx, from, to)
+	if err != nil {
+		return nil, nil, err
+	}
+	return mapSummaryRows(teachers), mapSummaryRows(staff), nil
+}
+
+func mapSummaryRows(rows []staffSummaryRow) []models.StaffAttendanceSummaryRow {
+	out := make([]models.StaffAttendanceSummaryRow, len(rows))
+	for i, row := range rows {
+		out[i] = models.StaffAttendanceSummaryRow{StaffID: row.ID.String(), FullName: row.FullName, PresentCount: row.PresentCount, LateCount: row.LateCount, AbsentCount: row.AbsentCount, LeaveCount: row.LeaveCount}
+	}
+	return out
+}
+
+func (s *StaffService) TeacherHistory(ctx context.Context, id uuid.UUID, from, to time.Time) ([]StaffRecord, error) {
+	return s.store.teacherHistory(ctx, id, from, to)
+}
+
+func (s *StaffService) NonAcademicHistory(ctx context.Context, id uuid.UUID, from, to time.Time) ([]StaffRecord, error) {
+	return s.store.nonAcademicHistory(ctx, id, from, to)
+}

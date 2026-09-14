@@ -18,8 +18,7 @@ func RegisterTeacherSelfRoutes(teacher *gin.RouterGroup, pool *pgxpool.Pool, tim
 	positionService := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	societyService := services.NewSocietyService(repositories.NewSocietyRepository(pool), teacherRepo)
 	dashboardService := services.NewDashboardService(repositories.NewDashboardRepository(pool))
-	staffAttendanceService := services.NewStaffAttendanceService(repositories.NewStaffAttendanceRepository(pool))
-	handler := handlers.NewTeacherSelfHandler(services.NewTeacherSelfService(teacherRepo), schoolRepo, positionService, societyService, dashboardService, timetableService, staffAttendanceService)
+	handler := handlers.NewTeacherSelfHandler(services.NewTeacherSelfService(teacherRepo), schoolRepo, positionService, societyService, dashboardService, timetableService)
 
 	teacher.GET("/me/teacher", handler.Profile)
 	teacher.GET("/me/teacher/position", handler.Position)
@@ -27,5 +26,4 @@ func RegisterTeacherSelfRoutes(teacher *gin.RouterGroup, pool *pgxpool.Pool, tim
 	teacher.GET("/me/teacher/society", handler.Society)
 	teacher.GET("/me/teacher/analytics", handler.Analytics)
 	teacher.GET("/me/teacher/timetables", handler.Timetables)
-	teacher.GET("/me/teacher/attendance", handler.Attendance)
 }

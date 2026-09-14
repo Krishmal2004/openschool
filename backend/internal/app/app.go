@@ -78,6 +78,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	positionService := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), newTimetableNotifier(pool), auditService, attendanceLeadership{positions: positionService})
 	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
+	staffAttendanceService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
+	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffAttendanceService, services.NewTeacherSelfService(repositories.NewTeacherRepository(pool)))
 	routes.RegisterAdminOperationsModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, pool)
 
 	timetableReader := timetablemodule.NewReader(pool)
