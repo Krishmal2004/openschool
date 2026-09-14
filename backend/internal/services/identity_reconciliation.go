@@ -13,7 +13,7 @@ import (
 // ErrOrphanNoLongerOrphaned is returned by DeleteOrphaned when the account now has a matching local `users` row — the delete is refused rather than proceeding.
 var ErrOrphanNoLongerOrphaned = errors.New("this identity provider account now has a matching local user — refusing to delete")
 
-// OrphanedIdentity is a ThunderID account with no matching local `users` row — left behind when a signup rollback's compensating ThunderID delete failed (identity_rollback.go's rollbackIDPUser only logs on that failure, by design).
+// OrphanedIdentity is a ThunderID account with no matching local `users` row — left behind when a signup rollback's compensating identity-provider delete failed.
 type OrphanedIdentity struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`

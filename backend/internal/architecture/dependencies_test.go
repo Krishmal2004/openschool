@@ -17,7 +17,6 @@ const modulePath = "github.com/openschool-org/openschool/"
 // but new service-layer imports are rejected. Remove entries as modules move.
 var sqlcServiceDebt = map[string]bool{
 	"services/report_export.go": true,
-	"services/setup.go":         true,
 }
 
 func TestDependencyBoundaries(t *testing.T) {

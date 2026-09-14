@@ -111,21 +111,22 @@ cmd/api
 | DONE | Section heads | Migrated grade/stream TIC assignment, listing, deletion, and leadership-scope resolution | `internal/modules/leadership` |
 | DONE | Prefects | Migrated academic-year appointments, rank updates, archive years, student history, and routes | `internal/modules/studentleadership` |
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
+| DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Thirty-three have now been migrated out of the legacy service layer.
+sqlc. Thirty-four have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 33 |
-| Remaining legacy sqlc service files | 2 |
+| Migrated legacy sqlc service files | 34 |
+| Remaining legacy sqlc service files | 1 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 85% |
+| Feature migration estimate | Approximately 90% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -136,7 +137,7 @@ sqlc. Thirty-three have now been migrated out of the legacy service layer.
 |---|---|---|---|
 | TODO | Authentication | Login/setup lifecycle, password lifecycle, and related identity operations | ThunderID remains the identity provider |
 | TODO | Identity reconciliation | Admin reconciliation and identity-provider/local-user consistency operations | Keep provider calls behind `internal/identity` |
-| TODO | School setup | Initial setup workflow and setup status | Spans school and academic configuration |
+| DONE | School setup | None | Setup status, one-time admin provisioning, role assignment, and rollbacks are module-owned |
 | TODO | Curriculum | None for the core curriculum configuration endpoints | Levels, groups, subjects, tree, and mediums are migrated |
 | TODO | Curriculum presets | None | Preview and transactional, idempotent preset seeding are migrated |
 | TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
@@ -214,7 +215,7 @@ The architecture test also verifies:
 7. Notifications and Audit are complete; migrate Reports, Dashboard, Search,
    and Automation.
 8. Positions, Section Heads, Prefects, and Societies are complete.
-9. Migrate School Setup and Report Export, then remove compatibility
+9. School Setup is complete; migrate Report Export, then remove compatibility
    repositories and the legacy route bridge.
 10. Run full integration/API tests and update this document before deleting it.
 

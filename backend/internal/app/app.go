@@ -18,11 +18,13 @@ import (
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
+	setupmodule "github.com/openschool-org/openschool/internal/modules/setup"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/routes"
 	"github.com/openschool-org/openschool/internal/services"
+	"github.com/openschool-org/openschool/internal/thunderid"
 )
 
 // HTTPGroups contains the authorization-scoped route groups shared by modules.
@@ -45,7 +47,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	groups.API.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	routes.RegisterSetupRoutes(groups.API, pool)
+	setupmodule.RegisterRoutes(groups.API, setupmodule.NewService(setupmodule.NewRepository(pool), thunderid.NewClient()))
 	routes.RegisterAuthRoutes(groups.API, groups.Protected, pool)
 	identitymodule.Register(groups.Protected, pool)
 	routes.RegisterCoreModule(groups.Admin, groups.Protected, pool)
