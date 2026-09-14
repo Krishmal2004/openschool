@@ -2,6 +2,7 @@ package academics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/models"
 )
 
 type subjectRepository struct{ queries *db.Queries }
@@ -191,6 +193,188 @@ func (r *classRepository) enroll(ctx context.Context, id, student uuid.UUID) err
 }
 func (r *classRepository) unenroll(ctx context.Context, id, student uuid.UUID) error {
 	return r.queries.UnenrollStudentFromClass(ctx, db.UnenrollStudentFromClassParams{ClassID: id, StudentID: student})
+}
+
+type enrollmentRepository struct {
+	pool    *pgxpool.Pool
+	queries *db.Queries
+}
+
+type promotionRepository struct {
+	pool    *pgxpool.Pool
+	queries *db.Queries
+}
+
+func newPromotionRepository(pool *pgxpool.Pool) *promotionRepository {
+	return &promotionRepository{pool: pool, queries: db.New(pool)}
+}
+func NewPromotionRepository(pool *pgxpool.Pool) promotionStore { return newPromotionRepository(pool) }
+func (r *promotionRepository) students(ctx context.Context, year uuid.UUID) ([]promotionStudent, error) {
+	rows, err := r.queries.ListActiveStudentsForYear(ctx, year)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]promotionStudent, len(rows))
+	for i, v := range rows {
+		out[i] = promotionStudent{ID: v.StudentID, Name: v.StudentName, Index: v.StudentIndex, ClassID: v.ClassID, ClassName: v.ClassName, GradeID: v.GradeID, GradeName: v.GradeName, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName)}
+	}
+	return out, nil
+}
+func (r *promotionRepository) nextGrade(ctx context.Context, id uuid.UUID) (promotionGrade, error) {
+	v, err := r.queries.GetNextGrade(ctx, id)
+	return promotionGrade{ID: v.ID, Name: v.Name}, err
+}
+func (r *promotionRepository) classByName(ctx context.Context, grade, year uuid.UUID, name string) (promotionClass, error) {
+	v, err := r.queries.FindClassByGradeAndName(ctx, db.FindClassByGradeAndNameParams{GradeID: grade, AcademicYearID: year, Name: name})
+	return promotionClass{ID: v.ID, Name: v.Name}, err
+}
+func (r *promotionRepository) classByMedium(ctx context.Context, grade, year uuid.UUID, medium string) (promotionClass, error) {
+	id, err := uuid.Parse(medium)
+	if err != nil {
+		return promotionClass{}, err
+	}
+	v, err := r.queries.FindClassByGradeAndMedium(ctx, db.FindClassByGradeAndMediumParams{GradeID: grade, AcademicYearID: year, MediumID: pgtype.UUID{Bytes: id, Valid: true}})
+	return promotionClass{ID: v.ID, Name: v.Name}, err
+}
+func (r *promotionRepository) marks(ctx context.Context, term uuid.UUID, ids []uuid.UUID) ([]promotionMarks, error) {
+	rows, err := r.queries.ListStudentTotalMarksForTerm(ctx, db.ListStudentTotalMarksForTermParams{TermID: term, StudentIds: ids})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]promotionMarks, len(rows))
+	for i, v := range rows {
+		out[i] = promotionMarks{ID: v.StudentID, Total: v.TotalMarks, Max: v.TotalMaxMarks}
+	}
+	return out, nil
+}
+func (r *promotionRepository) validClasses(ctx context.Context, year uuid.UUID, ids []uuid.UUID) (int64, error) {
+	return r.queries.CountClassesInYearByIDs(ctx, db.CountClassesInYearByIDsParams{AcademicYearID: year, ClassIds: ids})
+}
+func (r *promotionRepository) commit(ctx context.Context, year uuid.UUID, students, classes []uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	q := r.queries.WithTx(tx)
+	if err = q.BulkDeleteClassStudentsForYear(ctx, db.BulkDeleteClassStudentsForYearParams{AcademicYearID: year, StudentIds: students}); err != nil {
+		return err
+	}
+	if err = q.BulkInsertClassStudents(ctx, db.BulkInsertClassStudentsParams{ClassIds: classes, StudentIds: students}); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func newEnrollmentRepository(pool *pgxpool.Pool) *enrollmentRepository {
+	return &enrollmentRepository{pool: pool, queries: db.New(pool)}
+}
+
+func NewEnrollmentRepository(pool *pgxpool.Pool) enrollmentStore {
+	return newEnrollmentRepository(pool)
+}
+func enrollmentText(v pgtype.Text) *string {
+	if !v.Valid {
+		return nil
+	}
+	s := v.String
+	return &s
+}
+func enrollmentUUID(v pgtype.UUID) *string {
+	if !v.Valid {
+		return nil
+	}
+	s := uuid.UUID(v.Bytes).String()
+	return &s
+}
+func (r *enrollmentRepository) groups(ctx context.Context, id uuid.UUID) ([]enrollmentGroup, error) {
+	rows, e := r.queries.ListSelectionGroupsWithSubjectIDsByLevel(ctx, id)
+	if e != nil {
+		return nil, e
+	}
+	out := make([]enrollmentGroup, len(rows))
+	for i, v := range rows {
+		out[i] = enrollmentGroup{ID: v.GroupID, Label: v.GroupLabel, Min: v.MinSelect, Max: v.MaxSelect, Subjects: v.SubjectIds}
+	}
+	return out, nil
+}
+func (r *enrollmentRepository) replace(ctx context.Context, student, year, level uuid.UUID, picks []models.EnrollmentPick) error {
+	tx, e := r.pool.Begin(ctx)
+	if e != nil {
+		return e
+	}
+	defer tx.Rollback(ctx)
+	q := r.queries.WithTx(tx)
+	if e = q.DeleteStudentEnrollmentsForLevel(ctx, db.DeleteStudentEnrollmentsForLevelParams{StudentID: student, AcademicYearID: year, LevelID: level}); e != nil {
+		return e
+	}
+	for _, p := range picks {
+		gid, _ := uuid.Parse(p.GroupID)
+		sid, _ := uuid.Parse(p.SubjectID)
+		mid := pgtype.UUID{}
+		if p.MediumID != "" {
+			v, e := uuid.Parse(p.MediumID)
+			if e != nil {
+				return errors.New("invalid medium_id")
+			}
+			mid = pgtype.UUID{Bytes: v, Valid: true}
+		}
+		if _, e = q.CreateStudentSubjectEnrollment(ctx, db.CreateStudentSubjectEnrollmentParams{StudentID: student, AcademicYearID: year, GroupID: gid, SubjectID: sid, MediumID: mid}); e != nil {
+			return e
+		}
+	}
+	return tx.Commit(ctx)
+}
+func (r *enrollmentRepository) locked(ctx context.Context, student, level, year uuid.UUID) (bool, error) {
+	return r.queries.IsStudentEnrollmentLocked(ctx, db.IsStudentEnrollmentLockedParams{StudentID: student, LevelID: level, AcademicYearID: year})
+}
+func (r *enrollmentRepository) unlock(ctx context.Context, student, level, year uuid.UUID) (int64, error) {
+	return r.queries.UnlockStudentEnrollment(ctx, db.UnlockStudentEnrollmentParams{StudentID: student, LevelID: level, AcademicYearID: year})
+}
+func (r *enrollmentRepository) remove(ctx context.Context, student, year, group, subject uuid.UUID) error {
+	return r.queries.DeleteStudentSubjectEnrollment(ctx, db.DeleteStudentSubjectEnrollmentParams{StudentID: student, AcademicYearID: year, GroupID: group, SubjectID: subject})
+}
+func (r *enrollmentRepository) groupLevel(ctx context.Context, group uuid.UUID) (uuid.UUID, error) {
+	row, err := r.queries.GetSelectionGroupByID(ctx, group)
+	return row.LevelID, err
+}
+func mapEnrollment(v db.ListStudentEnrollmentsRow) models.EnrollmentResponse {
+	return models.EnrollmentResponse{StudentID: v.StudentID.String(), AcademicYearID: v.AcademicYearID.String(), GroupID: v.GroupID.String(), GroupLabel: v.GroupLabel, LevelID: v.LevelID.String(), LevelLabel: v.LevelLabel, SubjectID: v.SubjectID.String(), SubjectName: v.SubjectName, SubjectCode: v.SubjectCode, SubjectType: enrollmentText(v.SubjectType), MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+}
+func (r *enrollmentRepository) list(ctx context.Context, student, year uuid.UUID) ([]models.EnrollmentResponse, error) {
+	rows, e := r.queries.ListStudentEnrollments(ctx, db.ListStudentEnrollmentsParams{StudentID: student, AcademicYearID: year})
+	if e != nil {
+		return nil, e
+	}
+	out := make([]models.EnrollmentResponse, len(rows))
+	for i, v := range rows {
+		out[i] = mapEnrollment(v)
+	}
+	return out, nil
+}
+func (r *enrollmentRepository) bySubject(ctx context.Context, subject, year uuid.UUID) ([]models.EnrolledStudentResponse, error) {
+	rows, e := r.queries.ListStudentsBySubject(ctx, db.ListStudentsBySubjectParams{SubjectID: subject, AcademicYearID: year})
+	if e != nil {
+		return nil, e
+	}
+	out := make([]models.EnrolledStudentResponse, len(rows))
+	for i, v := range rows {
+		gid, gl := v.GroupID.String(), v.GroupLabel
+		out[i] = models.EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, GroupID: &gid, GroupLabel: &gl, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+	}
+	return out, nil
+}
+func (r *enrollmentRepository) byGroup(ctx context.Context, group, year uuid.UUID) ([]models.EnrolledStudentResponse, error) {
+	rows, e := r.queries.ListStudentsByGroup(ctx, db.ListStudentsByGroupParams{GroupID: group, AcademicYearID: year})
+	if e != nil {
+		return nil, e
+	}
+	out := make([]models.EnrolledStudentResponse, len(rows))
+	for i, v := range rows {
+		sid, sn, sc := v.SubjectID.String(), v.SubjectName, v.SubjectCode
+		out[i] = models.EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, SubjectID: &sid, SubjectName: &sn, SubjectCode: &sc, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+	}
+	return out, nil
 }
 func (r *streamRepository) createStream(ctx context.Context, name string) (Stream, error) {
 	row, err := r.queries.CreateStream(ctx, name)

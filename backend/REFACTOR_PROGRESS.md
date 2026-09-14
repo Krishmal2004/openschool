@@ -86,21 +86,24 @@ cmd/api
 | DONE | Curriculum levels and groups | Migrated level, selection-group, group-subject, duplicate, delete, and tree endpoints | `internal/modules/curriculum` |
 | DONE | Curriculum presets | Migrated preview and transactional, idempotent preset seeding | `internal/modules/curriculum` |
 | DONE | Classes | Migrated class CRUD, assignments, subject-teacher qualification, and enrollment endpoints | `internal/modules/academics` |
+| DONE | Enrollment routes | Migrated validation, submission, locking, deletion, and enrollment reporting routes | `internal/modules/academics` |
+| DONE | Promotion route boundary | Migrated promotion preview and commit HTTP ownership into the academics module | `internal/modules/academics` |
+| DONE | Promotions | Migrated preview, ranking, target validation, and transactional bulk assignment | `internal/modules/academics` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Seventeen have now been migrated out of the legacy service layer.
+sqlc. Eighteen have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 17 |
-| Remaining legacy sqlc service files | 18 |
+| Migrated legacy sqlc service files | 18 |
+| Remaining legacy sqlc service files | 17 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 40% |
+| Feature migration estimate | Approximately 45% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -115,8 +118,8 @@ sqlc. Seventeen have now been migrated out of the legacy service layer.
 | TODO | Curriculum | None for the core curriculum configuration endpoints | Levels, groups, subjects, tree, and mediums are migrated |
 | TODO | Curriculum presets | None | Preview and transactional, idempotent preset seeding are migrated |
 | TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
-| TODO | Enrollments | Student subject/group enrollment workflows | Depends on curriculum and student profiles |
-| TODO | Promotions | Student promotion between academic years | Depends on classes, enrollment, and academic years |
+| TODO | Enrollments | Migrate the remaining student self-service dependency | Public enrollment routes are migrated; student self-service still consumes the compatibility service |
+| TODO | Promotions | None | Preview and transactional assignment are migrated |
 | TODO | Term marks | Teacher mark entry and reporting data | Depends on students, subjects, and terms |
 | TODO | Students | Student profile CRUD and lifecycle | Must preserve ThunderID provisioning and rollback behavior |
 | TODO | Teachers | Teacher profile CRUD and subject assignment | Must preserve ThunderID provisioning and rollback behavior |
