@@ -89,21 +89,23 @@ cmd/api
 | DONE | Enrollment routes | Migrated validation, submission, locking, deletion, and enrollment reporting routes | `internal/modules/academics` |
 | DONE | Promotion route boundary | Migrated promotion preview and commit HTTP ownership into the academics module | `internal/modules/academics` |
 | DONE | Promotions | Migrated preview, ranking, target validation, and transactional bulk assignment | `internal/modules/academics` |
+| DONE | Term-mark route boundary | Migrated mark-entry and mark-report HTTP ownership into the academics module | `internal/modules/academics` |
+| DONE | Term marks | Migrated mark entry, authorization, enrollment checks, reporting, and deletion into the academics module | `internal/modules/academics` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Eighteen have now been migrated out of the legacy service layer.
+sqlc. Nineteen have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 18 |
-| Remaining legacy sqlc service files | 17 |
+| Migrated legacy sqlc service files | 19 |
+| Remaining legacy sqlc service files | 16 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 45% |
+| Feature migration estimate | Approximately 50% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -120,7 +122,7 @@ sqlc. Eighteen have now been migrated out of the legacy service layer.
 | TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
 | TODO | Enrollments | Migrate the remaining student self-service dependency | Public enrollment routes are migrated; student self-service still consumes the compatibility service |
 | TODO | Promotions | None | Preview and transactional assignment are migrated |
-| TODO | Term marks | Teacher mark entry and reporting data | Depends on students, subjects, and terms |
+| TODO | Term marks | None for the mark workflows | Reports still use the compatibility repository until Reports is migrated |
 | TODO | Students | Student profile CRUD and lifecycle | Must preserve ThunderID provisioning and rollback behavior |
 | TODO | Teachers | Teacher profile CRUD and subject assignment | Must preserve ThunderID provisioning and rollback behavior |
 | TODO | Guardians | Guardian profiles and student relationships | Includes parent access behavior |

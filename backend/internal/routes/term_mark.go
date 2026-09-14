@@ -3,20 +3,13 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/openschool-org/openschool/internal/handlers"
-	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services"
+	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 )
 
-func RegisterTermMarkRoutes(teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
-	repo := repositories.NewTermMarkRepository(pool)
-	teacherRepo := repositories.NewTeacherRepository(pool)
-	classRepo := repositories.NewClassRepository(pool)
-	service := services.NewTermMarkService(repo, teacherRepo, classRepo)
-	handler := handlers.NewTermMarkHandler(service)
+func newTermMarkRunner(pool *pgxpool.Pool) academicsmodule.TermMarkReader {
+	return academicsmodule.NewTermMarkService(academicsmodule.NewTermMarkRepository(pool))
+}
 
-	teacherOrAdmin.PUT("/classes/:id/marks", handler.BulkUpsert)
-	teacherOrAdmin.GET("/classes/:id/marks", handler.ListClassMarks)
-	teacherOrAdmin.GET("/students/:id/marks", handler.ListStudentMarks)
-	teacherOrAdmin.DELETE("/marks/:id", handler.DeleteMark)
+func RegisterTermMarkRoutes(teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
+	academicsmodule.RegisterTermMarkRoutes(teacherOrAdmin, academicsmodule.NewTermMarkService(academicsmodule.NewTermMarkRepository(pool)))
 }

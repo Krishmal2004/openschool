@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
+	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	"github.com/openschool-org/openschool/internal/services"
 )
 
@@ -15,12 +16,12 @@ import (
 type StudentSelfHandler struct {
 	studentSelf *services.StudentSelfService
 	attendance  *services.AttendanceService
-	marks       *services.TermMarkService
+	marks       academicsmodule.TermMarkReader
 	enrollments *services.EnrollmentService
 }
 
 // NewStudentSelfHandler constructs a StudentSelfHandler with its service dependencies.
-func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance *services.AttendanceService, marks *services.TermMarkService, enrollments *services.EnrollmentService) *StudentSelfHandler {
+func NewStudentSelfHandler(studentSelf *services.StudentSelfService, attendance *services.AttendanceService, marks academicsmodule.TermMarkReader, enrollments *services.EnrollmentService) *StudentSelfHandler {
 	return &StudentSelfHandler{studentSelf: studentSelf, attendance: attendance, marks: marks, enrollments: enrollments}
 }
 

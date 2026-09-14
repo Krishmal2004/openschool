@@ -266,6 +266,70 @@ func (r *promotionRepository) commit(ctx context.Context, year uuid.UUID, studen
 	return tx.Commit(ctx)
 }
 
+type termMarkRepository struct{ queries *db.Queries }
+
+func newTermMarkRepository(pool *pgxpool.Pool) *termMarkRepository {
+	return &termMarkRepository{queries: db.New(pool)}
+}
+func NewTermMarkRepository(pool *pgxpool.Pool) termMarkStore { return newTermMarkRepository(pool) }
+func (r *termMarkRepository) authorizeSubject(ctx context.Context, a TermMarkActor, class, subject uuid.UUID) error {
+	if a.Role == "admin" {
+		return nil
+	}
+	teacher, e := r.queries.GetTeacherByUserID(ctx, a.ID)
+	if e != nil {
+		return errors.New("only teachers assigned to a subject can enter its marks")
+	}
+	assigned, e := r.queries.GetClassSubjectTeacher(ctx, db.GetClassSubjectTeacherParams{ClassID: class, SubjectID: subject})
+	if e != nil {
+		return errors.New("no teacher is assigned to teach this subject for this class")
+	}
+	if assigned != teacher.ID {
+		return ErrNotAssignedToSubject
+	}
+	return nil
+}
+func (r *termMarkRepository) enrolled(ctx context.Context, class uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	return r.queries.ListStudentsEnrolledInCurrentClass(ctx, db.ListStudentsEnrolledInCurrentClassParams{ClassID: class, StudentIds: ids})
+}
+func (r *termMarkRepository) upsert(ctx context.Context, student, subject, term uuid.UUID, m, max pgtype.Numeric, absent bool, entered uuid.UUID) (any, error) {
+	return r.queries.UpsertTermMark(ctx, db.UpsertTermMarkParams{StudentID: student, SubjectID: subject, TermID: term, Marks: m, MaxMarks: max, IsAbsent: absent, EnteredBy: pgtype.UUID{Bytes: entered, Valid: true}})
+}
+func (r *termMarkRepository) listClass(ctx context.Context, class, term, subject uuid.UUID) (any, error) {
+	return r.queries.ListClassMarksForTermSubject(ctx, db.ListClassMarksForTermSubjectParams{ClassID: class, TermID: term, SubjectID: subject})
+}
+func (r *termMarkRepository) listStudent(ctx context.Context, student, term uuid.UUID) (any, error) {
+	return r.queries.ListStudentMarksByTerm(ctx, db.ListStudentMarksByTermParams{StudentID: student, TermID: term})
+}
+func (r *termMarkRepository) markOwner(ctx context.Context, id uuid.UUID) (uuid.UUID, uuid.UUID, error) {
+	v, e := r.queries.GetTermMarkByID(ctx, id)
+	return v.StudentID, v.SubjectID, e
+}
+func (r *termMarkRepository) studentClass(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	v, e := r.queries.GetStudentCurrentClass(ctx, id)
+	return v.ID, e
+}
+func (r *termMarkRepository) authorizeClass(ctx context.Context, a TermMarkActor, class uuid.UUID) error {
+	if a.Role == "admin" {
+		return nil
+	}
+	teacher, e := r.queries.GetTeacherByUserID(ctx, a.ID)
+	if e != nil {
+		return errors.New("only teachers assigned to a class can view its marks")
+	}
+	ok, e := r.queries.IsTeacherAssignedToClass(ctx, db.IsTeacherAssignedToClassParams{ID: class, FormTeacherID: pgtype.UUID{Bytes: teacher.ID, Valid: true}, TeacherID: teacher.ID})
+	if e != nil {
+		return e
+	}
+	if !ok {
+		return ErrNotAssignedToSubject
+	}
+	return nil
+}
+func (r *termMarkRepository) delete(ctx context.Context, id uuid.UUID) error {
+	return r.queries.DeleteTermMark(ctx, id)
+}
+
 func newEnrollmentRepository(pool *pgxpool.Pool) *enrollmentRepository {
 	return &enrollmentRepository{pool: pool, queries: db.New(pool)}
 }

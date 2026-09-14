@@ -29,9 +29,7 @@ func RegisterParentRoutes(parent *gin.RouterGroup, timetables *timetablemodule.R
 	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
 	positionSvc := services.NewPositionService(repositories.NewPositionRepository(pool), repositories.NewSectionHeadRepository(pool), nil)
 	attendanceService := services.NewAttendanceService(repositories.NewAttendanceRepository(pool), repositories.NewUserRepository(pool), repositories.NewTeacherRepository(pool), repositories.NewClassRepository(pool), repositories.NewStudentRepository(pool), guardianRepo, notifications, auditSvc, positionSvc, repositories.NewSchoolRepository(pool))
-	marksService := services.NewTermMarkService(repositories.NewTermMarkRepository(pool), repositories.NewTeacherRepository(pool), repositories.NewClassRepository(pool))
-
-	handler := handlers.NewParentHandler(guardianService, attendanceService, marksService, timetables)
+	handler := handlers.NewParentHandler(guardianService, attendanceService, newTermMarkRunner(pool), timetables)
 
 	parent.GET("/me/children", handler.ListChildren)
 	parent.GET("/me/children/:id/attendance", handler.ChildAttendance)
