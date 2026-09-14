@@ -13,6 +13,20 @@ import (
 
 const modulePath = "github.com/openschool-org/openschool/"
 
+// legacyRepositoryDebt is a ratchet for the horizontal repository package.
+// Entries are removed as their remaining feature consumers migrate to modules.
+var legacyRepositoryDebt = map[string]bool{
+	"repositories/auth.go":          true,
+	"repositories/dashboard.go":     true,
+	"repositories/job_checks.go":    true,
+	"repositories/job_scheduler.go": true,
+	"repositories/school.go":        true,
+	"repositories/search.go":        true,
+	"repositories/student.go":       true,
+	"repositories/teacher.go":       true,
+	"repositories/user.go":          true,
+}
+
 func TestDependencyBoundaries(t *testing.T) {
 	root := internalRoot(t)
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -25,6 +39,9 @@ func TestDependencyBoundaries(t *testing.T) {
 		}
 		rel = filepath.ToSlash(rel)
 		imports := fileImports(t, path)
+		if strings.HasPrefix(rel, "repositories/") && !legacyRepositoryDebt[rel] {
+			t.Errorf("%s adds a new horizontal repository; add persistence to its owning module", rel)
+		}
 
 		if strings.HasPrefix(rel, "handlers/") {
 			for _, forbidden := range []string{"db/sqlc", "internal/repositories"} {

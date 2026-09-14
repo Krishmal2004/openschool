@@ -26,5 +26,6 @@ cmd/api -> internal/app -> internal/modules
 
 The existing horizontal packages remain a migration bridge. New behavior must
 be added to a module, and existing behavior moves one vertical slice at a time.
-The architecture test rejects new legacy dependencies and new service-layer
-sqlc imports. Its explicit debt list is reduced whenever a service migrates.
+The architecture test rejects new legacy dependencies, all service-layer sqlc
+imports, and any new file in the horizontal repository package. Its explicit
+repository debt list is reduced whenever a remaining capability migrates.

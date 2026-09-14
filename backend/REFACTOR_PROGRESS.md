@@ -113,6 +113,8 @@ cmd/api
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
+| DONE | Dead repository cleanup | Removed fourteen superseded School, Academics, Curriculum, People, and Timetable repository adapters | Module repository adapters |
+| DONE | Repository debt guard | Added an exact allowlist for the nine active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -127,7 +129,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 92% |
+| Feature migration estimate | Approximately 93% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -139,20 +141,20 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | TODO | Authentication | Login/setup lifecycle, password lifecycle, and related identity operations | ThunderID remains the identity provider |
 | TODO | Identity reconciliation | Admin reconciliation and identity-provider/local-user consistency operations | Keep provider calls behind `internal/identity` |
 | DONE | School setup | None | Setup status, one-time admin provisioning, role assignment, and rollbacks are module-owned |
-| TODO | Curriculum | None for the core curriculum configuration endpoints | Levels, groups, subjects, tree, and mediums are migrated |
-| TODO | Curriculum presets | None | Preview and transactional, idempotent preset seeding are migrated |
-| TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
+| DONE | Curriculum | None | Levels, groups, subjects, tree, and mediums are module-owned |
+| DONE | Curriculum presets | None | Preview and transactional, idempotent preset seeding are module-owned |
+| DONE | Classes | None | Classes, assignments, subject-teacher qualification, and enrollment are module-owned |
 | DONE | Enrollments | None | Admin, public, and student self-service enrollment workflows are owned by Academics |
-| TODO | Promotions | None | Preview and transactional assignment are migrated |
+| DONE | Promotions | None | Preview and transactional assignment are module-owned |
 | DONE | Term marks | None | Mark workflows and report-export reads are module-owned |
 | DONE | Students | None for student profile CRUD and lifecycle | Identity provisioning, rollback, house assignment, and deletion are migrated |
 | DONE | Teachers | None for teacher profile and qualification workflows | Identity provisioning, rollback, lifecycle, house, and subject operations are migrated |
 | DONE | Guardians | None | CRUD, relationships, provisioning and rollback, parent access, authentication, notifications, reads, and routes are migrated |
 | DONE | Non-academic staff | None | CRUD, employee numbering, employment status, and audited house assignment are migrated |
 | DONE | Student portfolio | None | Business logic, persistence, handlers, and route ownership are migrated |
-| TODO | Student self-service | Student-facing profile, timetable, and academic endpoints | Some endpoints currently depend on legacy timetable repositories |
-| TODO | Parent self-service | Parent-facing student and timetable endpoints | Some endpoints currently depend on legacy repositories |
-| TODO | Teacher self-service | Teacher-facing timetable and workload endpoints | Depends on timetable engine and teacher module |
+| TODO | Student self-service | Move the remaining profile resolver and HTTP ownership into a module | Attendance, marks, and enrollments already use module contracts |
+| TODO | Parent self-service | Move the remaining HTTP ownership into a module | Guardian, attendance, marks, and timetable reads already use module contracts |
+| TODO | Teacher self-service | Move the remaining profile resolver and HTTP ownership into a module | Leadership, society, and timetable reads already use module contracts |
 | DONE | Student attendance | None | Sessions, records, scoped authorization, lock/correction rules, notifications, self/parent reads, and report reads are module-owned |
 | DONE | Staff attendance | None | Admin marking, date views, monthly summaries, histories, and teacher self-service are module-owned |
 | DONE | Notifications | None | Composer, scoped recipients, drafts, delivery, inbox state, and system-triggered delivery are module-owned |
@@ -168,17 +170,16 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 ## 6. Temporary compatibility pieces
 
-These are intentionally retained until their consumers are migrated:
+These are intentionally retained until their active consumers are migrated:
 
-- Legacy timetable repositories used by parent and
-  student views, teacher self-service, and jobs.
-- Legacy grade-section repository used by parent and
-  student views, teacher self-service, and jobs.
-- Legacy classroom repository used for subject-specific lab-room lookup.
-- Legacy subject and grade repositories used by curriculum preset seeding and
-  other unmigrated services.
-- Legacy school repository used by current-year and school-type lookups.
+- Nine horizontal repository files used by Authentication, Identity
+  Reconciliation, Dashboard, Search, Automation, and self-service.
+- Legacy handlers and services for those same remaining capabilities.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
+
+Fourteen superseded repositories for School, Academics, Curriculum, People,
+and Timetable have been deleted. The architecture guard rejects any new file
+outside the exact nine-file compatibility allowlist.
 
 These are migration debt, not new architecture targets. No new feature should
 be added to them unless it is required to keep an unmigrated consumer working.
