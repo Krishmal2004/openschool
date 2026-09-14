@@ -112,21 +112,22 @@ cmd/api
 | DONE | Prefects | Migrated academic-year appointments, rank updates, archive years, student history, and routes | `internal/modules/studentleadership` |
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
+| DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Thirty-four have now been migrated out of the legacy service layer.
+sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 34 |
-| Remaining legacy sqlc service files | 1 |
+| Migrated legacy sqlc service files | 35 |
+| Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 90% |
+| Feature migration estimate | Approximately 92% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -143,7 +144,7 @@ sqlc. Thirty-four have now been migrated out of the legacy service layer.
 | TODO | Classes | None for the class configuration endpoints | Classes, assignments, subject-teacher qualification, and enrollment are migrated |
 | DONE | Enrollments | None | Admin, public, and student self-service enrollment workflows are owned by Academics |
 | TODO | Promotions | None | Preview and transactional assignment are migrated |
-| TODO | Term marks | None for the mark workflows | Reports still use the compatibility repository until Reports is migrated |
+| DONE | Term marks | None | Mark workflows and report-export reads are module-owned |
 | DONE | Students | None for student profile CRUD and lifecycle | Identity provisioning, rollback, house assignment, and deletion are migrated |
 | DONE | Teachers | None for teacher profile and qualification workflows | Identity provisioning, rollback, lifecycle, house, and subject operations are migrated |
 | DONE | Guardians | None | CRUD, relationships, provisioning and rollback, parent access, authentication, notifications, reads, and routes are migrated |
@@ -159,7 +160,7 @@ sqlc. Thirty-four have now been migrated out of the legacy service layer.
 | DONE | Section heads | None | Grade/stream assignments, reads, deletion, and leadership scope are module-owned |
 | DONE | Prefects | None | Appointments, rank updates, archive years, student history, and routes are module-owned |
 | DONE | Societies | None | CRUD, roster authorization, membership history, and teacher self-service are module-owned |
-| TODO | Reports | Report export and report-facing queries | Preserve existing output formats |
+| DONE | Reports | None for attendance and marks PDF exports | Query adapters, templates, column selection, and routes are module-owned |
 | DONE | Audit | None | Recording is exposed through a narrow shared port; admin reads and persistence are module-owned |
 | TODO | Dashboard | Dashboard aggregates and house distributions | Depends on people and attendance data |
 | TODO | Search | Cross-entity search | Should be isolated behind a search capability |
@@ -177,7 +178,6 @@ These are intentionally retained until their consumers are migrated:
 - Legacy subject and grade repositories used by curriculum preset seeding and
   other unmigrated services.
 - Legacy school repository used by current-year and school-type lookups.
-- Legacy term repository used by report export.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
 
 These are migration debt, not new architecture targets. No new feature should
@@ -212,10 +212,10 @@ The architecture test also verifies:
    as the People module.
 5. Migrate Student, Parent, and Teacher self-service endpoints.
 6. Student and Staff Attendance are complete.
-7. Notifications and Audit are complete; migrate Reports, Dashboard, Search,
-   and Automation.
+7. Notifications, Audit, and Report Export are complete; migrate Dashboard,
+   Search, and Automation.
 8. Positions, Section Heads, Prefects, and Societies are complete.
-9. School Setup is complete; migrate Report Export, then remove compatibility
+9. School Setup and Report Export are complete; remove compatibility
    repositories and the legacy route bridge.
 10. Run full integration/API tests and update this document before deleting it.
 

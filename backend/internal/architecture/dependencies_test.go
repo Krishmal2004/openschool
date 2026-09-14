@@ -13,12 +13,6 @@ import (
 
 const modulePath = "github.com/openschool-org/openschool/"
 
-// sqlcServiceDebt is a ratchet: existing files may be migrated away from sqlc,
-// but new service-layer imports are rejected. Remove entries as modules move.
-var sqlcServiceDebt = map[string]bool{
-	"services/report_export.go": true,
-}
-
 func TestDependencyBoundaries(t *testing.T) {
 	root := internalRoot(t)
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -40,8 +34,8 @@ func TestDependencyBoundaries(t *testing.T) {
 			}
 		}
 
-		if strings.HasPrefix(rel, "services/") && imports[modulePath+"db/sqlc"] && !sqlcServiceDebt[rel] {
-			t.Errorf("%s adds a new service-layer sqlc dependency", rel)
+		if strings.HasPrefix(rel, "services/") && imports[modulePath+"db/sqlc"] {
+			t.Errorf("%s imports forbidden service-layer sqlc dependency", rel)
 		}
 
 		if strings.HasPrefix(rel, "modules/") {

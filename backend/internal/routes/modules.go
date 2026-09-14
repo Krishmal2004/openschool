@@ -50,5 +50,4 @@ func RegisterAutomationModule(admin *gin.RouterGroup, pool *pgxpool.Pool) *jobs.
 func RegisterAdminOperationsModule(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, pool *pgxpool.Pool) {
 	RegisterIdentityReconciliationRoutes(admin, pool)
 	RegisterDashboardRoutes(admin, pool)
-	RegisterReportExportRoutes(admin, pool)
 }
