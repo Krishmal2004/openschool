@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -18,7 +18,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/db/migrations"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // SystemHealthAgentName is this agent's stable job_settings/job_runs identifier.
@@ -42,13 +41,13 @@ var backupFileRe = regexp.MustCompile(`^openschool_\d{8}_\d{6}\.dump$`)
 // SystemHealthAgent runs the nightly backup, migration-drift check, backup retention pruning, and dump-size anomaly detection.
 type SystemHealthAgent struct {
 	pool      *pgxpool.Pool
-	checks    *repositories.JobChecksRepository
+	checks    *Repository
 	notifSvc  *notifications.NotificationService
 	backupDir string
 }
 
 // NewSystemHealthAgent constructs a SystemHealthAgent with its dependencies, defaulting backupDir to JOB_BACKUP_DIR or ./backups.
-func NewSystemHealthAgent(pool *pgxpool.Pool, checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService) *SystemHealthAgent {
+func NewSystemHealthAgent(pool *pgxpool.Pool, checks *Repository, notifSvc *notifications.NotificationService) *SystemHealthAgent {
 	dir := os.Getenv("JOB_BACKUP_DIR")
 	if dir == "" {
 		dir = "./backups"

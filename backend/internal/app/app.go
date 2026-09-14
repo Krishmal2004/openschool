@@ -7,12 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/openschool-org/openschool/internal/jobs"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
+	automationmodule "github.com/openschool-org/openschool/internal/modules/automation"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
@@ -43,7 +43,7 @@ type HTTPGroups struct {
 }
 
 // Setup composes the API modules and returns the scheduler owned by the process lifecycle.
-func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
+func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
 	groups := newHTTPGroups(router, pool)
 	notifications := notificationmodule.NewNotificationService(notificationmodule.NewNotificationRepository(pool))
 
@@ -101,7 +101,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, leadershipService, studentLeadershipService, dashboardService, pool)
 	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
 
-	return routes.RegisterAutomationModule(groups.Admin, pool)
+	return automationmodule.RegisterRoutes(groups.Admin, pool)
 }
 
 func newHTTPGroups(router *gin.Engine, pool *pgxpool.Pool) HTTPGroups {

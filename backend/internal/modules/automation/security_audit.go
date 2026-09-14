@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // SecurityAuditAgentName is this agent's stable job_settings/job_runs identifier.
@@ -38,12 +36,12 @@ var sriLankaOffset = time.FixedZone("+05:30", 5*3600+30*60)
 
 // SecurityAuditAgent runs three concurrent security checks: a per-actor statistical audit-log burst detector, off-hours activity detection, and the expired password-reset-token sweep.
 type SecurityAuditAgent struct {
-	checks   *repositories.JobChecksRepository
+	checks   *Repository
 	notifSvc *notifications.NotificationService
 }
 
 // NewSecurityAuditAgent constructs a SecurityAuditAgent with its dependencies.
-func NewSecurityAuditAgent(checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService) *SecurityAuditAgent {
+func NewSecurityAuditAgent(checks *Repository, notifSvc *notifications.NotificationService) *SecurityAuditAgent {
 	return &SecurityAuditAgent{checks: checks, notifSvc: notifSvc}
 }
 
@@ -91,8 +89,8 @@ func (a *SecurityAuditAgent) checkAuditAnomaly(ctx context.Context) checkOutcome
 
 	baselines := make(map[uuid.UUID]actorBaseline, len(baselineRows))
 	for _, b := range baselineRows {
-		id, ok := uuidFromPg(b.ActorID)
-		if !ok {
+		id := b.ActorID
+		if id == uuid.Nil {
 			continue
 		}
 		baselines[id] = actorBaseline{
@@ -105,8 +103,8 @@ func (a *SecurityAuditAgent) checkAuditAnomaly(ctx context.Context) checkOutcome
 
 	var descriptions []string
 	for _, cur := range currentRows {
-		id, ok := uuidFromPg(cur.ActorID)
-		if !ok {
+		id := cur.ActorID
+		if id == uuid.Nil {
 			continue
 		}
 		count := float64(cur.ChangeCount)
@@ -159,8 +157,8 @@ func (a *SecurityAuditAgent) checkOffHoursActivity(ctx context.Context) checkOut
 	for i, act := range actors {
 		descriptions[i] = fmt.Sprintf("%s: %d change(s) between %s and %s (Sri Lanka time)",
 			act.FullName, act.ChangeCount,
-			act.FirstSeen.Time.In(sriLankaOffset).Format("15:04"),
-			act.LastSeen.Time.In(sriLankaOffset).Format("15:04"))
+			act.FirstSeen.In(sriLankaOffset).Format("15:04"),
+			act.LastSeen.In(sriLankaOffset).Format("15:04"))
 	}
 	summary := fmt.Sprintf("%d account(s) with overnight (00:00-05:00) activity: %s", len(actors), strings.Join(descriptions, "; "))
 
@@ -181,12 +179,4 @@ func (a *SecurityAuditAgent) checkPasswordResetTokenSweep(ctx context.Context) c
 		return checkOutcome{}
 	}
 	return checkOutcome{label: fmt.Sprintf("swept %d expired reset token(s)", deleted)}
-}
-
-// uuidFromPg converts a pgtype.UUID into a uuid.UUID, reporting false if it isn't valid.
-func uuidFromPg(id pgtype.UUID) (uuid.UUID, bool) {
-	if !id.Valid {
-		return uuid.UUID{}, false
-	}
-	return uuid.UUID(id.Bytes), true
 }

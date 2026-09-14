@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // AcademicDeliveryAgentName is this agent's stable job_settings/job_runs identifier.
@@ -46,12 +45,12 @@ const (
 
 // AcademicDeliveryAgent runs five concurrent day-to-day academic-operations checks: attendance session coverage/compliance/completeness and term-marks deadline/pace.
 type AcademicDeliveryAgent struct {
-	checks   *repositories.JobChecksRepository
+	checks   *Repository
 	notifSvc *notifications.NotificationService
 }
 
 // NewAcademicDeliveryAgent constructs an AcademicDeliveryAgent with its dependencies.
-func NewAcademicDeliveryAgent(checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService) *AcademicDeliveryAgent {
+func NewAcademicDeliveryAgent(checks *Repository, notifSvc *notifications.NotificationService) *AcademicDeliveryAgent {
 	return &AcademicDeliveryAgent{checks: checks, notifSvc: notifSvc}
 }
 
@@ -160,7 +159,7 @@ func (a *AcademicDeliveryAgent) checkStaleAttendance(ctx context.Context) checkO
 	now := time.Now()
 	descriptions := make([]string, len(sessions))
 	for i, s := range sessions {
-		age := now.Sub(s.CreatedAt.Time)
+		age := now.Sub(s.CreatedAt)
 		neverStarted := s.RecordCount == 0
 		switch {
 		case neverStarted || age >= staleCriticalDays*24*time.Hour:
@@ -170,7 +169,7 @@ func (a *AcademicDeliveryAgent) checkStaleAttendance(ctx context.Context) checkO
 				severity = SeverityElevated
 			}
 		}
-		descriptions[i] = fmt.Sprintf("%s on %s (%d/%d marked, %dd old)", s.ClassName, s.Date.Time.Format("2006-01-02"), s.RecordCount, s.RosterSize, int(age.Hours()/24))
+		descriptions[i] = fmt.Sprintf("%s on %s (%d/%d marked, %dd old)", s.ClassName, s.Date.Format("2006-01-02"), s.RecordCount, s.RosterSize, int(age.Hours()/24))
 	}
 	summary := fmt.Sprintf("%d stale incomplete session(s): %s", len(sessions), strings.Join(descriptions, ", "))
 
@@ -193,7 +192,7 @@ func (a *AcademicDeliveryAgent) checkTermMarksDeadline(ctx context.Context) chec
 
 	names := make([]string, len(terms))
 	for i, t := range terms {
-		names[i] = fmt.Sprintf("%s (%s, ends %s)", t.Name, t.AcademicYearLabel, t.EndDate.Time.Format("2006-01-02"))
+		names[i] = fmt.Sprintf("%s (%s, ends %s)", t.Name, t.AcademicYearLabel, t.EndDate.Format("2006-01-02"))
 	}
 	summary := fmt.Sprintf("%d term(s) near their deadline with zero marks entered: %s", len(terms), strings.Join(names, ", "))
 
@@ -215,7 +214,7 @@ func (a *AcademicDeliveryAgent) checkTermMarksPace(ctx context.Context) checkOut
 	var flagged []string
 	worstDeficit := 0.0
 	for _, t := range terms {
-		start, end := t.StartDate.Time, t.EndDate.Time
+		start, end := t.StartDate, t.EndDate
 		totalDays := end.Sub(start).Hours() / 24
 		if totalDays <= 0 || t.EnrolledStudents == 0 {
 			continue

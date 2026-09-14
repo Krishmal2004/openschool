@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/robfig/cron/v3"
 )
 
@@ -22,13 +21,13 @@ const finishRunTimeout = 10 * time.Second
 type Scheduler struct {
 	cron    *cron.Cron
 	jobs    map[string]Job
-	setting *repositories.JobSchedulerRepository
+	setting *Repository
 	// running guards each job against overlapping with itself across a scheduled tick and an admin's "Run now".
 	running map[string]*sync.Mutex
 }
 
 // NewScheduler builds a Scheduler from jobList, panicking on a duplicate Job Name (a programming error, not a runtime one).
-func NewScheduler(jobList []Job, settingRepo *repositories.JobSchedulerRepository) *Scheduler {
+func NewScheduler(jobList []Job, settingRepo *Repository) *Scheduler {
 	byName := make(map[string]Job, len(jobList))
 	running := make(map[string]*sync.Mutex, len(jobList))
 	for _, j := range jobList {

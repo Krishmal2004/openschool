@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // PeopleComplianceAgentName is this agent's stable job_settings/job_runs identifier.
@@ -25,12 +24,12 @@ const (
 
 // PeopleComplianceAgent runs four concurrent checks about the people side of the school's data: employment consistency, guardian coverage, and onboarding completion.
 type PeopleComplianceAgent struct {
-	checks   *repositories.JobChecksRepository
+	checks   *Repository
 	notifSvc *notifications.NotificationService
 }
 
 // NewPeopleComplianceAgent constructs a PeopleComplianceAgent with its dependencies.
-func NewPeopleComplianceAgent(checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService) *PeopleComplianceAgent {
+func NewPeopleComplianceAgent(checks *Repository, notifSvc *notifications.NotificationService) *PeopleComplianceAgent {
 	return &PeopleComplianceAgent{checks: checks, notifSvc: notifSvc}
 }
 
@@ -116,7 +115,7 @@ func (a *PeopleComplianceAgent) checkOnboarding(ctx context.Context, role, label
 	now := time.Now()
 	names := make([]string, len(stale))
 	for i, u := range stale {
-		age := now.Sub(u.CreatedAt.Time)
+		age := now.Sub(u.CreatedAt)
 		switch {
 		case age >= staleProvisioningCriticalDays*24*time.Hour:
 			severity = SeverityCritical

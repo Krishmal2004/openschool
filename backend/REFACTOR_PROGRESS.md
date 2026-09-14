@@ -113,10 +113,11 @@ cmd/api
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
-| DONE | Dead repository cleanup | Removed fourteen superseded School, Academics, Curriculum, People, and Timetable repository adapters | Module repository adapters |
-| DONE | Repository debt guard | Added an exact allowlist for the seven active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
+| DONE | Dead repository cleanup | Removed eighteen superseded repository adapters, including the Automation check and scheduler repositories | Module repository adapters |
+| DONE | Repository debt guard | Reduced the exact allowlist to the five active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
 | DONE | Dashboard | Migrated student, staff, academic, school, and timetable aggregates plus admin and teacher analytics consumers | `internal/modules/dashboard` |
 | DONE | Global search | Migrated categorized student, teacher, guardian, and non-academic staff search plus HTTP ownership | `internal/modules/search` |
+| DONE | Automation | Migrated scheduler lifecycle, settings, run history, admin endpoints, notifications, and five isolated checking algorithms | `internal/modules/automation` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -131,7 +132,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 95% |
+| Feature migration estimate | Approximately 97% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -168,20 +169,21 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | DONE | Audit | None | Recording is exposed through a narrow shared port; admin reads and persistence are module-owned |
 | DONE | Dashboard | None | Aggregate queries, response composition, admin route, and teacher analytics consumer are module-owned |
 | DONE | Search | None | Cross-entity queries, categorized mapping, empty-query behavior, and route are module-owned |
-| TODO | Automation | Jobs, scheduler, and admin job endpoints | Keep process lifecycle ownership in `internal/app` |
+| DONE | Automation | None | Five deterministic checking algorithms are isolated by file; the module owns routes, scheduling, settings, history, notifications, and sqlc mapping |
 
 ## 6. Temporary compatibility pieces
 
 These are intentionally retained until their active consumers are migrated:
 
-- Seven horizontal repository files used by Authentication, Identity
-  Reconciliation, Automation, and self-service.
+- Five horizontal repository files used by Authentication, Identity
+  Reconciliation, and self-service.
 - Legacy handlers and services for those same remaining capabilities.
 - Legacy route registration grouped behind `internal/routes/modules.go`.
 
-Sixteen superseded repositories for School, Academics, Curriculum, People,
-Timetable, Dashboard, and Search have been deleted. The architecture guard
-rejects any new file outside the exact seven-file compatibility allowlist.
+Eighteen superseded repositories for School, Academics, Curriculum, People,
+Timetable, Dashboard, Search, and Automation have been deleted. The
+architecture guard rejects any new file outside the exact five-file
+compatibility allowlist.
 
 These are migration debt, not new architecture targets. No new feature should
 be added to them unless it is required to keep an unmigrated consumer working.
@@ -215,8 +217,8 @@ The architecture test also verifies:
    as the People module.
 5. Migrate Student, Parent, and Teacher self-service endpoints.
 6. Student and Staff Attendance are complete.
-7. Notifications, Audit, Report Export, Dashboard, and Search are complete;
-   migrate Automation.
+7. Notifications, Audit, Report Export, Dashboard, Search, and Automation are
+   complete.
 8. Positions, Section Heads, Prefects, and Societies are complete.
 9. School Setup and Report Export are complete; remove compatibility
    repositories and the legacy route bridge.

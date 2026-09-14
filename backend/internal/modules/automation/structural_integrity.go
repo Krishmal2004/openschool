@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // StructuralIntegrityAgentName is this agent's stable job_settings/job_runs identifier.
@@ -17,12 +16,12 @@ const unclassedElevatedThreshold = 3
 
 // StructuralIntegrityAgent runs five concurrent checks on whether the school's own structural data (academic year, curriculum, roster) still satisfies the invariants the rest of the app assumes.
 type StructuralIntegrityAgent struct {
-	checks   *repositories.JobChecksRepository
+	checks   *Repository
 	notifSvc *notifications.NotificationService
 }
 
 // NewStructuralIntegrityAgent constructs a StructuralIntegrityAgent with its dependencies.
-func NewStructuralIntegrityAgent(checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService) *StructuralIntegrityAgent {
+func NewStructuralIntegrityAgent(checks *Repository, notifSvc *notifications.NotificationService) *StructuralIntegrityAgent {
 	return &StructuralIntegrityAgent{checks: checks, notifSvc: notifSvc}
 }
 

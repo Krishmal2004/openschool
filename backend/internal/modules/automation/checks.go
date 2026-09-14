@@ -1,4 +1,4 @@
-package jobs
+package automation
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/openschool-org/openschool/internal/modules/notifications"
-	"github.com/openschool-org/openschool/internal/repositories"
 )
 
 // errNoAdminAccount signals notifyAdmins found no admin account to notify or attribute the notification to.
@@ -23,7 +22,7 @@ const (
 )
 
 // notifyAdmins sends a system-triggered notification to every admin account via NotificationService.SendDirect.
-func notifyAdmins(ctx context.Context, checks *repositories.JobChecksRepository, notifSvc *notifications.NotificationService, title, message, category string, severity Severity) error {
+func notifyAdmins(ctx context.Context, checks *Repository, notifSvc *notifications.NotificationService, title, message, category string, severity Severity) error {
 	adminIDs, err := checks.ListAdminUserIDs(ctx)
 	if err != nil {
 		return err

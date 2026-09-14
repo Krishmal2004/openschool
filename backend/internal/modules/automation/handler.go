@@ -1,21 +1,20 @@
-package handlers
+package automation
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/openschool-org/openschool/internal/models"
-	"github.com/openschool-org/openschool/internal/services"
+	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
 // JobsHandler exposes the admin Automation panel's endpoints for the background agent scheduler.
 type JobsHandler struct {
-	service *services.JobsService
+	service *Service
 }
 
 // NewJobsHandler constructs a JobsHandler with its scheduler and settings dependencies.
-func NewJobsHandler(service *services.JobsService) *JobsHandler {
+func NewJobsHandler(service *Service) *JobsHandler {
 	return &JobsHandler{service: service}
 }
 
@@ -33,18 +32,18 @@ func (h *JobsHandler) List(c *gin.Context) {
 // SetEnabled enables or disables a background agent.
 func (h *JobsHandler) SetEnabled(c *gin.Context) {
 	name := c.Param("name")
-	var req models.SetJobEnabledRequest
-	if err := bindStrict(c, &req); err != nil {
+	var req SetJobEnabledRequest
+	if err := httpx.BindStrict(c, &req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := h.service.SetEnabled(c.Request.Context(), name, req.Enabled); err != nil {
-		if errors.Is(err, services.ErrUnknownJob) {
+		if errors.Is(err, ErrUnknownJob) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
-		if errors.Is(err, services.ErrSystemHealthCannotStop) {
+		if errors.Is(err, ErrSystemHealthCannotStop) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -59,7 +58,7 @@ func (h *JobsHandler) RunNow(c *gin.Context) {
 	name := c.Param("name")
 	result, err := h.service.RunNow(c.Request.Context(), name)
 	if err != nil {
-		if errors.Is(err, services.ErrUnknownJob) {
+		if errors.Is(err, ErrUnknownJob) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
