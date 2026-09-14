@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -27,24 +26,24 @@ type enrollmentGroup struct {
 }
 type enrollmentStore interface {
 	groups(context.Context, uuid.UUID) ([]enrollmentGroup, error)
-	replace(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, []models.EnrollmentPick) error
+	replace(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, []EnrollmentPick) error
 	locked(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (bool, error)
 	lock(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
 	unlock(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (int64, error)
 	remove(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) error
 	groupLevel(context.Context, uuid.UUID) (uuid.UUID, error)
-	list(context.Context, uuid.UUID, uuid.UUID) ([]models.EnrollmentResponse, error)
-	bySubject(context.Context, uuid.UUID, uuid.UUID) ([]models.EnrolledStudentResponse, error)
-	byGroup(context.Context, uuid.UUID, uuid.UUID) ([]models.EnrolledStudentResponse, error)
+	list(context.Context, uuid.UUID, uuid.UUID) ([]EnrollmentResponse, error)
+	bySubject(context.Context, uuid.UUID, uuid.UUID) ([]EnrolledStudentResponse, error)
+	byGroup(context.Context, uuid.UUID, uuid.UUID) ([]EnrolledStudentResponse, error)
 }
 type enrollmentService struct{ store enrollmentStore }
 
 // StudentEnrollment exposes only the enrollment operations needed by the
 // signed-in student's self-service endpoints.
 type StudentEnrollment interface {
-	ListByStudentAndLevel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) ([]models.EnrollmentResponse, error)
+	ListByStudentAndLevel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) ([]EnrollmentResponse, error)
 	IsLocked(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (bool, error)
-	Submit(context.Context, uuid.UUID, models.SubmitEnrollmentRequest) ([]models.GroupValidationError, error)
+	Submit(context.Context, uuid.UUID, SubmitEnrollmentRequest) ([]GroupValidationError, error)
 	Confirm(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
 }
 
@@ -52,12 +51,12 @@ func NewStudentEnrollment(store enrollmentStore) StudentEnrollment {
 	return &enrollmentService{store: store}
 }
 
-func (s *enrollmentService) ListByStudentAndLevel(ctx context.Context, student, level, year uuid.UUID) ([]models.EnrollmentResponse, error) {
+func (s *enrollmentService) ListByStudentAndLevel(ctx context.Context, student, level, year uuid.UUID) ([]EnrollmentResponse, error) {
 	rows, err := s.store.list(ctx, student, year)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]models.EnrollmentResponse, 0, len(rows))
+	out := make([]EnrollmentResponse, 0, len(rows))
 	for _, row := range rows {
 		if row.LevelID == level.String() {
 			out = append(out, row)
@@ -70,7 +69,7 @@ func (s *enrollmentService) IsLocked(ctx context.Context, student, level, year u
 	return s.store.locked(ctx, student, level, year)
 }
 
-func (s *enrollmentService) Submit(ctx context.Context, student uuid.UUID, req models.SubmitEnrollmentRequest) ([]models.GroupValidationError, error) {
+func (s *enrollmentService) Submit(ctx context.Context, student uuid.UUID, req SubmitEnrollmentRequest) ([]GroupValidationError, error) {
 	return s.submit(ctx, student, req)
 }
 
@@ -85,7 +84,7 @@ func (s *enrollmentService) Confirm(ctx context.Context, student, level, year uu
 	return s.store.lock(ctx, student, level, year)
 }
 
-func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks []models.EnrollmentPick) ([]models.GroupValidationError, error) {
+func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks []EnrollmentPick) ([]GroupValidationError, error) {
 	groups, err := s.store.groups(ctx, level)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks
 	for _, g := range groups {
 		belongs[g.ID] = true
 	}
-	var out []models.GroupValidationError
+	var out []GroupValidationError
 	for _, p := range picks {
 		gid, e := uuid.Parse(p.GroupID)
 		if e != nil {
@@ -109,7 +108,7 @@ func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks
 			return nil, fmt.Errorf("invalid subject_id %q", p.SubjectID)
 		}
 		if !belongs[gid] {
-			out = append(out, models.GroupValidationError{GroupID: gid.String(), Message: "group does not belong to this level"})
+			out = append(out, GroupValidationError{GroupID: gid.String(), Message: "group does not belong to this level"})
 			continue
 		}
 		chosen[gid] = append(chosen[gid], sid)
@@ -123,9 +122,9 @@ func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks
 		valid := int32(0)
 		for _, id := range chosen[g.ID] {
 			if seen[id] {
-				out = append(out, models.GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("subject %s selected more than once", id)})
+				out = append(out, GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("subject %s selected more than once", id)})
 			} else if !allowed[id] {
-				out = append(out, models.GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("subject %s is not an option in this group", id)})
+				out = append(out, GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("subject %s is not an option in this group", id)})
 			} else {
 				valid++
 			}
@@ -140,12 +139,12 @@ func (s *enrollmentService) validate(ctx context.Context, level uuid.UUID, picks
 			if g.Min == g.Max {
 				expected = fmt.Sprintf("%d", g.Min)
 			}
-			out = append(out, models.GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("expected %s %s, got %d", expected, word, valid)})
+			out = append(out, GroupValidationError{GroupID: g.ID.String(), Label: g.Label, Message: fmt.Sprintf("expected %s %s, got %d", expected, word, valid)})
 		}
 	}
 	return out, nil
 }
-func (s *enrollmentService) submit(ctx context.Context, student uuid.UUID, req models.SubmitEnrollmentRequest) ([]models.GroupValidationError, error) {
+func (s *enrollmentService) submit(ctx context.Context, student uuid.UUID, req SubmitEnrollmentRequest) ([]GroupValidationError, error) {
 	year, e := uuid.Parse(req.AcademicYearID)
 	if e != nil {
 		return nil, errors.New("invalid academic_year_id")
@@ -223,7 +222,7 @@ func academicYear(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 func (h *enrollmentHandler) validate(c *gin.Context) {
-	var r models.SubmitEnrollmentRequest
+	var r SubmitEnrollmentRequest
 	if e := httpx.BindStrict(c, &r); e != nil {
 		c.JSON(400, gin.H{"error": e.Error()})
 		return
@@ -242,14 +241,14 @@ func (h *enrollmentHandler) validate(c *gin.Context) {
 		}
 		return
 	}
-	c.JSON(200, models.EnrollmentValidationResponse{Valid: len(errs) == 0, Errors: errs})
+	c.JSON(200, EnrollmentValidationResponse{Valid: len(errs) == 0, Errors: errs})
 }
 func (h *enrollmentHandler) submit(c *gin.Context) {
 	student, ok := parseEnrollmentID(c, "id", "invalid student id")
 	if !ok {
 		return
 	}
-	var r models.SubmitEnrollmentRequest
+	var r SubmitEnrollmentRequest
 	if e := httpx.BindStrict(c, &r); e != nil {
 		c.JSON(400, gin.H{"error": e.Error()})
 		return
@@ -257,7 +256,7 @@ func (h *enrollmentHandler) submit(c *gin.Context) {
 	errs, e := h.service.submit(c, student, r)
 	if e != nil {
 		if errors.Is(e, ErrEnrollmentInvalid) {
-			c.JSON(422, models.EnrollmentValidationResponse{Errors: errs})
+			c.JSON(422, EnrollmentValidationResponse{Errors: errs})
 		} else if errors.Is(e, ErrLevelHasNoGroups) {
 			c.JSON(404, gin.H{"error": e.Error()})
 		} else if errors.Is(e, ErrEnrollmentLocked) {
@@ -267,7 +266,7 @@ func (h *enrollmentHandler) submit(c *gin.Context) {
 		}
 		return
 	}
-	c.JSON(200, models.EnrollmentValidationResponse{Valid: true})
+	c.JSON(200, EnrollmentValidationResponse{Valid: true})
 }
 func (h *enrollmentHandler) list(c *gin.Context) {
 	id, ok := parseEnrollmentID(c, "id", "invalid student id")

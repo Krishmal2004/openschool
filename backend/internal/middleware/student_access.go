@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
-	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 // RequireStudentAccess aborts with 403 unless the caller is an admin, a teacher, the student themself, or a guardian of the student named by the :id URL parameter.
@@ -29,7 +29,7 @@ func RequireStudentAccess(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if slices.Contains(userRoleList, models.RoleAdmin) || slices.Contains(userRoleList, models.RoleTeacher) {
+		if slices.Contains(userRoleList, identity.RoleAdmin) || slices.Contains(userRoleList, identity.RoleTeacher) {
 			c.Next()
 			return
 		}
@@ -45,7 +45,7 @@ func RequireStudentAccess(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if slices.Contains(userRoleList, models.RoleStudent) {
+		if slices.Contains(userRoleList, identity.RoleStudent) {
 			student, err := queries.GetStudentByUserID(c.Request.Context(), pgtype.UUID{Bytes: userID, Valid: true})
 			if err == nil && student.ID == studentID {
 				c.Next()
@@ -53,7 +53,7 @@ func RequireStudentAccess(pool *pgxpool.Pool) gin.HandlerFunc {
 			}
 		}
 
-		if slices.Contains(userRoleList, models.RoleParent) {
+		if slices.Contains(userRoleList, identity.RoleParent) {
 			isGuardian, err := queries.IsGuardianOfStudent(c.Request.Context(), db.IsGuardianOfStudentParams{
 				UserID:    pgtype.UUID{Bytes: userID, Valid: true},
 				StudentID: studentID,

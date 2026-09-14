@@ -6,13 +6,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
 type PromotionRunner interface {
-	Preview(context.Context, uuid.UUID, uuid.UUID, *uuid.UUID) ([]models.PromotionPreviewRow, error)
-	CommitAssignments(context.Context, models.CommitAssignmentsRequest) (int, error)
+	Preview(context.Context, uuid.UUID, uuid.UUID, *uuid.UUID) ([]PromotionPreviewRow, error)
+	CommitAssignments(context.Context, CommitAssignmentsRequest) (int, error)
 }
 
 // RegisterPromotionRoutes owns the promotion HTTP boundary. The runner is
@@ -47,7 +46,7 @@ func RegisterPromotionRoutes(admin *gin.RouterGroup, runner PromotionRunner) {
 		c.JSON(http.StatusOK, rows)
 	})
 	admin.POST("/promotion/commit", func(c *gin.Context) {
-		var request models.CommitAssignmentsRequest
+		var request CommitAssignmentsRequest
 		if err := httpx.BindStrict(c, &request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

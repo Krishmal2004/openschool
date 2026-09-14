@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	identitycore "github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
@@ -27,7 +27,6 @@ import (
 	setupmodule "github.com/openschool-org/openschool/internal/modules/setup"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
-	"github.com/openschool-org/openschool/internal/routes"
 	"github.com/openschool-org/openschool/internal/thunderid"
 )
 
@@ -54,10 +53,11 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
 	setupmodule.RegisterRoutes(groups.API, setupmodule.NewService(setupmodule.NewRepository(pool), thunderid.NewClient()))
 	authmodule.RegisterRoutes(groups.API, groups.Protected, pool, peoplemodule.NewGuardianAuthenticator(pool), thunderid.NewClient())
 	identitymodule.Register(groups.Protected, pool)
-	routes.RegisterCoreModule(groups.Admin, groups.Protected, pool)
+	auditService := auditmodule.NewService(auditmodule.NewRepository(pool))
+	identitymodule.RegisterReconciliation(groups.Admin, pool, thunderid.NewClient(), auditService)
+	curriculummodule.RegisterPresetRoutes(groups.Admin, pool)
 	curriculummodule.RegisterMediumRoutes(groups.Admin, groups.Protected, pool)
 	curriculummodule.RegisterLevelRoutes(groups.Admin, groups.Protected, pool)
-	auditService := auditmodule.NewService(auditmodule.NewRepository(pool))
 	auditmodule.RegisterRoutes(groups.Admin, auditService)
 	leadershipService := leadershipmodule.NewService(leadershipmodule.NewRepository(pool), auditService)
 	leadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, leadershipService)
@@ -88,8 +88,24 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
 	academicsmodule.RegisterStreamRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	academicsmodule.RegisterClassRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
 	academicsmodule.RegisterEnrollmentRoutes(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, academicsmodule.NewEnrollmentRepository(pool))
-	routes.RegisterAcademicModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, pool)
-	routes.RegisterPeopleModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, houseService, pool)
+	academicsmodule.RegisterPromotionRoutes(groups.Admin, academicsmodule.NewPromotionService(academicsmodule.NewPromotionRepository(pool)))
+	academicsmodule.RegisterTermMarkRoutes(groups.TeacherOrAdmin, academicsmodule.NewTermMarkService(academicsmodule.NewTermMarkRepository(pool)))
+
+	studentStore := peoplemodule.NewStudentStore(pool)
+	studentService := peoplemodule.NewStudentService(studentStore, thunderid.NewClient(), houseService, auditService, schoolmodule.NewSchoolTypeReader(pool))
+	peoplemodule.RegisterStudentRoutes(groups.Admin, groups.TeacherOrAdmin, studentService, studentStore, studentService)
+	teacherService := peoplemodule.NewTeacherService(studentStore, thunderid.NewClient(), houseService, auditService)
+	peoplemodule.RegisterTeacherReadRoutes(groups.TeacherOrAdmin, groups.Admin, peoplemodule.NewTeacherReader(pool))
+	peoplemodule.RegisterTeacherWriteRoutes(groups.Admin, teacherService)
+	guardianStore := peoplemodule.NewGuardianStore(pool)
+	guardianService := peoplemodule.NewGuardianService(guardianStore, thunderid.NewClient(), auditService)
+	peoplemodule.RegisterGuardianReadRoutes(groups.TeacherOrAdmin, groups.StudentAccess, peoplemodule.NewGuardianReader(pool))
+	peoplemodule.RegisterGuardianWriteRoutes(groups.Admin, guardianService)
+	peoplemodule.RegisterGuardianNotificationRoute(groups.Admin, peoplemodule.NewGuardianNotificationReader(pool))
+	peoplemodule.RegisterNonAcademicStaffRoutes(groups.Admin, groups.TeacherOrAdmin, peoplemodule.NewNonAcademicStaffService(peoplemodule.NewNonAcademicStaffStore(pool), auditService))
+	studentPortfolioService := peoplemodule.NewStudentPortfolioService(peoplemodule.NewStudentPortfolioStore(pool))
+	peoplemodule.RegisterStudentPortfolioRoutes(groups.TeacherOrAdmin, groups.StudentAccess, studentPortfolioService)
+
 	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), notifications, auditService, attendanceLeadership{positions: leadershipService})
 	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
 	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService))
@@ -98,8 +114,6 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
 	studentProfiles := selfservicemodule.NewStudentProfiles(selfRepository)
 	teacherProfiles := selfservicemodule.NewTeacherProfiles(selfRepository)
 	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffAttendanceService, teacherProfiles)
-	routes.RegisterIdentityReconciliationRoutes(groups.Admin, pool)
-
 	timetableReader := timetablemodule.NewReader(pool)
 	selfservicemodule.RegisterRoutes(groups.Student, groups.Parent, groups.Teacher, pool, studentProfiles, teacherProfiles, peoplemodule.NewGuardianAccess(pool), timetableReader, leadershipService, studentLeadershipService, dashboardService)
 	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
@@ -117,15 +131,15 @@ func newHTTPGroups(router *gin.Engine, pool *pgxpool.Pool) HTTPGroups {
 	))
 
 	admin := protected.Group("")
-	admin.Use(middleware.RequireRole(models.RoleAdmin))
+	admin.Use(middleware.RequireRole(identitycore.RoleAdmin))
 	teacherOrAdmin := protected.Group("")
-	teacherOrAdmin.Use(middleware.RequireRole(models.RoleAdmin, models.RoleTeacher))
+	teacherOrAdmin.Use(middleware.RequireRole(identitycore.RoleAdmin, identitycore.RoleTeacher))
 	parent := protected.Group("")
-	parent.Use(middleware.RequireRole(models.RoleParent))
+	parent.Use(middleware.RequireRole(identitycore.RoleParent))
 	student := protected.Group("")
-	student.Use(middleware.RequireRole(models.RoleStudent))
+	student.Use(middleware.RequireRole(identitycore.RoleStudent))
 	teacher := protected.Group("")
-	teacher.Use(middleware.RequireRole(models.RoleTeacher))
+	teacher.Use(middleware.RequireRole(identitycore.RoleTeacher))
 	studentAccess := protected.Group("")
 	studentAccess.Use(middleware.RequireStudentAccess(pool))
 

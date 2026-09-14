@@ -7,13 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
 func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 	admin.PUT("/positions/principal", func(c *gin.Context) {
-		var req models.AssignPrincipalRequest
+		var req AssignPrincipalRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -32,7 +31,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 	})
 
 	admin.PUT("/positions/vice-principal", func(c *gin.Context) {
-		var req models.AssignVicePrincipalRequest
+		var req AssignVicePrincipalRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -82,7 +81,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 	})
 
 	admin.PUT("/section-heads", func(c *gin.Context) {
-		var req models.AssignSectionHeadRequest
+		var req AssignSectionHeadRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

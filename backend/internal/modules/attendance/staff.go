@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 var ErrStaffAttendanceAmbiguous = errors.New("exactly one of teacher_id or non_academic_staff_id is required")
@@ -56,7 +55,7 @@ type StaffService struct{ store staffStore }
 
 func NewStaffService(store staffStore) *StaffService { return &StaffService{store: store} }
 
-func (s *StaffService) Mark(ctx context.Context, req models.MarkStaffAttendanceRequest, markedBy uuid.UUID) (StaffRecord, error) {
+func (s *StaffService) Mark(ctx context.Context, req MarkStaffAttendanceRequest, markedBy uuid.UUID) (StaffRecord, error) {
 	hasTeacher := req.TeacherID != ""
 	hasStaff := req.NonAcademicStaffID != ""
 	if hasTeacher == hasStaff {
@@ -76,7 +75,7 @@ func (s *StaffService) Mark(ctx context.Context, req models.MarkStaffAttendanceR
 	return s.store.upsertNonAcademic(ctx, id, req.Date, req.Status, markedBy, req.Note)
 }
 
-func (s *StaffService) ListByDate(ctx context.Context, date time.Time) ([]models.StaffAttendanceRow, []models.StaffAttendanceRow, error) {
+func (s *StaffService) ListByDate(ctx context.Context, date time.Time) ([]StaffAttendanceRow, []StaffAttendanceRow, error) {
 	teachers, err := s.store.teachersByDate(ctx, date)
 	if err != nil {
 		return nil, nil, err
@@ -88,10 +87,10 @@ func (s *StaffService) ListByDate(ctx context.Context, date time.Time) ([]models
 	return mapDirectoryRows(teachers), mapDirectoryRows(staff), nil
 }
 
-func mapDirectoryRows(rows []staffDirectoryRow) []models.StaffAttendanceRow {
-	out := make([]models.StaffAttendanceRow, len(rows))
+func mapDirectoryRows(rows []staffDirectoryRow) []StaffAttendanceRow {
+	out := make([]StaffAttendanceRow, len(rows))
 	for i, row := range rows {
-		out[i] = models.StaffAttendanceRow{StaffID: row.ID.String(), FullName: row.FullName, EmployeeNumber: row.EmployeeNumber, Status: row.Status, Note: row.Note}
+		out[i] = StaffAttendanceRow{StaffID: row.ID.String(), FullName: row.FullName, EmployeeNumber: row.EmployeeNumber, Status: row.Status, Note: row.Note}
 		if row.RecordID != uuid.Nil {
 			out[i].RecordID = row.RecordID.String()
 		}
@@ -99,7 +98,7 @@ func mapDirectoryRows(rows []staffDirectoryRow) []models.StaffAttendanceRow {
 	return out
 }
 
-func (s *StaffService) MonthlySummary(ctx context.Context, from, to time.Time) ([]models.StaffAttendanceSummaryRow, []models.StaffAttendanceSummaryRow, error) {
+func (s *StaffService) MonthlySummary(ctx context.Context, from, to time.Time) ([]StaffAttendanceSummaryRow, []StaffAttendanceSummaryRow, error) {
 	teachers, err := s.store.teacherSummary(ctx, from, to)
 	if err != nil {
 		return nil, nil, err
@@ -111,10 +110,10 @@ func (s *StaffService) MonthlySummary(ctx context.Context, from, to time.Time) (
 	return mapSummaryRows(teachers), mapSummaryRows(staff), nil
 }
 
-func mapSummaryRows(rows []staffSummaryRow) []models.StaffAttendanceSummaryRow {
-	out := make([]models.StaffAttendanceSummaryRow, len(rows))
+func mapSummaryRows(rows []staffSummaryRow) []StaffAttendanceSummaryRow {
+	out := make([]StaffAttendanceSummaryRow, len(rows))
 	for i, row := range rows {
-		out[i] = models.StaffAttendanceSummaryRow{StaffID: row.ID.String(), FullName: row.FullName, PresentCount: row.PresentCount, LateCount: row.LateCount, AbsentCount: row.AbsentCount, LeaveCount: row.LeaveCount}
+		out[i] = StaffAttendanceSummaryRow{StaffID: row.ID.String(), FullName: row.FullName, PresentCount: row.PresentCount, LateCount: row.LateCount, AbsentCount: row.AbsentCount, LeaveCount: row.LeaveCount}
 	}
 	return out
 }

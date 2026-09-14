@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type fakeStaffStore struct {
@@ -44,7 +43,7 @@ func (f *fakeStaffStore) nonAcademicHistory(context.Context, uuid.UUID, time.Tim
 
 func TestStaffMarkRequiresExactlyOneTarget(t *testing.T) {
 	service := NewStaffService(&fakeStaffStore{})
-	for _, req := range []models.MarkStaffAttendanceRequest{{}, {TeacherID: uuid.NewString(), NonAcademicStaffID: uuid.NewString()}} {
+	for _, req := range []MarkStaffAttendanceRequest{{}, {TeacherID: uuid.NewString(), NonAcademicStaffID: uuid.NewString()}} {
 		_, err := service.Mark(context.Background(), req, uuid.New())
 		if !errors.Is(err, ErrStaffAttendanceAmbiguous) {
 			t.Fatalf("expected ambiguous target error, got %v", err)
@@ -56,10 +55,10 @@ func TestStaffMarkDispatchesByTargetType(t *testing.T) {
 	store := &fakeStaffStore{}
 	service := NewStaffService(store)
 	date := time.Date(2026, 9, 14, 0, 0, 0, 0, time.UTC)
-	if _, err := service.Mark(context.Background(), models.MarkStaffAttendanceRequest{TeacherID: uuid.NewString(), Date: date, Status: "present"}, uuid.New()); err != nil {
+	if _, err := service.Mark(context.Background(), MarkStaffAttendanceRequest{TeacherID: uuid.NewString(), Date: date, Status: "present"}, uuid.New()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := service.Mark(context.Background(), models.MarkStaffAttendanceRequest{NonAcademicStaffID: uuid.NewString(), Date: date, Status: "leave"}, uuid.New()); err != nil {
+	if _, err := service.Mark(context.Background(), MarkStaffAttendanceRequest{NonAcademicStaffID: uuid.NewString(), Date: date, Status: "leave"}, uuid.New()); err != nil {
 		t.Fatal(err)
 	}
 	if store.teacherCalls != 1 || store.staffCalls != 1 {

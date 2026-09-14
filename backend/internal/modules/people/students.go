@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -41,6 +40,10 @@ type studentStore interface {
 	DeleteUser(context.Context, uuid.UUID) error
 }
 
+type schoolTypeReader interface {
+	SchoolType(context.Context) (string, error)
+}
+
 type studentUser struct{ Email string }
 type studentUserCreate struct {
 	ID                 uuid.UUID
@@ -64,10 +67,10 @@ type StudentService struct {
 	idp    identity.Provider
 	houses ports.HouseAssignments
 	audit  ports.AuditRecorder
-	school func(context.Context) (string, error)
+	school schoolTypeReader
 }
 
-func NewStudentService(store studentStore, idp identity.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder, school func(context.Context) (string, error)) *StudentService {
+func NewStudentService(store studentStore, idp identity.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder, school schoolTypeReader) *StudentService {
 	return &StudentService{store: store, idp: idp, houses: houses, audit: audit, school: school}
 }
 
@@ -75,7 +78,7 @@ func (s *StudentService) validateGender(ctx context.Context, gender string) erro
 	if s.school == nil {
 		return nil
 	}
-	t, err := s.school(ctx)
+	t, err := s.school.SchoolType(ctx)
 	if err != nil {
 		return nil
 	}
@@ -85,7 +88,7 @@ func (s *StudentService) validateGender(ctx context.Context, gender string) erro
 	return nil
 }
 
-func (s *StudentService) Create(ctx context.Context, req models.CreateStudentRequest, actor uuid.UUID) (any, error) {
+func (s *StudentService) Create(ctx context.Context, req CreateStudentRequest, actor uuid.UUID) (any, error) {
 	if !validation.IsValidSriLankanPhone(req.PhoneNumber) || !validation.IsValidSriLankanPhone(req.WhatsApp) {
 		return nil, validation.ErrInvalidPhone
 	}
@@ -95,7 +98,7 @@ func (s *StudentService) Create(ctx context.Context, req models.CreateStudentReq
 	if err := s.store.FindByIndex(ctx, req.IndexNumber); err == nil {
 		return nil, fmt.Errorf("index number already exists")
 	}
-	idpUser, err := s.idp.CreateUser(ctx, models.RoleStudent, map[string]any{"username": req.IndexNumber, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "password": req.IndexNumber})
+	idpUser, err := s.idp.CreateUser(ctx, identity.RoleStudent, map[string]any{"username": req.IndexNumber, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "password": req.IndexNumber})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity provider user: %w", err)
 	}
@@ -109,7 +112,7 @@ func (s *StudentService) Create(ctx context.Context, req models.CreateStudentReq
 		_ = s.idp.DeleteUser(ctx, idpUser.ID)
 		return nil, fmt.Errorf("failed to create user record: %w", err)
 	}
-	if err = s.idp.AssignRole(ctx, identity.RoleID(models.RoleStudent), idpUser.ID); err != nil {
+	if err = s.idp.AssignRole(ctx, identity.RoleID(identity.RoleStudent), idpUser.ID); err != nil {
 		rollback()
 		return nil, fmt.Errorf("failed to assign student role: %w", err)
 	}
@@ -128,7 +131,7 @@ func (s *StudentService) Create(ctx context.Context, req models.CreateStudentReq
 	return profile, nil
 }
 
-func (s *StudentService) Update(ctx context.Context, id uuid.UUID, req models.UpdateStudentRequest) (any, error) {
+func (s *StudentService) Update(ctx context.Context, id uuid.UUID, req UpdateStudentRequest) (any, error) {
 	if !validation.IsValidSriLankanPhone(req.PhoneNumber) || !validation.IsValidSriLankanPhone(req.WhatsApp) {
 		return nil, validation.ErrInvalidPhone
 	}
@@ -143,13 +146,13 @@ func (s *StudentService) Update(ctx context.Context, id uuid.UUID, req models.Up
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
-	if err := s.idp.UpdateUser(ctx, student.UserID.String(), models.RoleStudent, map[string]any{"username": student.IndexNumber, "email": user.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
+	if err := s.idp.UpdateUser(ctx, student.UserID.String(), identity.RoleStudent, map[string]any{"username": student.IndexNumber, "email": user.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
 		log.Printf("UpdateStudent: failed to update identity provider user: %v", err)
 	}
 	return s.store.Update(ctx, id, studentUpdate{FullName: req.GivenName + " " + req.FamilyName, Address: req.Address, Phone: req.PhoneNumber, WhatsApp: req.WhatsApp, Remarks: req.SpecialRemarks, Gender: req.Gender})
 }
 
-func (s *StudentService) UpdateHouse(ctx context.Context, id uuid.UUID, req models.UpdateStudentHouseRequest, actor uuid.UUID) (any, error) {
+func (s *StudentService) UpdateHouse(ctx context.Context, id uuid.UUID, req UpdateStudentHouseRequest, actor uuid.UUID) (any, error) {
 	return s.houses.ChangeStudentHouse(ctx, id, req.HouseID, actor)
 }
 func (s *StudentService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) (any, error) {

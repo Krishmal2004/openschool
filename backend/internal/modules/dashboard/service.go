@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type countByGrade struct {
@@ -82,14 +81,14 @@ type Service struct{ store store }
 
 func NewService(store store) *Service { return &Service{store: store} }
 
-func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsResponse, error) {
+func (s *Service) Analytics(ctx context.Context) (DashboardAnalyticsResponse, error) {
 	response := emptyResponse()
 	byGrade, err := s.store.studentCountByGrade(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range byGrade {
-		response.Student.ByGrade = append(response.Student.ByGrade, models.CountRow{Label: value.GradeName, Count: value.StudentCount})
+		response.Student.ByGrade = append(response.Student.ByGrade, CountRow{Label: value.GradeName, Count: value.StudentCount})
 		response.Student.Total += value.StudentCount
 	}
 	byClass, err := s.store.studentCountByClass(ctx)
@@ -97,28 +96,28 @@ func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsRespo
 		return response, err
 	}
 	for _, value := range byClass {
-		response.Student.ByClass = append(response.Student.ByClass, models.CountRow{Label: value.GradeName + " " + value.ClassName, Count: value.StudentCount})
+		response.Student.ByClass = append(response.Student.ByClass, CountRow{Label: value.GradeName + " " + value.ClassName, Count: value.StudentCount})
 	}
 	gender, err := s.store.studentGenderDistribution(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range gender {
-		response.Student.GenderDistribution = append(response.Student.GenderDistribution, models.CountRow{Label: value.Gender, Count: value.StudentCount})
+		response.Student.GenderDistribution = append(response.Student.GenderDistribution, CountRow{Label: value.Gender, Count: value.StudentCount})
 	}
 	houses, err := s.store.studentHouseDistribution(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range houses {
-		response.Student.HouseDistribution = append(response.Student.HouseDistribution, models.HouseCountRow{Name: value.HouseName, Color: value.HouseColor, Count: value.StudentCount})
+		response.Student.HouseDistribution = append(response.Student.HouseDistribution, HouseCountRow{Name: value.HouseName, Color: value.HouseColor, Count: value.StudentCount})
 	}
 	trend, err := s.store.studentAttendanceTrend(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range trend {
-		response.Student.AttendanceTrend = append(response.Student.AttendanceTrend, models.AttendanceTrendPoint{Date: value.Date.Time.Format("2006-01-02"), PresentCount: value.PresentCount, TotalCount: value.TotalCount})
+		response.Student.AttendanceTrend = append(response.Student.AttendanceTrend, AttendanceTrendPoint{Date: value.Date.Time.Format("2006-01-02"), PresentCount: value.PresentCount, TotalCount: value.TotalCount})
 	}
 	staff, err := s.store.staffCounts(ctx)
 	if err != nil {
@@ -129,13 +128,13 @@ func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsRespo
 	if err != nil {
 		return response, err
 	}
-	response.Staff.AttendanceThisMonth = models.StaffAttendanceTotals{PresentCount: staffAttendance.PresentCount, LateCount: staffAttendance.LateCount, AbsentCount: staffAttendance.AbsentCount, LeaveCount: staffAttendance.LeaveCount}
+	response.Staff.AttendanceThisMonth = StaffAttendanceTotals{PresentCount: staffAttendance.PresentCount, LateCount: staffAttendance.LateCount, AbsentCount: staffAttendance.AbsentCount, LeaveCount: staffAttendance.LeaveCount}
 	subjects, err := s.store.subjectPerformance(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range subjects {
-		response.Academic.SubjectPerformance = append(response.Academic.SubjectPerformance, models.PerformanceRow{Label: value.SubjectName, AveragePercentage: numericToFloat64(value.AveragePercentage), Entries: value.Entries})
+		response.Academic.SubjectPerformance = append(response.Academic.SubjectPerformance, PerformanceRow{Label: value.SubjectName, AveragePercentage: numericToFloat64(value.AveragePercentage), Entries: value.Entries})
 	}
 	exams, err := s.store.examinationSummary(ctx)
 	if err != nil {
@@ -147,14 +146,14 @@ func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsRespo
 		return response, err
 	}
 	for _, value := range grades {
-		response.Academic.GradeWisePerformance = append(response.Academic.GradeWisePerformance, models.PerformanceRow{Label: value.GradeName, AveragePercentage: numericToFloat64(value.AveragePercentage)})
+		response.Academic.GradeWisePerformance = append(response.Academic.GradeWisePerformance, PerformanceRow{Label: value.GradeName, AveragePercentage: numericToFloat64(value.AveragePercentage)})
 	}
 	classes, err := s.store.classWisePerformance(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range classes {
-		response.Academic.ClassWisePerformance = append(response.Academic.ClassWisePerformance, models.PerformanceRow{Label: value.GradeName + " " + value.ClassName, AveragePercentage: numericToFloat64(value.AveragePercentage)})
+		response.Academic.ClassWisePerformance = append(response.Academic.ClassWisePerformance, PerformanceRow{Label: value.GradeName + " " + value.ClassName, AveragePercentage: numericToFloat64(value.AveragePercentage)})
 	}
 	attendance, err := s.store.attendancePercentage(ctx)
 	if err != nil {
@@ -168,14 +167,14 @@ func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsRespo
 		return response, err
 	}
 	for _, value := range students {
-		response.School.StudentGrowth = append(response.School.StudentGrowth, models.GrowthPoint{Label: value.AcademicYearLabel, Count: value.StudentCount})
+		response.School.StudentGrowth = append(response.School.StudentGrowth, GrowthPoint{Label: value.AcademicYearLabel, Count: value.StudentCount})
 	}
 	staffHistory, err := s.store.staffGrowth(ctx)
 	if err != nil {
 		return response, err
 	}
 	for _, value := range staffHistory {
-		response.School.StaffGrowth = append(response.School.StaffGrowth, models.GrowthPoint{Label: strconv.Itoa(int(value.Year)), Count: value.TeacherCount})
+		response.School.StaffGrowth = append(response.School.StaffGrowth, GrowthPoint{Label: strconv.Itoa(int(value.Year)), Count: value.TeacherCount})
 	}
 	response.School.NotificationsSentCount, err = s.store.notificationsSentCount(ctx)
 	if err != nil {
@@ -192,11 +191,11 @@ func (s *Service) Analytics(ctx context.Context) (models.DashboardAnalyticsRespo
 	return response, nil
 }
 
-func emptyResponse() models.DashboardAnalyticsResponse {
-	return models.DashboardAnalyticsResponse{
-		Student:  models.DashboardStudentAnalytics{ByGrade: []models.CountRow{}, ByClass: []models.CountRow{}, GenderDistribution: []models.CountRow{}, HouseDistribution: []models.HouseCountRow{}, AttendanceTrend: []models.AttendanceTrendPoint{}},
-		Academic: models.DashboardAcademicAnalytics{SubjectPerformance: []models.PerformanceRow{}, GradeWisePerformance: []models.PerformanceRow{}, ClassWisePerformance: []models.PerformanceRow{}},
-		School:   models.DashboardSchoolAnalytics{StudentGrowth: []models.GrowthPoint{}, StaffGrowth: []models.GrowthPoint{}},
+func emptyResponse() DashboardAnalyticsResponse {
+	return DashboardAnalyticsResponse{
+		Student:  DashboardStudentAnalytics{ByGrade: []CountRow{}, ByClass: []CountRow{}, GenderDistribution: []CountRow{}, HouseDistribution: []HouseCountRow{}, AttendanceTrend: []AttendanceTrendPoint{}},
+		Academic: DashboardAcademicAnalytics{SubjectPerformance: []PerformanceRow{}, GradeWisePerformance: []PerformanceRow{}, ClassWisePerformance: []PerformanceRow{}},
+		School:   DashboardSchoolAnalytics{StudentGrowth: []GrowthPoint{}, StaffGrowth: []GrowthPoint{}},
 	}
 }
 

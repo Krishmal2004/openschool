@@ -80,7 +80,7 @@ The backend authenticates against ThunderID exclusively.
 
 - `internal/identity/` - provider-neutral seam: the `Provider` interface (CreateUser/UpdateUser/DeleteUser/AssignRole), the shared `User` return type, and env helpers `JWKSURL()`, `Issuer()`, `RoleID(role)` that resolve to the `THUNDERID_*` vars.
 - `internal/thunderid/` - the concrete client; satisfies `identity.Provider`.
-- `internal/routes/idp.go` - `newIdentityProvider()` factory that constructs the ThunderID client; route files inject it into services.
+- `internal/app/app.go` constructs the ThunderID client and injects the provider-neutral `identity.Provider` capability into modules.
 - Token validation reads `JWKSURL()`/`Issuer()`; provisioning uses the injected `Provider` and `RoleID(...)`.
 
 ## Frontend
@@ -115,7 +115,7 @@ Authentication is handled by **ThunderID** (`@thunderid/react`). The provider is
 - `src/layouts/` - `RootLayout.tsx` (admin), `TeacherLayout.tsx`, `StudentLayout.tsx`, `ParentLayout.tsx` - each a Carbon `Header` with nav + `<Outlet>` for page content
 - `src/pages/` - route-level page components, one directory per portal (`admin/`, `teacher/`, `student/`, `parent/`, `notifications/` shared across portals); admin pages are further split by module
 - `src/queries/` - TanStack Query hooks, one typed query-key builder per entity; mutations invalidate the keys they affect
-- `src/services/` - one file per backend module, thin `axios` wrappers matching `internal/models/` shapes
+- `src/services/` - one file per backend module, thin `axios` wrappers matching the owning backend module's API contracts
 - `src/components/common/` - shared CRUD building blocks (`ConfirmDeleteModal`, `EntityCombobox`, `EmptyState`, etc.) that almost every admin page composes from - deviating from the list+modal-form+confirm-delete template is a signal something's off, not a style choice
 
 UI uses **IBM Carbon Design System** (`@carbon/react`, `@carbon/icons-react`). Data fetching uses **TanStack Query** (`@tanstack/react-query`). Styles are SCSS (`index.scss`).

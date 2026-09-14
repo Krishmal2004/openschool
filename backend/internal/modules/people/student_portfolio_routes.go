@@ -7,26 +7,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type studentPortfolioService interface {
 	TeacherProfileIDForUser(context.Context, uuid.UUID) *uuid.UUID
-	CreateProgressReport(context.Context, uuid.UUID, models.CreateProgressReportRequest, *uuid.UUID) (any, error)
+	CreateProgressReport(context.Context, uuid.UUID, CreateProgressReportRequest, *uuid.UUID) (any, error)
 	ListProgressReports(context.Context, uuid.UUID) (any, error)
-	UpdateProgressReport(context.Context, uuid.UUID, uuid.UUID, models.UpdateProgressReportRequest) (any, error)
+	UpdateProgressReport(context.Context, uuid.UUID, uuid.UUID, UpdateProgressReportRequest) (any, error)
 	DeleteProgressReport(context.Context, uuid.UUID, uuid.UUID) error
-	CreateActivity(context.Context, uuid.UUID, models.CreateActivityRequest) (any, error)
+	CreateActivity(context.Context, uuid.UUID, CreateActivityRequest) (any, error)
 	ListActivities(context.Context, uuid.UUID) (any, error)
-	UpdateActivity(context.Context, uuid.UUID, uuid.UUID, models.UpdateActivityRequest) (any, error)
+	UpdateActivity(context.Context, uuid.UUID, uuid.UUID, UpdateActivityRequest) (any, error)
 	DeleteActivity(context.Context, uuid.UUID, uuid.UUID) error
-	CreateLeadershipRole(context.Context, uuid.UUID, models.CreateLeadershipRoleRequest) (any, error)
+	CreateLeadershipRole(context.Context, uuid.UUID, CreateLeadershipRoleRequest) (any, error)
 	ListLeadershipRoles(context.Context, uuid.UUID) (any, error)
 	DeleteLeadershipRole(context.Context, uuid.UUID, uuid.UUID) error
-	CreateAward(context.Context, uuid.UUID, models.CreateAwardRequest) (any, error)
+	CreateAward(context.Context, uuid.UUID, CreateAwardRequest) (any, error)
 	ListAwards(context.Context, uuid.UUID) (any, error)
 	DeleteAward(context.Context, uuid.UUID, uuid.UUID) error
-	CreateDisciplinaryRecord(context.Context, uuid.UUID, models.CreateDisciplinaryRecordRequest, *uuid.UUID) (any, error)
+	CreateDisciplinaryRecord(context.Context, uuid.UUID, CreateDisciplinaryRecordRequest, *uuid.UUID) (any, error)
 	ListDisciplinaryRecords(context.Context, uuid.UUID) (any, error)
 	DeleteDisciplinaryRecord(context.Context, uuid.UUID, uuid.UUID) error
 }
@@ -78,7 +77,7 @@ func (h *StudentPortfolioHandler) CreateProgressReport(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateProgressReportRequest
+	var req CreateProgressReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -120,7 +119,7 @@ func (h *StudentPortfolioHandler) UpdateProgressReport(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.UpdateProgressReportRequest
+	var req UpdateProgressReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -158,7 +157,7 @@ func (h *StudentPortfolioHandler) CreateActivity(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateActivityRequest
+	var req CreateActivityRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -195,7 +194,7 @@ func (h *StudentPortfolioHandler) UpdateActivity(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.UpdateActivityRequest
+	var req UpdateActivityRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -233,7 +232,7 @@ func (h *StudentPortfolioHandler) CreateLeadershipRole(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateLeadershipRoleRequest
+	var req CreateLeadershipRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -285,7 +284,7 @@ func (h *StudentPortfolioHandler) CreateAward(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateAwardRequest
+	var req CreateAwardRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -337,7 +336,7 @@ func (h *StudentPortfolioHandler) CreateDisciplinaryRecord(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateDisciplinaryRecordRequest
+	var req CreateDisciplinaryRecordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -20,13 +19,13 @@ type GuardianReader interface {
 }
 
 type GuardianWriter interface {
-	Create(context.Context, models.CreateGuardianRequest) (any, any, error)
-	Update(context.Context, uuid.UUID, models.UpdateGuardianRequest) (any, error)
+	Create(context.Context, CreateGuardianRequest) (any, any, error)
+	Update(context.Context, uuid.UUID, UpdateGuardianRequest) (any, error)
 	Delete(context.Context, uuid.UUID, uuid.UUID) error
-	Link(context.Context, uuid.UUID, models.LinkGuardianRequest) error
+	Link(context.Context, uuid.UUID, LinkGuardianRequest) error
 	Unlink(context.Context, uuid.UUID, uuid.UUID) error
 	SetPrimary(context.Context, uuid.UUID, uuid.UUID) error
-	Provision(context.Context, uuid.UUID, models.ProvisionGuardianLoginRequest, uuid.UUID) (any, error)
+	Provision(context.Context, uuid.UUID, ProvisionGuardianLoginRequest, uuid.UUID) (any, error)
 }
 
 type GuardianNotificationReader interface {
@@ -46,7 +45,7 @@ func RegisterGuardianNotificationRoute(admin *gin.RouterGroup, reader GuardianNo
 
 func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) {
 	admin.POST("/guardians", func(c *gin.Context) {
-		var req models.CreateGuardianRequest
+		var req CreateGuardianRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -63,7 +62,7 @@ func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) 
 		if !ok {
 			return
 		}
-		var req models.UpdateGuardianRequest
+		var req UpdateGuardianRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -95,7 +94,7 @@ func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) 
 		if !ok {
 			return
 		}
-		var req models.LinkGuardianRequest
+		var req LinkGuardianRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -143,7 +142,7 @@ func RegisterGuardianWriteRoutes(admin *gin.RouterGroup, writer GuardianWriter) 
 		if !ok {
 			return
 		}
-		var req models.ProvisionGuardianLoginRequest
+		var req ProvisionGuardianLoginRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

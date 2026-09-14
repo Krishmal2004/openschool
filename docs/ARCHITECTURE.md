@@ -56,15 +56,13 @@ flowchart TB
                 RBAC["RequireRole<br/>RequireStudentAccess"]
             end
 
-            subgraph LAYERS["Feature Module - Layered Architecture"]
-                ROUTER["Routes<br/>Route Registration + RBAC Groups"]
-                HANDLER["Handlers<br/>HTTP Binding · Validation · Status Codes"]
-                SERVICE["Services<br/>Business Logic · Authorization"]
-                REPOSITORY["Repositories<br/>Database Access Interfaces"]
+            subgraph LAYERS["Capability-Owned Feature Module"]
+                ROUTER["Module Routes<br/>HTTP Binding · Status Codes"]
+                SERVICE["Module Use Cases<br/>Business Logic · Authorization"]
+                REPOSITORY["Module repository.go<br/>Database Adapter"]
                 SQLC["sqlc Generated Queries<br/>Type-Safe SQL"]
 
-                ROUTER --> HANDLER
-                HANDLER --> SERVICE
+                ROUTER --> SERVICE
                 SERVICE --> REPOSITORY
                 REPOSITORY --> SQLC
             end
@@ -75,7 +73,6 @@ flowchart TB
                 DATABASE["Database Package<br/>pgxpool · Migrations"]
                 MAILER["Mailer Client<br/>Password Reset Links (direct SMTP)"]
                 JOBS["In-Process Cron Scheduler<br/>Maintenance and Automation"]
-                MODELS["Request / Response DTOs"]
             end
 
             GIN --> MW
@@ -85,7 +82,6 @@ flowchart TB
             SERVICE --> IDENTITY
             IDENTITY --> THUNDER_CLIENT
             REPOSITORY --> DATABASE
-            HANDLER --> MODELS
             SERVICE --> MAILER
             GIN -.->|"boot: constructs + starts scheduler"| JOBS
             ROUTER -->|"Automation panel API<br/>(enable/disable, run now)"| JOBS
@@ -127,11 +123,11 @@ flowchart TB
     SHARED -.-> BACKEND
 ```
 
-`SERVICE --> MAILER` and `JOBS --> SERVICE` are drawn in their real
-dependency direction - `internal/jobs` imports `internal/services/notifications`
-(to raise admin alerts), never the other way around, and the scheduler
+The mailer and Automation-to-Notifications arrows are drawn in their real
+dependency direction: `internal/modules/automation` uses the Notifications
+module to raise admin alerts, never the other way around, and the scheduler
 itself is constructed and started once, at boot, from the composition
-root (`internal/routes.Setup`/`main.go`), not called into from request-
+root (`internal/app.Setup`/`main.go`), not called into from request-
 handling code. See [§2.2](#22-background-jobs) for the background-jobs
 detail view.
 
@@ -144,35 +140,32 @@ what that implies operationally.
 
 Go, using the [Gin](https://gin-gonic.com/) HTTP framework and
 [pgx](https://github.com/jackc/pgx)/[sqlc](https://sqlc.dev/) for
-database access. Every feature module follows the same four-layer
-structure:
+database access. The backend is a modular monolith: each business capability
+owns its HTTP boundary, use cases, persistence adapter, and focused tests.
 
 ```mermaid
 flowchart LR
-    R["routes/<br/>route registration + RBAC group"] --> H["handlers/<br/>HTTP binding, status codes"]
-    H --> S["services/<br/>business logic, authorization checks"]
-    S --> Repo["repositories/<br/>thin wrapper over generated queries"]
+    App["internal/app<br/>composition root + RBAC groups"] --> Module["internal/modules/&lt;capability&gt;<br/>HTTP + use cases + owned types"]
+    Module --> Repo["module repository.go<br/>sqlc adapter boundary"]
     Repo --> SQLC["db/sqlc/<br/>generated, type-safe query code"]
+    Module -. "narrow interfaces" .-> Ports["internal/ports<br/>cross-module capabilities"]
 ```
 
-- **`internal/routes/`** - registers each module's endpoints onto one of
-  five pre-built Gin route groups (`admin`, `teacherOrAdmin`, `teacher`,
-  `student`, `parent`), each already gated by `middleware.RequireRole`.
-  A handful of modules (`timetable/`, `notifications/`) are large enough
-  to get their own subpackage, following the same pattern.
-- **`internal/handlers/`** - parses/validates the HTTP request, calls into
-  the matching service, and maps the result (or error) to a status code
-  and JSON body. See [§5.2](#52-rest-api) for Swagger's current status.
-- **`internal/services/`** - where authorization checks beyond plain role
-  (e.g. "is this teacher assigned to this class") and business rules live.
-  This is the layer most worth reading first when investigating a bug -
-  see [`audit.md`](../audit.md) for where that pattern has and hasn't been
-  applied consistently.
-- **`internal/repositories/`** - one thin method per `sqlc`-generated
-  query function; exists mainly so services depend on an interface rather
-  than the generated package directly.
-- **`internal/models/`** - request/response DTOs (distinct from
-  `db/sqlc/models.go`'s generated row structs).
+- **`internal/app/`** - the composition root. It creates shared adapters and
+  authorization-scoped Gin groups, then injects them into feature modules.
+- **`internal/modules/`** - capability-oriented vertical slices such as
+  School, People, Academics, Attendance, Identity, and Timetable. HTTP
+  handlers depend on module use cases; use cases depend on narrow interfaces.
+- **Module `repository.go` files** - the only module files allowed to import
+  `db/sqlc`. They map generated rows into module-owned types before returning.
+- **`internal/ports/`** - narrow contracts for capabilities shared across
+  modules, preventing one module from reaching into another module's storage.
+- **Module route files** - each capability registers its own endpoints onto
+  authorization-scoped groups supplied by `internal/app`; no central route
+  compatibility package sits between the composition root and modules.
+- **Module model files** - request/response and read-model contracts live with
+  the capability that owns them. Generated database rows remain isolated in
+  `db/sqlc/models.go`.
 
 Cross-cutting packages:
 
@@ -190,7 +183,7 @@ Cross-cutting packages:
   (`Provider` interface: `CreateUser`/`UpdateUser`/`DeleteUser`/`AssignRole`)
   that `internal/thunderid` implements. See
   [`adr/0001-thunderid-as-sole-identity-provider.md`](./adr/0001-thunderid-as-sole-identity-provider.md).
-- **`internal/jobs/`** - an in-process, cron-scheduled (`robfig/cron/v3`)
+- **`internal/modules/automation/`** - an in-process, cron-scheduled (`robfig/cron/v3`)
   background job runner, started/stopped alongside the HTTP server from
   `main.go` (`scheduler.Start()`/`defer scheduler.Stop()`) - not a separate
   worker process or external queue. See [§2.2](#22-background-jobs) below.
@@ -214,7 +207,7 @@ entirely by the versioned migrations in `backend/db/migrations/`
 
 ### 2.2 Background jobs (agents)
 
-`internal/jobs` runs read-mostly maintenance/ops checks on their own cron
+`internal/modules/automation` runs read-mostly maintenance/ops checks on their own cron
 schedules, inside the same binary and `pgxpool` as the API - no separate
 worker, queue, or LLM/AI call anywhere in the path (every check is SQL
 plus arithmetic). Each **agent** implements a small `Job` interface
@@ -301,7 +294,7 @@ Vite + TypeScript + React 19, using IBM's
   pages are further split by module, mirroring the backend's module list.
 - **`src/services/`** - one file per backend module, wrapping `axios`
   calls with typed request/response shapes matching the backend's
-  `internal/models/`.
+  module-owned API contracts.
 - **`src/queries/`** - TanStack Query hooks built on `src/services/`; every
   query key is a named, typed builder function (e.g. `studentKey(id)`),
   and mutations invalidate the specific keys they affect. This layer is
@@ -489,8 +482,8 @@ notification channel - see
 - `RequireStudentAccess` is a third authorization primitive beyond plain
   role checks, used where a route must additionally confirm the caller
   owns or is linked to the specific student in the URL (not just holds a
-  role) - the same "narrow authorization beyond role" pattern the
-  `internal/services` layer applies elsewhere.
+  role) - the same narrow authorization pattern applied inside module use
+  cases elsewhere.
 
 See [`audit.md`](../audit.md) for known gaps against the above as of its
 last update.
@@ -502,7 +495,7 @@ last update.
   fail.
 - HTTP read/write timeouts (15s) and idle timeout (60s) bound resource
   usage per connection.
-- A nightly `pg_dump` (`internal/jobs.SystemHealthAgent`, default 02:00,
+- A nightly `pg_dump` (`internal/modules/automation.SystemHealthAgent`, default 02:00,
   writes to local disk under `JOB_BACKUP_DIR`, retains the newest 14
   dumps) is the only backup mechanism - there is no managed database
   failover for this single-instance, self-hosted deployment. The same

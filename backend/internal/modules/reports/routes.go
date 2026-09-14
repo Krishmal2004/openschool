@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 func RegisterRoutes(admin *gin.RouterGroup, service *Service) {
 	admin.GET("/reports/attendance", func(c *gin.Context) {
-		var req models.AttendanceReportRequest
+		var req AttendanceReportRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -24,7 +23,7 @@ func RegisterRoutes(admin *gin.RouterGroup, service *Service) {
 	})
 
 	admin.GET("/reports/marks", func(c *gin.Context) {
-		var req models.MarksReportRequest
+		var req MarksReportRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

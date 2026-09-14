@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jung-kurt/gofpdf"
-	"github.com/openschool-org/openschool/internal/models"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 )
 
@@ -69,7 +68,7 @@ func resolveColumns(requested, all []string) []string {
 	return columns
 }
 
-func (s *Service) ExportAttendance(ctx context.Context, req models.AttendanceReportRequest) ([]byte, error) {
+func (s *Service) ExportAttendance(ctx context.Context, req AttendanceReportRequest) ([]byte, error) {
 	classID, err := uuid.Parse(req.ClassID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid class id")
@@ -102,7 +101,7 @@ func (s *Service) ExportAttendance(ctx context.Context, req models.AttendanceRep
 	return renderTablePDF(title, headers, rows)
 }
 
-func (s *Service) ExportMarks(ctx context.Context, req models.MarksReportRequest) ([]byte, error) {
+func (s *Service) ExportMarks(ctx context.Context, req MarksReportRequest) ([]byte, error) {
 	classID, err := uuid.Parse(req.ClassID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid class id")

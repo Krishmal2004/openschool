@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 var ErrNotAssignedToSubject = errors.New("you are not assigned to teach this subject for this class")
@@ -32,7 +31,7 @@ func markNumeric(value float64) (pgtype.Numeric, error) {
 	}
 	return n, nil
 }
-func (s *termMarkService) BulkUpsertMarks(ctx context.Context, class uuid.UUID, actor TermMarkActor, req models.BulkUpsertMarksRequest) (any, error) {
+func (s *termMarkService) BulkUpsertMarks(ctx context.Context, class uuid.UUID, actor TermMarkActor, req BulkUpsertMarksRequest) (any, error) {
 	term, e := uuid.Parse(req.TermID)
 	if e != nil {
 		return nil, e

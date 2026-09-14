@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type subjectRepository struct{ queries *db.Queries }
@@ -362,7 +361,7 @@ func (r *enrollmentRepository) groups(ctx context.Context, id uuid.UUID) ([]enro
 	}
 	return out, nil
 }
-func (r *enrollmentRepository) replace(ctx context.Context, student, year, level uuid.UUID, picks []models.EnrollmentPick) error {
+func (r *enrollmentRepository) replace(ctx context.Context, student, year, level uuid.UUID, picks []EnrollmentPick) error {
 	tx, e := r.pool.Begin(ctx)
 	if e != nil {
 		return e
@@ -405,41 +404,41 @@ func (r *enrollmentRepository) groupLevel(ctx context.Context, group uuid.UUID) 
 	row, err := r.queries.GetSelectionGroupByID(ctx, group)
 	return row.LevelID, err
 }
-func mapEnrollment(v db.ListStudentEnrollmentsRow) models.EnrollmentResponse {
-	return models.EnrollmentResponse{StudentID: v.StudentID.String(), AcademicYearID: v.AcademicYearID.String(), GroupID: v.GroupID.String(), GroupLabel: v.GroupLabel, LevelID: v.LevelID.String(), LevelLabel: v.LevelLabel, SubjectID: v.SubjectID.String(), SubjectName: v.SubjectName, SubjectCode: v.SubjectCode, SubjectType: enrollmentText(v.SubjectType), MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+func mapEnrollment(v db.ListStudentEnrollmentsRow) EnrollmentResponse {
+	return EnrollmentResponse{StudentID: v.StudentID.String(), AcademicYearID: v.AcademicYearID.String(), GroupID: v.GroupID.String(), GroupLabel: v.GroupLabel, LevelID: v.LevelID.String(), LevelLabel: v.LevelLabel, SubjectID: v.SubjectID.String(), SubjectName: v.SubjectName, SubjectCode: v.SubjectCode, SubjectType: enrollmentText(v.SubjectType), MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
 }
-func (r *enrollmentRepository) list(ctx context.Context, student, year uuid.UUID) ([]models.EnrollmentResponse, error) {
+func (r *enrollmentRepository) list(ctx context.Context, student, year uuid.UUID) ([]EnrollmentResponse, error) {
 	rows, e := r.queries.ListStudentEnrollments(ctx, db.ListStudentEnrollmentsParams{StudentID: student, AcademicYearID: year})
 	if e != nil {
 		return nil, e
 	}
-	out := make([]models.EnrollmentResponse, len(rows))
+	out := make([]EnrollmentResponse, len(rows))
 	for i, v := range rows {
 		out[i] = mapEnrollment(v)
 	}
 	return out, nil
 }
-func (r *enrollmentRepository) bySubject(ctx context.Context, subject, year uuid.UUID) ([]models.EnrolledStudentResponse, error) {
+func (r *enrollmentRepository) bySubject(ctx context.Context, subject, year uuid.UUID) ([]EnrolledStudentResponse, error) {
 	rows, e := r.queries.ListStudentsBySubject(ctx, db.ListStudentsBySubjectParams{SubjectID: subject, AcademicYearID: year})
 	if e != nil {
 		return nil, e
 	}
-	out := make([]models.EnrolledStudentResponse, len(rows))
+	out := make([]EnrolledStudentResponse, len(rows))
 	for i, v := range rows {
 		gid, gl := v.GroupID.String(), v.GroupLabel
-		out[i] = models.EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, GroupID: &gid, GroupLabel: &gl, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+		out[i] = EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, GroupID: &gid, GroupLabel: &gl, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
 	}
 	return out, nil
 }
-func (r *enrollmentRepository) byGroup(ctx context.Context, group, year uuid.UUID) ([]models.EnrolledStudentResponse, error) {
+func (r *enrollmentRepository) byGroup(ctx context.Context, group, year uuid.UUID) ([]EnrolledStudentResponse, error) {
 	rows, e := r.queries.ListStudentsByGroup(ctx, db.ListStudentsByGroupParams{GroupID: group, AcademicYearID: year})
 	if e != nil {
 		return nil, e
 	}
-	out := make([]models.EnrolledStudentResponse, len(rows))
+	out := make([]EnrolledStudentResponse, len(rows))
 	for i, v := range rows {
 		sid, sn, sc := v.SubjectID.String(), v.SubjectName, v.SubjectCode
-		out[i] = models.EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, SubjectID: &sid, SubjectName: &sn, SubjectCode: &sc, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
+		out[i] = EnrolledStudentResponse{StudentID: v.StudentID.String(), FullName: v.FullName, IndexNumber: v.IndexNumber, SubjectID: &sid, SubjectName: &sn, SubjectCode: &sc, MediumID: enrollmentUUID(v.MediumID), MediumName: enrollmentText(v.MediumName), EnrolledAt: v.EnrolledAt.Time.String()}
 	}
 	return out, nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
@@ -49,8 +48,8 @@ type NonAcademicStaffService struct {
 func NewNonAcademicStaffService(store nonAcademicStaffStore, audit ports.AuditRecorder) *NonAcademicStaffService {
 	return &NonAcademicStaffService{store: store, audit: audit}
 }
-func (s *NonAcademicStaffService) Create(ctx context.Context, req models.CreateNonAcademicStaffRequest) (any, error) {
-	if !models.ValidNonAcademicDesignations[req.Designation] {
+func (s *NonAcademicStaffService) Create(ctx context.Context, req CreateNonAcademicStaffRequest) (any, error) {
+	if !ValidNonAcademicDesignations[req.Designation] {
 		return nil, ErrInvalidNonAcademicDesignation
 	}
 	if !validation.IsValidSriLankanPhone(req.Phone) {
@@ -76,8 +75,8 @@ func (s *NonAcademicStaffService) Get(ctx context.Context, id uuid.UUID) (any, e
 func (s *NonAcademicStaffService) List(ctx context.Context, search, designation string) (any, error) {
 	return s.store.listStaff(ctx, search, designation)
 }
-func (s *NonAcademicStaffService) Update(ctx context.Context, id uuid.UUID, req models.UpdateNonAcademicStaffRequest) (any, error) {
-	if !models.ValidNonAcademicDesignations[req.Designation] {
+func (s *NonAcademicStaffService) Update(ctx context.Context, id uuid.UUID, req UpdateNonAcademicStaffRequest) (any, error) {
+	if !ValidNonAcademicDesignations[req.Designation] {
 		return nil, ErrInvalidNonAcademicDesignation
 	}
 	if !validation.IsValidSriLankanPhone(req.Phone) {
@@ -153,7 +152,7 @@ func RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin *gin.RouterGroup, serv
 		staffResponse(c, http.StatusOK, value, err)
 	})
 	admin.POST("/non-academic-staff", func(c *gin.Context) {
-		var req models.CreateNonAcademicStaffRequest
+		var req CreateNonAcademicStaffRequest
 		if !staffBind(c, &req) {
 			return
 		}
@@ -165,7 +164,7 @@ func RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin *gin.RouterGroup, serv
 		if !ok {
 			return
 		}
-		var req models.UpdateNonAcademicStaffRequest
+		var req UpdateNonAcademicStaffRequest
 		if !staffBind(c, &req) {
 			return
 		}
@@ -177,7 +176,7 @@ func RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin *gin.RouterGroup, serv
 		if !ok {
 			return
 		}
-		var req models.UpdateNonAcademicStaffEmploymentStatusRequest
+		var req UpdateNonAcademicStaffEmploymentStatusRequest
 		if !staffBind(c, &req) {
 			return
 		}
@@ -189,7 +188,7 @@ func RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin *gin.RouterGroup, serv
 		if !ok {
 			return
 		}
-		var req models.UpdateNonAcademicStaffHouseRequest
+		var req UpdateNonAcademicStaffHouseRequest
 		if !staffBind(c, &req) {
 			return
 		}

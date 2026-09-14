@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type leadershipStore struct {
@@ -86,7 +85,7 @@ func TestAssignVicePrincipalReplacesGradeScopeAndAudits(t *testing.T) {
 	teacherID, actorID := uuid.New(), uuid.New()
 	gradeOne, gradeTwo := uuid.New(), uuid.New()
 
-	position, err := NewService(store, audit).AssignVicePrincipal(context.Background(), models.AssignVicePrincipalRequest{
+	position, err := NewService(store, audit).AssignVicePrincipal(context.Background(), AssignVicePrincipalRequest{
 		TeacherID: teacherID.String(), GradeIDs: []string{gradeOne.String(), gradeTwo.String()},
 	}, actorID)
 	if err != nil {
@@ -102,7 +101,7 @@ func TestAssignVicePrincipalReplacesGradeScopeAndAudits(t *testing.T) {
 
 func TestAssignVicePrincipalWholeSchoolIgnoresGradeInput(t *testing.T) {
 	store := &leadershipStore{}
-	_, err := NewService(store, nil).AssignVicePrincipal(context.Background(), models.AssignVicePrincipalRequest{
+	_, err := NewService(store, nil).AssignVicePrincipal(context.Background(), AssignVicePrincipalRequest{
 		TeacherID: uuid.NewString(), NotifyWholeSchool: true, GradeIDs: []string{"not-a-uuid"},
 	}, uuid.New())
 	if err != nil {
@@ -166,7 +165,7 @@ func TestAssignStreamSectionHeadParsesIdentifiers(t *testing.T) {
 	store := &leadershipStore{streamSection: SectionHead{ID: uuid.New()}}
 	yearID, gradeID, streamID, teacherID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	rawStream := streamID.String()
-	result, err := NewService(store, nil).AssignSectionHead(context.Background(), models.AssignSectionHeadRequest{
+	result, err := NewService(store, nil).AssignSectionHead(context.Background(), AssignSectionHeadRequest{
 		AcademicYearID: yearID.String(), GradeID: gradeID.String(), StreamID: &rawStream, TeacherID: teacherID.String(),
 	})
 	if err != nil {

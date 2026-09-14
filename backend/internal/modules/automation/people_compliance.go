@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
 )
 
@@ -49,8 +49,8 @@ func (a *PeopleComplianceAgent) Run(ctx context.Context) (Result, error) {
 	return runChecks(ctx,
 		a.checkEmploymentConsistency,
 		a.checkZeroGuardians,
-		func(ctx context.Context) checkOutcome { return a.checkOnboarding(ctx, models.RoleTeacher, "teacher") },
-		func(ctx context.Context) checkOutcome { return a.checkOnboarding(ctx, models.RoleStudent, "student") },
+		func(ctx context.Context) checkOutcome { return a.checkOnboarding(ctx, identity.RoleTeacher, "teacher") },
+		func(ctx context.Context) checkOutcome { return a.checkOnboarding(ctx, identity.RoleStudent, "student") },
 	)
 }
 

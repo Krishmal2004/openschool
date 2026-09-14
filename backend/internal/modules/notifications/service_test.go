@@ -7,8 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	rootmodels "github.com/openschool-org/openschool/internal/models"
-	models "github.com/openschool-org/openschool/internal/models/notifications"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 type fakeStore struct {
@@ -42,7 +41,7 @@ func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: tru
 
 func TestNonTeacherCannotComposeNotifications(t *testing.T) {
 	service := NewNotificationService(&fakeStore{})
-	err := service.authorizeSender(context.Background(), rootmodels.RoleStudent, uuid.New(), []models.RecipientRule{{Type: models.RuleTeacher, TeacherID: pointer(uuid.New())}})
+	err := service.authorizeSender(context.Background(), identity.RoleStudent, uuid.New(), []RecipientRule{{Type: RuleTeacher, TeacherID: pointer(uuid.New())}})
 	if !errors.Is(err, ErrForbiddenRecipients) {
 		t.Fatalf("expected forbidden recipients, got %v", err)
 	}
@@ -53,7 +52,7 @@ func TestClassRecipientResolutionDeduplicatesUsers(t *testing.T) {
 	store := &fakeStore{students: []pgtype.UUID{pgUUID(student), pgUUID(shared)}, guardians: []pgtype.UUID{pgUUID(shared)}, teachers: []uuid.UUID{teacher, shared}}
 	service := NewNotificationService(store)
 	classID := uuid.New()
-	ids, err := service.resolveRecipientUserIDs(context.Background(), []models.RecipientRule{{Type: models.RuleClass, ClassID: &classID}})
+	ids, err := service.resolveRecipientUserIDs(context.Background(), []RecipientRule{{Type: RuleClass, ClassID: &classID}})
 	if err != nil {
 		t.Fatal(err)
 	}

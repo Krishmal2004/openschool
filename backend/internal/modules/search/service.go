@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type candidate struct {
@@ -25,10 +24,10 @@ type Service struct{ store store }
 
 func NewService(store store) *Service { return &Service{store: store} }
 
-func (s *Service) Global(ctx context.Context, term string) (models.GlobalSearchResponse, error) {
-	response := models.GlobalSearchResponse{
-		Students: []models.SearchResultItem{}, Teachers: []models.SearchResultItem{},
-		Guardians: []models.SearchResultItem{}, NonAcademicStaff: []models.SearchResultItem{},
+func (s *Service) Global(ctx context.Context, term string) (GlobalSearchResponse, error) {
+	response := GlobalSearchResponse{
+		Students: []SearchResultItem{}, Teachers: []SearchResultItem{},
+		Guardians: []SearchResultItem{}, NonAcademicStaff: []SearchResultItem{},
 	}
 	if term == "" {
 		return response, nil
@@ -57,10 +56,10 @@ func (s *Service) Global(ctx context.Context, term string) (models.GlobalSearchR
 	return response, nil
 }
 
-func mapCandidates(values []candidate) []models.SearchResultItem {
-	result := make([]models.SearchResultItem, len(values))
+func mapCandidates(values []candidate) []SearchResultItem {
+	result := make([]SearchResultItem, len(values))
 	for i, value := range values {
-		result[i] = models.SearchResultItem{ID: value.ID.String(), Name: value.Name, Subtitle: value.Subtitle}
+		result[i] = SearchResultItem{ID: value.ID.String(), Name: value.Name, Subtitle: value.Subtitle}
 	}
 	return result
 }

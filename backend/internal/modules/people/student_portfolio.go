@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 var (
@@ -50,7 +49,7 @@ func (s *StudentPortfolioService) TeacherProfileIDForUser(ctx context.Context, u
 	}
 	return &id
 }
-func (s *StudentPortfolioService) CreateProgressReport(ctx context.Context, student uuid.UUID, req models.CreateProgressReportRequest, writer *uuid.UUID) (any, error) {
+func (s *StudentPortfolioService) CreateProgressReport(ctx context.Context, student uuid.UUID, req CreateProgressReportRequest, writer *uuid.UUID) (any, error) {
 	term, err := parsePortfolioUUID(req.TermID, "term")
 	if err != nil {
 		return nil, err
@@ -60,15 +59,15 @@ func (s *StudentPortfolioService) CreateProgressReport(ctx context.Context, stud
 func (s *StudentPortfolioService) ListProgressReports(ctx context.Context, student uuid.UUID) (any, error) {
 	return s.store.listProgress(ctx, student)
 }
-func (s *StudentPortfolioService) UpdateProgressReport(ctx context.Context, id, student uuid.UUID, req models.UpdateProgressReportRequest) (any, error) {
+func (s *StudentPortfolioService) UpdateProgressReport(ctx context.Context, id, student uuid.UUID, req UpdateProgressReportRequest) (any, error) {
 	value, err := s.store.updateProgress(ctx, id, student, req.Narrative)
 	return portfolioValue(value, err)
 }
 func (s *StudentPortfolioService) DeleteProgressReport(ctx context.Context, id, student uuid.UUID) error {
 	return portfolioDelete(s.store.deleteProgress(ctx, id, student))
 }
-func (s *StudentPortfolioService) CreateActivity(ctx context.Context, student uuid.UUID, req models.CreateActivityRequest) (any, error) {
-	if !models.ValidActivityCategories[req.Category] {
+func (s *StudentPortfolioService) CreateActivity(ctx context.Context, student uuid.UUID, req CreateActivityRequest) (any, error) {
+	if !ValidActivityCategories[req.Category] {
 		return nil, ErrInvalidActivityCategory
 	}
 	year, err := parsePortfolioUUID(req.AcademicYearID, "academic year")
@@ -80,8 +79,8 @@ func (s *StudentPortfolioService) CreateActivity(ctx context.Context, student uu
 func (s *StudentPortfolioService) ListActivities(ctx context.Context, student uuid.UUID) (any, error) {
 	return s.store.listActivities(ctx, student)
 }
-func (s *StudentPortfolioService) UpdateActivity(ctx context.Context, id, student uuid.UUID, req models.UpdateActivityRequest) (any, error) {
-	if !models.ValidActivityCategories[req.Category] {
+func (s *StudentPortfolioService) UpdateActivity(ctx context.Context, id, student uuid.UUID, req UpdateActivityRequest) (any, error) {
+	if !ValidActivityCategories[req.Category] {
 		return nil, ErrInvalidActivityCategory
 	}
 	value, err := s.store.updateActivity(ctx, id, student, req.Category, req.Name, req.Role, req.Achievement)
@@ -90,7 +89,7 @@ func (s *StudentPortfolioService) UpdateActivity(ctx context.Context, id, studen
 func (s *StudentPortfolioService) DeleteActivity(ctx context.Context, id, student uuid.UUID) error {
 	return portfolioDelete(s.store.deleteActivity(ctx, id, student))
 }
-func (s *StudentPortfolioService) CreateLeadershipRole(ctx context.Context, student uuid.UUID, req models.CreateLeadershipRoleRequest) (any, error) {
+func (s *StudentPortfolioService) CreateLeadershipRole(ctx context.Context, student uuid.UUID, req CreateLeadershipRoleRequest) (any, error) {
 	year, err := parsePortfolioUUID(req.AcademicYearID, "academic year")
 	if err != nil {
 		return nil, err
@@ -103,7 +102,7 @@ func (s *StudentPortfolioService) ListLeadershipRoles(ctx context.Context, stude
 func (s *StudentPortfolioService) DeleteLeadershipRole(ctx context.Context, id, student uuid.UUID) error {
 	return portfolioDelete(s.store.deleteLeadership(ctx, id, student))
 }
-func (s *StudentPortfolioService) CreateAward(ctx context.Context, student uuid.UUID, req models.CreateAwardRequest) (any, error) {
+func (s *StudentPortfolioService) CreateAward(ctx context.Context, student uuid.UUID, req CreateAwardRequest) (any, error) {
 	year, err := parsePortfolioUUID(req.AcademicYearID, "academic year")
 	if err != nil {
 		return nil, err
@@ -116,8 +115,8 @@ func (s *StudentPortfolioService) ListAwards(ctx context.Context, student uuid.U
 func (s *StudentPortfolioService) DeleteAward(ctx context.Context, id, student uuid.UUID) error {
 	return portfolioDelete(s.store.deleteAward(ctx, id, student))
 }
-func (s *StudentPortfolioService) CreateDisciplinaryRecord(ctx context.Context, student uuid.UUID, req models.CreateDisciplinaryRecordRequest, recorder *uuid.UUID) (any, error) {
-	if !models.ValidDisciplinarySeverities[req.Severity] {
+func (s *StudentPortfolioService) CreateDisciplinaryRecord(ctx context.Context, student uuid.UUID, req CreateDisciplinaryRecordRequest, recorder *uuid.UUID) (any, error) {
+	if !ValidDisciplinarySeverities[req.Severity] {
 		return nil, ErrInvalidDisciplinarySeverity
 	}
 	year, err := parsePortfolioUUID(req.AcademicYearID, "academic year")

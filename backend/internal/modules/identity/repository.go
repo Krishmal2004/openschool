@@ -2,7 +2,10 @@ package identity
 
 import (
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
 )
@@ -21,4 +24,28 @@ func (r *userRepository) ensureExists(ctx context.Context, command ensureUserCom
 		return provisionedUser{}, err
 	}
 	return provisionedUser{MustChangePassword: user.MustChangePassword}, nil
+}
+
+func (r *userRepository) listIDs(ctx context.Context) ([]uuid.UUID, error) {
+	users, err := r.queries.ListUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]uuid.UUID, len(users))
+	for i, user := range users {
+		ids[i] = user.ID
+	}
+	return ids, nil
+}
+
+func (r *userRepository) exists(ctx context.Context, id uuid.UUID) (bool, error) {
+	_, err := r.queries.GetUserByID(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

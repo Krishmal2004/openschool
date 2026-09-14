@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type TeacherResolver interface {
@@ -55,7 +54,7 @@ func monthRange(c *gin.Context) (time.Time, time.Time, bool) {
 }
 
 func (h *staffHandler) mark(c *gin.Context) {
-	var req models.MarkStaffAttendanceRequest
+	var req MarkStaffAttendanceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/models"
+	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
@@ -32,5 +32,5 @@ type SocietyReader interface {
 
 // DashboardReader exposes the leadership analytics read model.
 type DashboardReader interface {
-	Analytics(context.Context) (models.DashboardAnalyticsResponse, error)
+	Analytics(context.Context) (dashboardmodule.DashboardAnalyticsResponse, error)
 }

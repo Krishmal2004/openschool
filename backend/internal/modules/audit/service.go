@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type createCommand struct {
@@ -66,14 +65,14 @@ func (s *Service) Record(ctx context.Context, entityType string, entityID uuid.U
 	})
 }
 
-func (s *Service) List(ctx context.Context, entityType string, entityID *uuid.UUID) ([]models.AuditLogResponse, error) {
+func (s *Service) List(ctx context.Context, entityType string, entityID *uuid.UUID) ([]AuditLogResponse, error) {
 	rows, err := s.store.list(ctx, entityType, entityID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]models.AuditLogResponse, len(rows))
+	result := make([]AuditLogResponse, len(rows))
 	for i, value := range rows {
-		result[i] = models.AuditLogResponse{ID: value.ID, EntityType: value.EntityType, EntityID: value.EntityID, Action: value.Action, Before: value.Before, After: value.After, CreatedAt: value.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00")}
+		result[i] = AuditLogResponse{ID: value.ID, EntityType: value.EntityType, EntityID: value.EntityID, Action: value.Action, Before: value.Before, After: value.After, CreatedAt: value.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00")}
 		if value.ActorID.Valid {
 			id := uuid.UUID(value.ActorID.Bytes)
 			result[i].ActorID = &id

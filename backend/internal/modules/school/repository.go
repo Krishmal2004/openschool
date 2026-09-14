@@ -219,6 +219,23 @@ type schoolRepository struct{ queries *db.Queries }
 func newSchoolRepository(pool *pgxpool.Pool) *schoolRepository {
 	return &schoolRepository{queries: db.New(pool)}
 }
+
+// SchoolTypeReader exposes the single School capability required by student
+// validation without leaking generated database rows across module boundaries.
+type SchoolTypeReader struct{ repository *schoolRepository }
+
+func NewSchoolTypeReader(pool *pgxpool.Pool) *SchoolTypeReader {
+	return &SchoolTypeReader{repository: newSchoolRepository(pool)}
+}
+
+func (r *SchoolTypeReader) SchoolType(ctx context.Context) (string, error) {
+	school, err := r.repository.getSchool(ctx)
+	if err != nil {
+		return "", err
+	}
+	return school.SchoolType, nil
+}
+
 func optionalText(value string) pgtype.Text { return pgtype.Text{String: value, Valid: value != ""} }
 func optionalInt(value *int32) pgtype.Int4 {
 	if value == nil {

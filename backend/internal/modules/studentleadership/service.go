@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 var (
@@ -47,7 +47,7 @@ type Service struct{ store store }
 
 func NewService(store store) *Service { return &Service{store: store} }
 
-func (s *Service) AssignPrefect(ctx context.Context, req models.AssignPrefectRequest) (Prefect, error) {
+func (s *Service) AssignPrefect(ctx context.Context, req AssignPrefectRequest) (Prefect, error) {
 	yearID, err := uuid.Parse(req.AcademicYearID)
 	if err != nil {
 		return Prefect{}, fmt.Errorf("invalid academic year id")
@@ -82,7 +82,7 @@ func (s *Service) DeletePrefect(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) CreateSociety(ctx context.Context, req models.CreateSocietyRequest) (Society, error) {
+func (s *Service) CreateSociety(ctx context.Context, req CreateSocietyRequest) (Society, error) {
 	teacherID, err := uuid.Parse(req.TeacherInChargeID)
 	if err != nil {
 		return Society{}, fmt.Errorf("invalid teacher_in_charge_id")
@@ -94,7 +94,7 @@ func (s *Service) CreateSociety(ctx context.Context, req models.CreateSocietyReq
 	return s.store.createSociety(ctx, req.Name, teacherID, yearID)
 }
 
-func (s *Service) UpdateSociety(ctx context.Context, id uuid.UUID, req models.UpdateSocietyRequest) (Society, error) {
+func (s *Service) UpdateSociety(ctx context.Context, id uuid.UUID, req UpdateSocietyRequest) (Society, error) {
 	teacherID, err := uuid.Parse(req.TeacherInChargeID)
 	if err != nil {
 		return Society{}, fmt.Errorf("invalid teacher_in_charge_id")
@@ -145,7 +145,7 @@ func (s *Service) authorizeTeacherInCharge(ctx context.Context, actor Actor, soc
 	if err != nil {
 		return Society{}, err
 	}
-	if actor.Role == models.RoleAdmin {
+	if actor.Role == identity.RoleAdmin {
 		return society, nil
 	}
 	teacherID, err := s.store.teacherIDByUser(ctx, actor.ID)
@@ -161,7 +161,7 @@ func (s *Service) authorizeTeacherInCharge(ctx context.Context, actor Actor, soc
 	return society, nil
 }
 
-func (s *Service) AssignSocietyMember(ctx context.Context, actor Actor, societyID uuid.UUID, req models.AssignSocietyMemberRequest) (SocietyMember, error) {
+func (s *Service) AssignSocietyMember(ctx context.Context, actor Actor, societyID uuid.UUID, req AssignSocietyMemberRequest) (SocietyMember, error) {
 	society, err := s.authorizeTeacherInCharge(ctx, actor, societyID)
 	if err != nil {
 		return SocietyMember{}, err

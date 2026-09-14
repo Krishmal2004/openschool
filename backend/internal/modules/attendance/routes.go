@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type handler struct{ service *Service }
@@ -69,7 +68,7 @@ func uuidParam(c *gin.Context, name, message string) (uuid.UUID, bool) {
 }
 
 func (h *handler) createSession(c *gin.Context) {
-	var req models.CreateAttendanceSessionRequest
+	var req CreateAttendanceSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -159,7 +158,7 @@ func (h *handler) markAttendance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.MarkAttendanceRequest
+	var req MarkAttendanceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

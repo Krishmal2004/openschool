@@ -10,8 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	rootmodels "github.com/openschool-org/openschool/internal/models"
-	models "github.com/openschool-org/openschool/internal/models/notifications"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 var (
@@ -117,14 +116,14 @@ func (s *NotificationService) currentAcademicYearID(ctx context.Context) (uuid.U
 
 // gradesForRule expands a grade/grade_section rule into the concrete
 // grade IDs it covers.
-func (s *NotificationService) gradesForRule(ctx context.Context, rule models.RecipientRule) ([]uuid.UUID, error) {
+func (s *NotificationService) gradesForRule(ctx context.Context, rule RecipientRule) ([]uuid.UUID, error) {
 	switch rule.Type {
-	case models.RuleGrade:
+	case RuleGrade:
 		if rule.GradeID == nil {
 			return nil, nil
 		}
 		return []uuid.UUID{*rule.GradeID}, nil
-	case models.RuleGradeSection:
+	case RuleGradeSection:
 		if rule.GradeSectionID == nil {
 			return nil, nil
 		}
@@ -164,11 +163,11 @@ func (s *NotificationService) isTeacherAuthorizedForGrade(ctx context.Context, t
 }
 
 // authorizeSender enforces that a non-admin sender only targets audiences they're actually responsible for: their own classes, grades/sections they head, subjects they teach, and the students/guardians under those.
-func (s *NotificationService) authorizeSender(ctx context.Context, callerRole string, callerUserID uuid.UUID, rules []models.RecipientRule) error {
-	if callerRole == rootmodels.RoleAdmin {
+func (s *NotificationService) authorizeSender(ctx context.Context, callerRole string, callerUserID uuid.UUID, rules []RecipientRule) error {
+	if callerRole == identity.RoleAdmin {
 		return nil
 	}
-	if callerRole != rootmodels.RoleTeacher {
+	if callerRole != identity.RoleTeacher {
 		return ErrForbiddenRecipients
 	}
 	teacherID, err := s.repo.TeacherIDByUser(ctx, callerUserID)
@@ -186,10 +185,10 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 
 	for _, rule := range rules {
 		switch rule.Type {
-		case models.RuleEveryone:
+		case RuleEveryone:
 			return ErrForbiddenRecipients
 
-		case models.RuleClass:
+		case RuleClass:
 			if rule.ClassID == nil {
 				return ErrForbiddenRecipients
 			}
@@ -198,7 +197,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				return ErrForbiddenRecipients
 			}
 
-		case models.RuleGrade, models.RuleGradeSection:
+		case RuleGrade, RuleGradeSection:
 			gradeIDs, err := s.gradesForRule(ctx, rule)
 			if err != nil {
 				return err
@@ -216,8 +215,8 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				}
 			}
 
-		case models.RuleSubject:
-			if rule.SubjectID == nil || rule.SubjectAudience != models.AudienceStudents {
+		case RuleSubject:
+			if rule.SubjectID == nil || rule.SubjectAudience != AudienceStudents {
 				return ErrForbiddenRecipients
 			}
 			ok, err := s.repo.IsTeacherAssignedToSubject(ctx, teacherID, *rule.SubjectID)
@@ -225,7 +224,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				return ErrForbiddenRecipients
 			}
 
-		case models.RuleStudent:
+		case RuleStudent:
 			if rule.StudentID == nil {
 				return ErrForbiddenRecipients
 			}
@@ -238,7 +237,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				return ErrForbiddenRecipients
 			}
 
-		case models.RuleGuardian:
+		case RuleGuardian:
 			if rule.GuardianID == nil {
 				return ErrForbiddenRecipients
 			}
@@ -251,7 +250,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 				return ErrForbiddenRecipients
 			}
 
-		case models.RuleTeacher:
+		case RuleTeacher:
 			// colleague-to-colleague messaging is low-risk; any teacher may do it
 
 		default:
@@ -263,7 +262,7 @@ func (s *NotificationService) authorizeSender(ctx context.Context, callerRole st
 
 // resolveRecipientUserIDs expands the rule set into the deduplicated set
 // of users.id that should receive the notification.
-func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules []models.RecipientRule) ([]uuid.UUID, error) {
+func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules []RecipientRule) ([]uuid.UUID, error) {
 	seen := make(map[uuid.UUID]bool)
 	var result []uuid.UUID
 
@@ -311,7 +310,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 
 	for _, rule := range rules {
 		switch rule.Type {
-		case models.RuleEveryone:
+		case RuleEveryone:
 			ids, err := s.repo.ListAllUserIDs(ctx)
 			if err != nil {
 				return nil, err
@@ -320,7 +319,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 				addUUID(seen, &result, id)
 			}
 
-		case models.RuleClass:
+		case RuleClass:
 			if rule.ClassID == nil {
 				continue
 			}
@@ -328,7 +327,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 				return nil, err
 			}
 
-		case models.RuleGrade:
+		case RuleGrade:
 			if rule.GradeID == nil {
 				continue
 			}
@@ -336,7 +335,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 				return nil, err
 			}
 
-		case models.RuleGradeSection:
+		case RuleGradeSection:
 			gradeIDs, err := s.gradesForRule(ctx, rule)
 			if err != nil {
 				return nil, err
@@ -347,11 +346,11 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 				}
 			}
 
-		case models.RuleSubject:
+		case RuleSubject:
 			if rule.SubjectID == nil {
 				continue
 			}
-			if rule.SubjectAudience == models.AudienceTeachers {
+			if rule.SubjectAudience == AudienceTeachers {
 				ids, err := s.repo.ListTeacherUserIDsBySubject(ctx, *rule.SubjectID)
 				if err != nil {
 					return nil, err
@@ -373,7 +372,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 				}
 			}
 
-		case models.RuleStudent:
+		case RuleStudent:
 			if rule.StudentID == nil {
 				continue
 			}
@@ -383,7 +382,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 			}
 			addPgUUID(seen, &result, userID)
 
-		case models.RuleGuardian:
+		case RuleGuardian:
 			if rule.GuardianID == nil {
 				continue
 			}
@@ -393,7 +392,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 			}
 			addPgUUID(seen, &result, userID)
 
-		case models.RuleTeacher:
+		case RuleTeacher:
 			if rule.TeacherID == nil {
 				continue
 			}
@@ -408,7 +407,7 @@ func (s *NotificationService) resolveRecipientUserIDs(ctx context.Context, rules
 	return result, nil
 }
 
-func (s *NotificationService) materializeRecipients(ctx context.Context, notificationID uuid.UUID, rules []models.RecipientRule) error {
+func (s *NotificationService) materializeRecipients(ctx context.Context, notificationID uuid.UUID, rules []RecipientRule) error {
 	userIDs, err := s.resolveRecipientUserIDs(ctx, rules)
 	if err != nil {
 		return err
@@ -422,10 +421,10 @@ func (s *NotificationService) materializeRecipients(ctx context.Context, notific
 }
 
 func validateCategoryAndPriority(category, priority string) error {
-	if !models.ValidCategories[category] {
+	if !ValidCategories[category] {
 		return fmt.Errorf("invalid category %q", category)
 	}
-	if !models.ValidPriorities[priority] {
+	if !ValidPriorities[priority] {
 		return fmt.Errorf("invalid priority %q", priority)
 	}
 	return nil
@@ -433,23 +432,23 @@ func validateCategoryAndPriority(category, priority string) error {
 
 // Composer
 
-func (s *NotificationService) Create(ctx context.Context, req models.CreateNotificationRequest, callerUserID uuid.UUID, callerRole string) (models.NotificationResponse, error) {
+func (s *NotificationService) Create(ctx context.Context, req CreateNotificationRequest, callerUserID uuid.UUID, callerRole string) (NotificationResponse, error) {
 	if err := validateCategoryAndPriority(req.Category, req.Priority); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	if err := s.authorizeSender(ctx, callerRole, callerUserID, req.RecipientRules); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
 	rulesJSON, err := json.Marshal(req.RecipientRules)
 	if err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
-	status := models.StatusSent
+	status := StatusSent
 	var sentAt pgtype.Timestamptz
 	if req.SaveAsDraft {
-		status = models.StatusDraft
+		status = StatusDraft
 	} else {
 		sentAt = pgtype.Timestamptz{Time: time.Now(), Valid: true}
 	}
@@ -459,76 +458,76 @@ func (s *NotificationService) Create(ctx context.Context, req models.CreateNotif
 		Status: status, RecipientRules: rulesJSON, CreatedBy: callerUserID, SentAt: sentAt,
 	})
 	if err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
 	if !req.SaveAsDraft {
 		if err := s.materializeRecipients(ctx, notification.ID, req.RecipientRules); err != nil {
-			return models.NotificationResponse{}, err
+			return NotificationResponse{}, err
 		}
 	}
 
 	return s.toResponse(notification, ""), nil
 }
 
-func (s *NotificationService) UpdateDraft(ctx context.Context, id uuid.UUID, req models.UpdateNotificationRequest, callerUserID uuid.UUID, callerRole string) (models.NotificationResponse, error) {
+func (s *NotificationService) UpdateDraft(ctx context.Context, id uuid.UUID, req UpdateNotificationRequest, callerUserID uuid.UUID, callerRole string) (NotificationResponse, error) {
 	if err := validateCategoryAndPriority(req.Category, req.Priority); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	existing, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return models.NotificationResponse{}, ErrNotificationNotFound
+		return NotificationResponse{}, ErrNotificationNotFound
 	}
-	if existing.Status != models.StatusDraft {
-		return models.NotificationResponse{}, ErrNotADraft
+	if existing.Status != StatusDraft {
+		return NotificationResponse{}, ErrNotADraft
 	}
-	if existing.CreatedBy != callerUserID && callerRole != rootmodels.RoleAdmin {
-		return models.NotificationResponse{}, ErrForbiddenRecipients
+	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+		return NotificationResponse{}, ErrForbiddenRecipients
 	}
 	if err := s.authorizeSender(ctx, callerRole, callerUserID, req.RecipientRules); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
 	rulesJSON, err := json.Marshal(req.RecipientRules)
 	if err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
 	updated, err := s.repo.UpdateDraft(ctx, notificationCommand{
 		ID: id, Title: req.Title, Message: req.Message, Category: req.Category, Priority: req.Priority, RecipientRules: rulesJSON,
 	})
 	if err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	return s.toResponse(updated, ""), nil
 }
 
-func (s *NotificationService) SendDraft(ctx context.Context, id, callerUserID uuid.UUID, callerRole string) (models.NotificationResponse, error) {
+func (s *NotificationService) SendDraft(ctx context.Context, id, callerUserID uuid.UUID, callerRole string) (NotificationResponse, error) {
 	existing, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return models.NotificationResponse{}, ErrNotificationNotFound
+		return NotificationResponse{}, ErrNotificationNotFound
 	}
-	if existing.Status != models.StatusDraft {
-		return models.NotificationResponse{}, ErrNotADraft
+	if existing.Status != StatusDraft {
+		return NotificationResponse{}, ErrNotADraft
 	}
-	if existing.CreatedBy != callerUserID && callerRole != rootmodels.RoleAdmin {
-		return models.NotificationResponse{}, ErrForbiddenRecipients
+	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+		return NotificationResponse{}, ErrForbiddenRecipients
 	}
 
-	var rules []models.RecipientRule
+	var rules []RecipientRule
 	if err := json.Unmarshal(existing.RecipientRules, &rules); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	if err := s.authorizeSender(ctx, callerRole, callerUserID, rules); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 
 	updated, err := s.repo.MarkSent(ctx, id)
 	if err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	if err := s.materializeRecipients(ctx, id, rules); err != nil {
-		return models.NotificationResponse{}, err
+		return NotificationResponse{}, err
 	}
 	return s.toResponse(updated, ""), nil
 }
@@ -538,7 +537,7 @@ func (s *NotificationService) DeleteDraft(ctx context.Context, id, callerUserID 
 	if err != nil {
 		return ErrNotificationNotFound
 	}
-	if existing.CreatedBy != callerUserID && callerRole != rootmodels.RoleAdmin {
+	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
 		return ErrForbiddenRecipients
 	}
 	n, err := s.repo.DeleteDraft(ctx, id)
@@ -551,13 +550,13 @@ func (s *NotificationService) DeleteDraft(ctx context.Context, id, callerUserID 
 	return nil
 }
 
-func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UUID, callerRole string) ([]models.NotificationResponse, error) {
-	if callerRole == rootmodels.RoleAdmin {
+func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UUID, callerRole string) ([]NotificationResponse, error) {
+	if callerRole == identity.RoleAdmin {
 		rows, err := s.repo.ListAllSent(ctx)
 		if err != nil {
 			return nil, err
 		}
-		result := make([]models.NotificationResponse, len(rows))
+		result := make([]NotificationResponse, len(rows))
 		for i, row := range rows {
 			result[i] = s.toResponse(row.notification, row.SenderName)
 		}
@@ -568,19 +567,19 @@ func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UU
 	if err != nil {
 		return nil, err
 	}
-	result := make([]models.NotificationResponse, len(rows))
+	result := make([]NotificationResponse, len(rows))
 	for i, row := range rows {
 		result[i] = s.toResponse(row.notification, row.SenderName)
 	}
 	return result, nil
 }
 
-func (s *NotificationService) ListMyDrafts(ctx context.Context, callerUserID uuid.UUID) ([]models.NotificationResponse, error) {
+func (s *NotificationService) ListMyDrafts(ctx context.Context, callerUserID uuid.UUID) ([]NotificationResponse, error) {
 	rows, err := s.repo.ListMyDrafts(ctx, callerUserID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]models.NotificationResponse, len(rows))
+	result := make([]NotificationResponse, len(rows))
 	for i, row := range rows {
 		result[i] = s.toResponse(row, "")
 	}
@@ -597,7 +596,7 @@ func (s *NotificationService) SendDirect(ctx context.Context, title, message, ca
 	}
 	notification, err := s.repo.Create(ctx, notificationCommand{
 		Title: title, Message: message, Category: category, Priority: priority,
-		Status: models.StatusSent, RecipientRules: []byte("[]"), CreatedBy: createdBy,
+		Status: StatusSent, RecipientRules: []byte("[]"), CreatedBy: createdBy,
 		SentAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	})
 	if err != nil {
@@ -611,26 +610,26 @@ func (s *NotificationService) SendDirect(ctx context.Context, title, message, ca
 	return nil
 }
 
-func (s *NotificationService) GetStats(ctx context.Context, id, callerUserID uuid.UUID, callerRole string) (models.NotificationStatsResponse, error) {
+func (s *NotificationService) GetStats(ctx context.Context, id, callerUserID uuid.UUID, callerRole string) (NotificationStatsResponse, error) {
 	existing, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return models.NotificationStatsResponse{}, ErrNotificationNotFound
+		return NotificationStatsResponse{}, ErrNotificationNotFound
 	}
-	if existing.CreatedBy != callerUserID && callerRole != rootmodels.RoleAdmin {
-		return models.NotificationStatsResponse{}, ErrForbiddenRecipients
+	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+		return NotificationStatsResponse{}, ErrForbiddenRecipients
 	}
 
 	row, err := s.repo.GetStats(ctx, id)
 	if err != nil {
-		return models.NotificationStatsResponse{}, err
+		return NotificationStatsResponse{}, err
 	}
-	return models.NotificationStatsResponse{Total: row.Total, Read: row.Read, Unread: row.Total - row.Read}, nil
+	return NotificationStatsResponse{Total: row.Total, Read: row.Read, Unread: row.Total - row.Read}, nil
 }
 
-func (s *NotificationService) toResponse(n notification, senderName string) models.NotificationResponse {
-	var rules []models.RecipientRule
+func (s *NotificationService) toResponse(n notification, senderName string) NotificationResponse {
+	var rules []RecipientRule
 	_ = json.Unmarshal(n.RecipientRules, &rules)
-	return models.NotificationResponse{
+	return NotificationResponse{
 		ID: n.ID, Title: n.Title, Message: n.Message, Category: n.Category, Priority: n.Priority, Status: n.Status,
 		RecipientRules: rules, SenderName: senderName, SentAt: n.SentAt, CreatedAt: n.CreatedAt,
 	}
@@ -638,14 +637,14 @@ func (s *NotificationService) toResponse(n notification, senderName string) mode
 
 // Notification Center (recipient side)
 
-func (s *NotificationService) ListMine(ctx context.Context, userID uuid.UUID) ([]models.MyNotificationResponse, error) {
+func (s *NotificationService) ListMine(ctx context.Context, userID uuid.UUID) ([]MyNotificationResponse, error) {
 	rows, err := s.repo.ListMine(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]models.MyNotificationResponse, len(rows))
+	result := make([]MyNotificationResponse, len(rows))
 	for i, row := range rows {
-		result[i] = models.MyNotificationResponse{
+		result[i] = MyNotificationResponse{
 			RecipientID: row.RecipientID, NotificationID: row.NotificationID, Title: row.Title, Message: row.Message,
 			Category: row.Category, Priority: row.Priority, SenderName: row.SenderName, SentAt: row.SentAt,
 			IsRead: row.IsRead, IsArchived: row.IsArchived,
@@ -654,14 +653,14 @@ func (s *NotificationService) ListMine(ctx context.Context, userID uuid.UUID) ([
 	return result, nil
 }
 
-func (s *NotificationService) ListMyArchived(ctx context.Context, userID uuid.UUID) ([]models.MyNotificationResponse, error) {
+func (s *NotificationService) ListMyArchived(ctx context.Context, userID uuid.UUID) ([]MyNotificationResponse, error) {
 	rows, err := s.repo.ListMyArchived(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]models.MyNotificationResponse, len(rows))
+	result := make([]MyNotificationResponse, len(rows))
 	for i, row := range rows {
-		result[i] = models.MyNotificationResponse{
+		result[i] = MyNotificationResponse{
 			RecipientID: row.RecipientID, NotificationID: row.NotificationID, Title: row.Title, Message: row.Message,
 			Category: row.Category, Priority: row.Priority, SenderName: row.SenderName, SentAt: row.SentAt,
 			IsRead: row.IsRead, IsArchived: row.IsArchived,

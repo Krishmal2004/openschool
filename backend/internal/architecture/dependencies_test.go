@@ -13,13 +13,6 @@ import (
 
 const modulePath = "github.com/openschool-org/openschool/"
 
-// legacyRepositoryDebt is a ratchet for the horizontal repository package.
-// Entries are removed as their remaining feature consumers migrate to modules.
-var legacyRepositoryDebt = map[string]bool{
-	"repositories/school.go": true,
-	"repositories/user.go":   true,
-}
-
 func TestDependencyBoundaries(t *testing.T) {
 	root := internalRoot(t)
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -32,20 +25,21 @@ func TestDependencyBoundaries(t *testing.T) {
 		}
 		rel = filepath.ToSlash(rel)
 		imports := fileImports(t, path)
-		if strings.HasPrefix(rel, "repositories/") && !legacyRepositoryDebt[rel] {
-			t.Errorf("%s adds a new horizontal repository; add persistence to its owning module", rel)
+		if strings.HasPrefix(rel, "repositories/") {
+			t.Errorf("%s adds a horizontal repository; add persistence to its owning module", rel)
+		}
+		if strings.HasPrefix(rel, "models/") {
+			t.Errorf("%s adds a global model; add the contract to its owning module", rel)
+		}
+		if strings.HasPrefix(rel, "routes/") {
+			t.Errorf("%s adds a route bridge; register the owning module from internal/app", rel)
 		}
 
 		if strings.HasPrefix(rel, "handlers/") {
-			for _, forbidden := range []string{"db/sqlc", "internal/repositories"} {
-				if imports[modulePath+forbidden] {
-					t.Errorf("%s imports forbidden handler dependency %s", rel, forbidden)
-				}
-			}
+			t.Errorf("%s adds a horizontal handler; add HTTP behavior to its owning module", rel)
 		}
-
-		if strings.HasPrefix(rel, "services/") && imports[modulePath+"db/sqlc"] {
-			t.Errorf("%s imports forbidden service-layer sqlc dependency", rel)
+		if strings.HasPrefix(rel, "services/") {
+			t.Errorf("%s adds a horizontal service; add the use case to its owning module", rel)
 		}
 
 		if strings.HasPrefix(rel, "modules/") {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -34,8 +33,8 @@ type guardianRecord struct {
 type guardianStore interface {
 	guardian(context.Context, uuid.UUID) (guardianRecord, error)
 	guardianDuplicates(context.Context, string, string) (any, error)
-	createGuardian(context.Context, models.CreateGuardianRequest) (any, error)
-	updateGuardian(context.Context, uuid.UUID, models.UpdateGuardianRequest) (any, error)
+	createGuardian(context.Context, CreateGuardianRequest) (any, error)
+	updateGuardian(context.Context, uuid.UUID, UpdateGuardianRequest) (any, error)
 	deleteGuardian(context.Context, uuid.UUID) (int64, error)
 	linkGuardian(context.Context, uuid.UUID, uuid.UUID, bool) error
 	unlinkGuardian(context.Context, uuid.UUID, uuid.UUID) error
@@ -56,7 +55,7 @@ func NewGuardianService(store guardianStore, idp identity.Provider, audit ports.
 	return &GuardianService{store: store, idp: idp, audit: audit}
 }
 
-func (s *GuardianService) Create(ctx context.Context, req models.CreateGuardianRequest) (any, any, error) {
+func (s *GuardianService) Create(ctx context.Context, req CreateGuardianRequest) (any, any, error) {
 	if !validation.IsValidSriLankanPhone(req.Phone) {
 		return nil, nil, validation.ErrInvalidPhone
 	}
@@ -68,7 +67,7 @@ func (s *GuardianService) Create(ctx context.Context, req models.CreateGuardianR
 	return guardian, duplicates, err
 }
 
-func (s *GuardianService) Update(ctx context.Context, id uuid.UUID, req models.UpdateGuardianRequest) (any, error) {
+func (s *GuardianService) Update(ctx context.Context, id uuid.UUID, req UpdateGuardianRequest) (any, error) {
 	if !validation.IsValidSriLankanPhone(req.Phone) {
 		return nil, validation.ErrInvalidPhone
 	}
@@ -93,7 +92,7 @@ func (s *GuardianService) Delete(ctx context.Context, id, actor uuid.UUID) error
 	return nil
 }
 
-func (s *GuardianService) Link(ctx context.Context, student uuid.UUID, req models.LinkGuardianRequest) error {
+func (s *GuardianService) Link(ctx context.Context, student uuid.UUID, req LinkGuardianRequest) error {
 	guardian, err := uuid.Parse(req.GuardianID)
 	if err != nil {
 		return errors.New("invalid guardian id")
@@ -109,7 +108,7 @@ func (s *GuardianService) SetPrimary(ctx context.Context, student, guardian uuid
 	return s.store.setPrimaryGuardian(ctx, student, guardian)
 }
 
-func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req models.ProvisionGuardianLoginRequest, actor uuid.UUID) (any, error) {
+func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req ProvisionGuardianLoginRequest, actor uuid.UUID) (any, error) {
 	guardian, err := s.store.guardian(ctx, id)
 	if err != nil {
 		return nil, ErrGuardianNotFound
@@ -124,7 +123,7 @@ func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req model
 		return nil, ErrGuardianMissingNIC
 	}
 
-	idpUser, err := s.idp.CreateUser(ctx, models.RoleParent, map[string]any{
+	idpUser, err := s.idp.CreateUser(ctx, identity.RoleParent, map[string]any{
 		"username": req.Username, "email": guardian.Email, "given_name": req.GivenName,
 		"family_name": req.FamilyName, "phone": guardian.Phone, "password": guardian.NIC,
 	})
@@ -139,7 +138,7 @@ func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req model
 		s.rollbackIdentity(ctx, idpUser.ID)
 		return nil, fmt.Errorf("failed to create local user record: %w", err)
 	}
-	if err := s.idp.AssignRole(ctx, identity.RoleID(models.RoleParent), idpUser.ID); err != nil {
+	if err := s.idp.AssignRole(ctx, identity.RoleID(identity.RoleParent), idpUser.ID); err != nil {
 		s.rollbackWithCleanup(idpUser.ID, userID)
 		return nil, fmt.Errorf("failed to assign parent role: %w", err)
 	}

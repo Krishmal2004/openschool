@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 type setupStore struct {
@@ -71,8 +70,8 @@ func (i *setupIdentity) AssignRole(_ context.Context, _ string, userID string) e
 
 func (*setupIdentity) ListUsers(context.Context) ([]identity.User, error) { return nil, nil }
 
-func adminRequest() models.RegisterAdminRequest {
-	return models.RegisterAdminRequest{Email: "admin@example.test", Username: "admin", GivenName: "Open", FamilyName: "School", PhoneNumber: "0700000000", Password: "password"}
+func adminRequest() RegisterAdminRequest {
+	return RegisterAdminRequest{Email: "admin@example.test", Username: "admin", GivenName: "Open", FamilyName: "School", PhoneNumber: "0700000000", Password: "password"}
 }
 
 func TestNeedsSetupUsesAdminCount(t *testing.T) {

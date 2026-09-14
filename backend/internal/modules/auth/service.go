@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/mailer"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -72,15 +72,15 @@ func (s *Service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest)
 	}
 
 	switch req.Role {
-	case models.RoleTeacher:
+	case identity.RoleTeacher:
 		if !s.store.teacherCredentialsMatch(ctx, user.ID, req.Secret) {
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
-	case models.RoleStudent:
+	case identity.RoleStudent:
 		if !s.store.studentCredentialsMatch(ctx, user.ID, req.Secret) {
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
-	case models.RoleParent:
+	case identity.RoleParent:
 		if err := s.guardians.VerifyCredentials(ctx, user.ID, req.Secret); err != nil {
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}

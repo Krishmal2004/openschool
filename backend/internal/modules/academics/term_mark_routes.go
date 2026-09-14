@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -22,7 +21,7 @@ type TermMarkReader interface {
 }
 type TermMarkRunner interface {
 	TermMarkReader
-	BulkUpsertMarks(context.Context, uuid.UUID, TermMarkActor, models.BulkUpsertMarksRequest) (any, error)
+	BulkUpsertMarks(context.Context, uuid.UUID, TermMarkActor, BulkUpsertMarksRequest) (any, error)
 	ListClassMarks(context.Context, TermMarkActor, uuid.UUID, uuid.UUID, uuid.UUID) (any, error)
 	ListStudentMarksForTeacher(context.Context, TermMarkActor, uuid.UUID, uuid.UUID) (any, error)
 	DeleteMark(context.Context, TermMarkActor, uuid.UUID) error
@@ -34,7 +33,7 @@ func RegisterTermMarkRoutes(teacherOrAdmin *gin.RouterGroup, runner TermMarkRunn
 		if !ok {
 			return
 		}
-		var request models.BulkUpsertMarksRequest
+		var request BulkUpsertMarksRequest
 		if err := httpx.BindStrict(c, &request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

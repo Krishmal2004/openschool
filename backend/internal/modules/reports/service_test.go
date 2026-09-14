@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 )
 
@@ -93,7 +92,7 @@ func TestExportAttendanceReadsRangeAndReturnsPDF(t *testing.T) {
 	attendance := &attendanceReader{rows: []attendancemodule.ReportRow{{
 		StudentName: "Student One", StudentIndex: "S001", SessionDate: pgtype.Date{Time: from, Valid: true}, Status: "present",
 	}}}
-	data, err := NewService(store, attendance).ExportAttendance(context.Background(), models.AttendanceReportRequest{ClassID: classID.String(), From: from, To: to, Columns: []string{"student", "status"}})
+	data, err := NewService(store, attendance).ExportAttendance(context.Background(), AttendanceReportRequest{ClassID: classID.String(), From: from, To: to, Columns: []string{"student", "status"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +108,7 @@ func TestExportMarksReadsEntitiesAndReturnsPDF(t *testing.T) {
 		{StudentName: "Absent", IndexNumber: "S002", TermMarkID: pgtype.UUID{Bytes: uuid.New(), Valid: true}, MaxMarks: numeric(t, "100"), IsAbsent: pgtype.Bool{Bool: true, Valid: true}},
 		{StudentName: "Unmarked", IndexNumber: "S003"},
 	}}
-	data, err := NewService(store, &attendanceReader{}).ExportMarks(context.Background(), models.MarksReportRequest{ClassID: classID.String(), TermID: termID.String(), SubjectID: subjectID.String()})
+	data, err := NewService(store, &attendanceReader{}).ExportMarks(context.Background(), MarksReportRequest{ClassID: classID.String(), TermID: termID.String(), SubjectID: subjectID.String()})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
-	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 type Repository struct{ queries *db.Queries }
@@ -18,7 +18,7 @@ func (r *Repository) countUsersByRole(ctx context.Context, role string) (int64, 
 }
 
 func (r *Repository) createAdmin(ctx context.Context, id uuid.UUID, email, fullName string) (AdminUser, error) {
-	user, err := r.queries.CreateUser(ctx, db.CreateUserParams{ID: id, Email: email, FullName: fullName, Role: models.RoleAdmin})
+	user, err := r.queries.CreateUser(ctx, db.CreateUserParams{ID: id, Email: email, FullName: fullName, Role: identity.RoleAdmin})
 	return AdminUser{ID: user.ID, Email: user.Email}, err
 }
 

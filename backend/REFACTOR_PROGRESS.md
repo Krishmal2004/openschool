@@ -33,8 +33,6 @@ cmd/api
           -> module use cases
           -> repository.go     sqlc adapter boundary
               -> db/sqlc
-      -> internal/routes        temporary migration bridge
-          -> legacy handlers/services/repositories
 ```
 
 ### Boundary rules
@@ -56,7 +54,7 @@ cmd/api
 | Status | Area | Completed work | Current location |
 |---|---|---|---|
 | DONE | Composition root | Centralized router groups and module wiring | `internal/app/app.go` |
-| DONE | Route migration bridge | Grouped remaining legacy route registration by business area | `internal/routes/modules.go` |
+| DONE | Route bridge removal | Wired every feature module directly from the composition root and deleted the compatibility routes package | `internal/app/app.go` |
 | DONE | Architecture guard | Added automated dependency-boundary and sqlc-debt checks | `internal/architecture/dependencies_test.go` |
 | DONE | Architecture documentation | Documented the modular-monolith direction and dependency rules | `ARCHITECTURE.md` |
 | DONE | HTTP binding | Added shared strict JSON binding infrastructure | `internal/platform/httpx` |
@@ -113,14 +111,18 @@ cmd/api
 | DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | School setup | Migrated setup status, first-admin registration, ThunderID provisioning, role assignment, and compensating rollbacks | `internal/modules/setup` |
 | DONE | Report export | Migrated attendance and marks PDF exports, query adapters, column selection, and HTTP delivery | `internal/modules/reports` |
-| DONE | Dead repository cleanup | Removed twenty-one superseded repository adapters, including Automation and Authentication compatibility repositories | Module repository adapters |
-| DONE | Repository debt guard | Reduced the exact allowlist to the two active horizontal repository files so no new compatibility repository can be introduced | `internal/architecture/dependencies_test.go` |
+| DONE | Dead repository cleanup | Removed all twenty-three superseded horizontal repository adapters | Module repository adapters |
+| DONE | Repository debt guard | Removed the compatibility allowlist and prohibited every horizontal repository file | `internal/architecture/dependencies_test.go` |
 | DONE | Dashboard | Migrated student, staff, academic, school, and timetable aggregates plus admin and teacher analytics consumers | `internal/modules/dashboard` |
 | DONE | Global search | Migrated categorized student, teacher, guardian, and non-academic staff search plus HTTP ownership | `internal/modules/search` |
 | DONE | Automation | Migrated scheduler lifecycle, settings, run history, admin endpoints, notifications, and five isolated checking algorithms | `internal/modules/automation` |
 | DONE | Self-service portals | Migrated student, parent, and teacher profile resolution and HTTP ownership behind narrow module contracts | `internal/modules/selfservice` |
 | DONE | Authentication | Migrated forgot/reset/change/default-password flows, role-specific credential checks, ThunderID password updates, and routes | `internal/modules/auth` |
 | DONE | Authentication hardening | Added atomic one-time reset-token consumption, JWT contract tests, required issuer/JWKS validation, bounded provider calls, and sanitized provider errors | Auth module, middleware, and ThunderID adapter |
+| DONE | Identity reconciliation | Migrated orphan discovery, stale-state protection, provider deletion, auditing, persistence, and admin routes | `internal/modules/identity` |
+| DONE | Legacy handler/service cleanup | Removed the horizontal handler and service packages after migrating their final Identity Reconciliation consumer | Module-owned HTTP and use-case files |
+| DONE | Shared role cleanup | Moved application role constants from the compatibility models package to the provider-neutral Identity package | `internal/identity` |
+| DONE | Model ownership cleanup | Moved all active contracts to their owning modules, moved roles to Identity, removed obsolete DTOs, and deleted the global models package | Feature modules, `internal/identity` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -135,17 +137,20 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Migrated legacy sqlc service files | 35 |
 | Remaining legacy sqlc service files | 0 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 99% |
+| Feature migration estimate | 100% |
+| Original compatibility model files | 23 |
+| Remaining compatibility model files | 0 |
 
-> Note: the exact service-file debt is the authoritative metric. Run
-> `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
+> Note: the architecture test is now authoritative and rejects horizontal
+> handlers, services, repositories, models, and route bridges as well as sqlc
+> imports outside module `repository.go` files.
 
 ## 5. Remaining feature migrations
 
 | Status | Domain | Remaining work | Notes |
 |---|---|---|---|
 | DONE | Authentication | None | Password lifecycle is module-owned; ThunderID remains the identity provider and JWT verification remains cross-cutting middleware |
-| TODO | Identity reconciliation | Admin reconciliation and identity-provider/local-user consistency operations | Keep provider calls behind `internal/identity` |
+| DONE | Identity reconciliation | None | Admin reconciliation is module-owned and provider operations remain behind `internal/identity` |
 | DONE | School setup | None | Setup status, one-time admin provisioning, role assignment, and rollbacks are module-owned |
 | DONE | Curriculum | None | Levels, groups, subjects, tree, and mediums are module-owned |
 | DONE | Curriculum presets | None | Preview and transactional, idempotent preset seeding are module-owned |
@@ -176,20 +181,12 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 
 ## 6. Temporary compatibility pieces
 
-These are intentionally retained until their active consumers are migrated:
+No horizontal handler, service, repository, model, or route compatibility
+package remains.
 
-- Two horizontal repository files used by Identity Reconciliation and the
-  remaining Student composition bridge.
-- Legacy handlers and services for Identity Reconciliation only.
-- Legacy route registration grouped behind `internal/routes/modules.go`.
-
-Twenty-one superseded repositories for School, Academics, Curriculum, People,
-Timetable, Dashboard, Search, Automation, and Authentication have been
-deleted. The architecture guard rejects any new file outside the exact
-two-file compatibility allowlist.
-
-These are migration debt, not new architecture targets. No new feature should
-be added to them unless it is required to keep an unmigrated consumer working.
+All twenty-three superseded horizontal repositories have been deleted. The
+horizontal handler, service, model, and route packages are also gone. The
+architecture guard prevents any of these compatibility layers from returning.
 
 ## 7. Verification checklist
 
@@ -223,10 +220,11 @@ The architecture test also verifies:
 7. Notifications, Audit, Report Export, Dashboard, Search, and Automation are
    complete.
 8. Positions, Section Heads, Prefects, and Societies are complete.
-9. School Setup, Authentication, and Report Export are complete; migrate
-   Identity Reconciliation, then remove compatibility repositories and the
-   legacy route bridge.
-10. Run full integration/API tests and update this document before deleting it.
+9. School Setup, Authentication, Identity Reconciliation, Report Export, and
+   all feature migrations are complete.
+10. Compatibility DTO and constant ownership migration is complete.
+11. Legacy route bridge removal is complete.
+12. Run full integration/API tests and update this document before deleting it.
 
 ## 9. Definition of complete
 

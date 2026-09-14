@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -35,7 +34,7 @@ func routeActor(c *gin.Context) (Actor, error) {
 
 func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, service *Service) {
 	admin.PUT("/prefects", func(c *gin.Context) {
-		var req models.AssignPrefectRequest
+		var req AssignPrefectRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -103,7 +102,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 	})
 
 	admin.POST("/societies", func(c *gin.Context) {
-		var req models.CreateSocietyRequest
+		var req CreateSocietyRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -122,7 +121,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid society id"})
 			return
 		}
-		var req models.UpdateSocietyRequest
+		var req UpdateSocietyRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -191,7 +190,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid society id"})
 			return
 		}
-		var req models.AssignSocietyMemberRequest
+		var req AssignSocietyMemberRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

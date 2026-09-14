@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -62,7 +61,7 @@ type TeacherService struct {
 func NewTeacherService(store teacherStore, idp identity.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder) *TeacherService {
 	return &TeacherService{store: store, idp: idp, houses: houses, audit: audit}
 }
-func (s *TeacherService) Create(ctx context.Context, req models.CreateTeacherRequest, actor uuid.UUID) (any, error) {
+func (s *TeacherService) Create(ctx context.Context, req CreateTeacherRequest, actor uuid.UUID) (any, error) {
 	if !validation.IsValidSriLankanPhone(req.PhoneNumber) {
 		return nil, validation.ErrInvalidPhone
 	}
@@ -70,7 +69,7 @@ func (s *TeacherService) Create(ctx context.Context, req models.CreateTeacherReq
 	if err != nil {
 		return nil, fmt.Errorf("failed to assign employee number: %w", err)
 	}
-	u, err := s.idp.CreateUser(ctx, models.RoleTeacher, map[string]any{"username": req.Email, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "employee_number": employee, "password": req.NICNumber})
+	u, err := s.idp.CreateUser(ctx, identity.RoleTeacher, map[string]any{"username": req.Email, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "employee_number": employee, "password": req.NICNumber})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity provider user: %w", err)
 	}
@@ -84,7 +83,7 @@ func (s *TeacherService) Create(ctx context.Context, req models.CreateTeacherReq
 		return nil, fmt.Errorf("failed to create user record: %w", err)
 	}
 	rollback := func() { _ = s.idp.DeleteUser(ctx, u.ID); _ = s.store.DeleteUser(ctx, uid) }
-	if err = s.idp.AssignRole(ctx, identity.RoleID(models.RoleTeacher), u.ID); err != nil {
+	if err = s.idp.AssignRole(ctx, identity.RoleID(identity.RoleTeacher), u.ID); err != nil {
 		rollback()
 		return nil, fmt.Errorf("failed to assign teacher role: %w", err)
 	}
@@ -102,7 +101,7 @@ func (s *TeacherService) Create(ctx context.Context, req models.CreateTeacherReq
 	}
 	return profile, nil
 }
-func (s *TeacherService) Update(ctx context.Context, id uuid.UUID, req models.UpdateTeacherRequest) (any, error) {
+func (s *TeacherService) Update(ctx context.Context, id uuid.UUID, req UpdateTeacherRequest) (any, error) {
 	if !validation.IsValidSriLankanPhone(req.PhoneNumber) {
 		return nil, validation.ErrInvalidPhone
 	}
@@ -114,12 +113,12 @@ func (s *TeacherService) Update(ctx context.Context, id uuid.UUID, req models.Up
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
-	if err := s.idp.UpdateUser(ctx, t.UserID.String(), models.RoleTeacher, map[string]any{"username": email, "email": email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
+	if err := s.idp.UpdateUser(ctx, t.UserID.String(), identity.RoleTeacher, map[string]any{"username": email, "email": email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
 		log.Printf("UpdateTeacher: failed to update identity provider user: %v", err)
 	}
 	return s.store.UpdateTeacher(ctx, id, teacherUpdate{FullName: req.GivenName + " " + req.FamilyName, NIC: req.NICNumber, Phone: req.PhoneNumber, Title: req.Title, Gender: req.Gender})
 }
-func (s *TeacherService) UpdateHouse(ctx context.Context, id uuid.UUID, req models.UpdateTeacherHouseRequest, actor uuid.UUID) (any, error) {
+func (s *TeacherService) UpdateHouse(ctx context.Context, id uuid.UUID, req UpdateTeacherHouseRequest, actor uuid.UUID) (any, error) {
 	return s.houses.ChangeTeacherHouse(ctx, id, req.HouseID, actor)
 }
 func (s *TeacherService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) (any, error) {
@@ -148,7 +147,7 @@ func (s *TeacherService) Delete(ctx context.Context, id, actor uuid.UUID) error 
 	}
 	return s.idp.DeleteUser(ctx, t.UserID.String())
 }
-func (s *TeacherService) AssignSubject(ctx context.Context, id uuid.UUID, req models.AssignSubjectToTeacherRequest) error {
+func (s *TeacherService) AssignSubject(ctx context.Context, id uuid.UUID, req AssignSubjectToTeacherRequest) error {
 	subject, err := uuid.Parse(req.SubjectID)
 	if err != nil {
 		return fmt.Errorf("invalid subject id")

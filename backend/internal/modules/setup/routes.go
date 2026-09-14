@@ -9,7 +9,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 func RegisterRoutes(public *gin.RouterGroup, service *Service) {
@@ -23,7 +22,7 @@ func RegisterRoutes(public *gin.RouterGroup, service *Service) {
 	})
 
 	public.POST("/setup/admin", middleware.RateLimit(1, 3), func(c *gin.Context) {
-		var req models.RegisterAdminRequest
+		var req RegisterAdminRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": friendlyBindError(err)})
 			return

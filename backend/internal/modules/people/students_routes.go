@@ -8,14 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
 type StudentRunner interface {
-	Create(context.Context, models.CreateStudentRequest, uuid.UUID) (any, error)
-	Update(context.Context, uuid.UUID, models.UpdateStudentRequest) (any, error)
-	UpdateHouse(context.Context, uuid.UUID, models.UpdateStudentHouseRequest, uuid.UUID) (any, error)
+	Create(context.Context, CreateStudentRequest, uuid.UUID) (any, error)
+	Update(context.Context, uuid.UUID, UpdateStudentRequest) (any, error)
+	UpdateHouse(context.Context, uuid.UUID, UpdateStudentHouseRequest, uuid.UUID) (any, error)
 	Delete(context.Context, uuid.UUID, uuid.UUID) error
 }
 type StudentStatusWriter interface {
@@ -31,7 +30,7 @@ type StudentReader interface {
 
 func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner StudentRunner, reader StudentReader, statusWriter StudentStatusWriter) {
 	admin.POST("/students", func(c *gin.Context) {
-		var r models.CreateStudentRequest
+		var r CreateStudentRequest
 		if e := httpx.BindStrict(c, &r); e != nil {
 			c.JSON(400, gin.H{"error": e.Error()})
 			return
@@ -84,7 +83,7 @@ func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner Studen
 		if !ok {
 			return
 		}
-		var r models.UpdateStudentRequest
+		var r UpdateStudentRequest
 		if e := httpx.BindStrict(c, &r); e != nil {
 			c.JSON(400, gin.H{"error": e.Error()})
 			return
@@ -101,7 +100,7 @@ func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner Studen
 		if !ok {
 			return
 		}
-		var r models.UpdateStudentHouseRequest
+		var r UpdateStudentHouseRequest
 		if e := httpx.BindStrict(c, &r); e != nil {
 			c.JSON(400, gin.H{"error": e.Error()})
 			return
@@ -122,7 +121,7 @@ func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner Studen
 		if !ok {
 			return
 		}
-		var r models.UpdateStudentEnrollmentStatusRequest
+		var r UpdateStudentEnrollmentStatusRequest
 		if e := httpx.BindStrict(c, &r); e != nil {
 			c.JSON(400, gin.H{"error": e.Error()})
 			return

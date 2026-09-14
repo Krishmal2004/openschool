@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
 )
@@ -134,7 +133,7 @@ func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 		return
 	}
 
-	var req models.SubmitEnrollmentRequest
+	var req academicsmodule.SubmitEnrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -144,7 +143,7 @@ func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, academicsmodule.ErrEnrollmentInvalid):
-			c.JSON(http.StatusUnprocessableEntity, models.EnrollmentValidationResponse{Valid: false, Errors: validationErrs})
+			c.JSON(http.StatusUnprocessableEntity, academicsmodule.EnrollmentValidationResponse{Valid: false, Errors: validationErrs})
 		case errors.Is(err, academicsmodule.ErrEnrollmentLocked):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		case errors.Is(err, academicsmodule.ErrLevelHasNoGroups):
@@ -155,7 +154,7 @@ func (h *StudentSelfHandler) SubmitEnrollment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, models.EnrollmentValidationResponse{Valid: true, Errors: nil})
+	c.JSON(http.StatusOK, academicsmodule.EnrollmentValidationResponse{Valid: true, Errors: nil})
 }
 
 // ConfirmEnrollment locks the student's picks for this level and year until an admin unlocks them.
@@ -165,7 +164,7 @@ func (h *StudentSelfHandler) ConfirmEnrollment(c *gin.Context) {
 		return
 	}
 
-	var req models.ConfirmEnrollmentRequest
+	var req academicsmodule.ConfirmEnrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

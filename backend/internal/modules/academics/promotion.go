@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 var ErrCommitTargetClassMismatch = errors.New("one or more target classes do not belong to the target academic year")
@@ -45,17 +44,17 @@ func NewPromotionService(store promotionStore) PromotionRunner {
 	return &promotionService{store: store}
 }
 
-func (s *promotionService) Preview(ctx context.Context, source, target uuid.UUID, term *uuid.UUID) ([]models.PromotionPreviewRow, error) {
+func (s *promotionService) Preview(ctx context.Context, source, target uuid.UUID, term *uuid.UUID) ([]PromotionPreviewRow, error) {
 	students, err := s.store.students(ctx, source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list students for source year: %w", err)
 	}
 	grades := map[uuid.UUID]*promotionGrade{}
 	classes := map[string]*promotionClass{}
-	result := make([]models.PromotionPreviewRow, 0, len(students))
+	result := make([]PromotionPreviewRow, 0, len(students))
 	ids := make([]uuid.UUID, 0, len(students))
 	for _, student := range students {
-		row := models.PromotionPreviewRow{StudentID: student.ID.String(), StudentName: student.Name, StudentIndex: student.Index, CurrentClassID: student.ClassID.String(), CurrentClassName: student.ClassName, CurrentGradeID: student.GradeID.String(), CurrentGradeName: student.GradeName, MediumLocked: student.MediumID != nil, CurrentMediumID: student.MediumID, CurrentMediumName: student.MediumName}
+		row := PromotionPreviewRow{StudentID: student.ID.String(), StudentName: student.Name, StudentIndex: student.Index, CurrentClassID: student.ClassID.String(), CurrentClassName: student.ClassName, CurrentGradeID: student.GradeID.String(), CurrentGradeName: student.GradeName, MediumLocked: student.MediumID != nil, CurrentMediumID: student.MediumID, CurrentMediumName: student.MediumName}
 		grade, ok := grades[student.GradeID]
 		if !ok {
 			value, e := s.store.nextGrade(ctx, student.GradeID)
@@ -122,7 +121,7 @@ func (s *promotionService) Preview(ctx context.Context, source, target uuid.UUID
 	return result, nil
 }
 
-func (s *promotionService) CommitAssignments(ctx context.Context, request models.CommitAssignmentsRequest) (int, error) {
+func (s *promotionService) CommitAssignments(ctx context.Context, request CommitAssignmentsRequest) (int, error) {
 	year, err := uuid.Parse(request.AcademicYearID)
 	if err != nil {
 		return 0, errors.New("invalid academic year id")

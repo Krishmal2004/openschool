@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/models"
 )
 
 var ErrAlreadyDone = errors.New("setup already completed")
@@ -35,14 +34,14 @@ func NewService(store store, idp identity.Provider) *Service {
 }
 
 func (s *Service) NeedsSetup(ctx context.Context) (bool, error) {
-	count, err := s.store.countUsersByRole(ctx, models.RoleAdmin)
+	count, err := s.store.countUsersByRole(ctx, identity.RoleAdmin)
 	if err != nil {
 		return false, err
 	}
 	return count == 0, nil
 }
 
-func (s *Service) RegisterFirstAdmin(ctx context.Context, req models.RegisterAdminRequest) (AdminUser, error) {
+func (s *Service) RegisterFirstAdmin(ctx context.Context, req RegisterAdminRequest) (AdminUser, error) {
 	needsSetup, err := s.NeedsSetup(ctx)
 	if err != nil {
 		return AdminUser{}, err
@@ -51,7 +50,7 @@ func (s *Service) RegisterFirstAdmin(ctx context.Context, req models.RegisterAdm
 		return AdminUser{}, ErrAlreadyDone
 	}
 
-	idpUser, err := s.idp.CreateUser(ctx, models.RoleAdmin, map[string]interface{}{
+	idpUser, err := s.idp.CreateUser(ctx, identity.RoleAdmin, map[string]interface{}{
 		"username": req.Username, "email": req.Email, "given_name": req.GivenName,
 		"family_name": req.FamilyName, "phone_number": req.PhoneNumber, "password": req.Password,
 	})
@@ -80,7 +79,7 @@ func (s *Service) RegisterFirstAdmin(ctx context.Context, req models.RegisterAdm
 		return AdminUser{}, fmt.Errorf("failed to create user record: %w", err)
 	}
 
-	if err := s.idp.AssignRole(ctx, identity.RoleID(models.RoleAdmin), idpUser.ID); err != nil {
+	if err := s.idp.AssignRole(ctx, identity.RoleID(identity.RoleAdmin), idpUser.ID); err != nil {
 		if deleteErr := s.store.deleteUser(ctx, userID); deleteErr != nil {
 			log.Printf("RegisterFirstAdmin: failed to roll back local user row %s: %v (local admin row now orphaned, instance may be unbootstrappable)", userID, deleteErr)
 		}

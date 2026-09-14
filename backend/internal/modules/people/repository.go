@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -255,10 +254,10 @@ func (r *guardianRepository) guardian(c context.Context, id uuid.UUID) (guardian
 func (r *guardianRepository) guardianDuplicates(c context.Context, phone, email string) (any, error) {
 	return r.queries.FindGuardianDuplicateCandidates(c, db.FindGuardianDuplicateCandidatesParams{Phone: phone, Email: pgtype.Text{String: email, Valid: email != ""}})
 }
-func (r *guardianRepository) createGuardian(c context.Context, req models.CreateGuardianRequest) (any, error) {
+func (r *guardianRepository) createGuardian(c context.Context, req CreateGuardianRequest) (any, error) {
 	return r.queries.CreateGuardian(c, db.CreateGuardianParams{FullName: req.FullName, Relationship: req.Relationship, Phone: req.Phone, Email: pgtype.Text{String: req.Email, Valid: req.Email != ""}, NicNumber: req.NICNumber})
 }
-func (r *guardianRepository) updateGuardian(c context.Context, id uuid.UUID, req models.UpdateGuardianRequest) (any, error) {
+func (r *guardianRepository) updateGuardian(c context.Context, id uuid.UUID, req UpdateGuardianRequest) (any, error) {
 	return r.queries.UpdateGuardian(c, db.UpdateGuardianParams{ID: id, FullName: req.FullName, Relationship: req.Relationship, Phone: req.Phone, Email: pgtype.Text{String: req.Email, Valid: req.Email != ""}, NicNumber: req.NICNumber})
 }
 func (r *guardianRepository) deleteGuardian(c context.Context, id uuid.UUID) (int64, error) {

@@ -6,9 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/identity"
 	"github.com/openschool-org/openschool/internal/middleware"
-	rootmodels "github.com/openschool-org/openschool/internal/models"
-	models "github.com/openschool-org/openschool/internal/models/notifications"
 )
 
 type NotificationHandler struct {
@@ -47,12 +46,12 @@ func (h *NotificationHandler) caller(c *gin.Context) (uuid.UUID, string, bool) {
 	role := ""
 	if list, ok := roles.([]string); ok {
 		for _, r := range list {
-			if r == rootmodels.RoleAdmin {
-				role = rootmodels.RoleAdmin
+			if r == identity.RoleAdmin {
+				role = identity.RoleAdmin
 				break
 			}
-			if r == rootmodels.RoleTeacher {
-				role = rootmodels.RoleTeacher
+			if r == identity.RoleTeacher {
+				role = identity.RoleTeacher
 			}
 		}
 	}
@@ -79,7 +78,7 @@ func (h *NotificationHandler) Create(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req models.CreateNotificationRequest
+	var req CreateNotificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -102,7 +101,7 @@ func (h *NotificationHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	var req models.UpdateNotificationRequest
+	var req UpdateNotificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -1,10 +1,6 @@
 package identity
 
-import (
-	"testing"
-
-	"github.com/openschool-org/openschool/internal/models"
-)
+import "testing"
 
 func TestResolveAppRole(t *testing.T) {
 	tests := []struct {
@@ -13,8 +9,8 @@ func TestResolveAppRole(t *testing.T) {
 		want  string
 	}{
 		{name: "no application role", roles: []string{"offline_access"}, want: ""},
-		{name: "teacher", roles: []string{models.RoleTeacher}, want: models.RoleTeacher},
-		{name: "priority", roles: []string{models.RoleStudent, models.RoleAdmin}, want: models.RoleAdmin},
+		{name: "teacher", roles: []string{RoleTeacher}, want: RoleTeacher},
+		{name: "priority", roles: []string{RoleStudent, RoleAdmin}, want: RoleAdmin},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/identity"
 )
 
 type studentLeadershipStore struct {
@@ -55,7 +55,7 @@ func (s *studentLeadershipStore) upsertPrefect(_ context.Context, yearID, studen
 func TestAssignPrefectParsesAndPassesAppointment(t *testing.T) {
 	store := &studentLeadershipStore{prefect: Prefect{ID: uuid.New()}}
 	yearID, studentID := uuid.New(), uuid.New()
-	result, err := NewService(store).AssignPrefect(context.Background(), models.AssignPrefectRequest{
+	result, err := NewService(store).AssignPrefect(context.Background(), AssignPrefectRequest{
 		AcademicYearID: yearID.String(), StudentID: studentID.String(), Rank: "head",
 	})
 	if err != nil {
@@ -73,7 +73,7 @@ func TestAssignSocietyMemberUsesAuthoritativeSocietyYear(t *testing.T) {
 		teacherID: teacherID,
 		member:    SocietyMember{ID: uuid.New()},
 	}
-	result, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: userID, Role: models.RoleTeacher}, societyID, models.AssignSocietyMemberRequest{StudentID: studentID.String(), Role: "leader"})
+	result, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: userID, Role: identity.RoleTeacher}, societyID, AssignSocietyMemberRequest{StudentID: studentID.String(), Role: "leader"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestAssignSocietyMemberUsesAuthoritativeSocietyYear(t *testing.T) {
 func TestAdminCanManageSocietyWithoutTeacherProfile(t *testing.T) {
 	societyID := uuid.New()
 	store := &studentLeadershipStore{society: Society{ID: societyID, AcademicYearID: uuid.New()}, teacherErr: errors.New("teacher lookup must not run")}
-	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: models.RoleAdmin}, societyID, models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: identity.RoleAdmin}, societyID, AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestAdminCanManageSocietyWithoutTeacherProfile(t *testing.T) {
 
 func TestTeacherCannotManageAnotherSociety(t *testing.T) {
 	store := &studentLeadershipStore{society: Society{TeacherInChargeID: uuid.New()}, teacherID: uuid.New()}
-	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: models.RoleTeacher}, uuid.New(), models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: identity.RoleTeacher}, uuid.New(), AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
 	if !errors.Is(err, ErrNotTeacherInCharge) {
 		t.Fatalf("error=%v, want ErrNotTeacherInCharge", err)
 	}
@@ -101,7 +101,7 @@ func TestTeacherCannotManageAnotherSociety(t *testing.T) {
 
 func TestMissingSocietyMapsToDomainError(t *testing.T) {
 	store := &studentLeadershipStore{societyErr: pgx.ErrNoRows}
-	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{Role: models.RoleAdmin}, uuid.New(), models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{Role: identity.RoleAdmin}, uuid.New(), AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
 	if !errors.Is(err, ErrSocietyNotFound) {
 		t.Fatalf("error=%v, want ErrSocietyNotFound", err)
 	}
@@ -110,7 +110,7 @@ func TestMissingSocietyMapsToDomainError(t *testing.T) {
 func TestRemoveMemberKeepsDeleteScopedToSociety(t *testing.T) {
 	societyID, memberID := uuid.New(), uuid.New()
 	store := &studentLeadershipStore{society: Society{ID: societyID}, removeCount: 1}
-	if err := NewService(store).RemoveSocietyMember(context.Background(), Actor{Role: models.RoleAdmin}, societyID, memberID); err != nil {
+	if err := NewService(store).RemoveSocietyMember(context.Background(), Actor{Role: identity.RoleAdmin}, societyID, memberID); err != nil {
 		t.Fatal(err)
 	}
 	if store.removedSocietyID != societyID || store.removedMemberID != memberID {

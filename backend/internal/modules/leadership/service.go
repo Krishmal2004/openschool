@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -91,7 +90,7 @@ func NewService(store store, audit ports.AuditRecorder) *Service {
 	return &Service{store: store, audit: audit}
 }
 
-func (s *Service) AssignPrincipal(ctx context.Context, req models.AssignPrincipalRequest, actorID uuid.UUID) (Position, error) {
+func (s *Service) AssignPrincipal(ctx context.Context, req AssignPrincipalRequest, actorID uuid.UUID) (Position, error) {
 	teacherID, err := uuid.Parse(req.TeacherID)
 	if err != nil {
 		return Position{}, fmt.Errorf("invalid teacher id")
@@ -109,7 +108,7 @@ func (s *Service) AssignPrincipal(ctx context.Context, req models.AssignPrincipa
 	return position, nil
 }
 
-func (s *Service) AssignVicePrincipal(ctx context.Context, req models.AssignVicePrincipalRequest, actorID uuid.UUID) (Position, error) {
+func (s *Service) AssignVicePrincipal(ctx context.Context, req AssignVicePrincipalRequest, actorID uuid.UUID) (Position, error) {
 	teacherID, err := uuid.Parse(req.TeacherID)
 	if err != nil {
 		return Position{}, fmt.Errorf("invalid teacher id")
@@ -158,7 +157,7 @@ func (s *Service) DeletePosition(ctx context.Context, id, actorID uuid.UUID) err
 	return nil
 }
 
-func (s *Service) AssignSectionHead(ctx context.Context, req models.AssignSectionHeadRequest) (SectionHead, error) {
+func (s *Service) AssignSectionHead(ctx context.Context, req AssignSectionHeadRequest) (SectionHead, error) {
 	yearID, err := uuid.Parse(req.AcademicYearID)
 	if err != nil {
 		return SectionHead{}, fmt.Errorf("invalid academic year id")

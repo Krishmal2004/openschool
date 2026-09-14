@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/models"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -20,18 +19,18 @@ type TeacherReader interface {
 }
 
 type TeacherWriter interface {
-	Create(context.Context, models.CreateTeacherRequest, uuid.UUID) (any, error)
-	Update(context.Context, uuid.UUID, models.UpdateTeacherRequest) (any, error)
-	UpdateHouse(context.Context, uuid.UUID, models.UpdateTeacherHouseRequest, uuid.UUID) (any, error)
+	Create(context.Context, CreateTeacherRequest, uuid.UUID) (any, error)
+	Update(context.Context, uuid.UUID, UpdateTeacherRequest) (any, error)
+	UpdateHouse(context.Context, uuid.UUID, UpdateTeacherHouseRequest, uuid.UUID) (any, error)
 	UpdateStatus(context.Context, uuid.UUID, string) (any, error)
 	Delete(context.Context, uuid.UUID, uuid.UUID) error
-	AssignSubject(context.Context, uuid.UUID, models.AssignSubjectToTeacherRequest) error
+	AssignSubject(context.Context, uuid.UUID, AssignSubjectToTeacherRequest) error
 	RemoveSubject(context.Context, uuid.UUID, uuid.UUID) error
 }
 
 func RegisterTeacherWriteRoutes(admin *gin.RouterGroup, writer TeacherWriter) {
 	admin.POST("/teachers", func(c *gin.Context) {
-		var req models.CreateTeacherRequest
+		var req CreateTeacherRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -52,7 +51,7 @@ func RegisterTeacherWriteRoutes(admin *gin.RouterGroup, writer TeacherWriter) {
 		if !ok {
 			return
 		}
-		var req models.UpdateTeacherRequest
+		var req UpdateTeacherRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -69,7 +68,7 @@ func RegisterTeacherWriteRoutes(admin *gin.RouterGroup, writer TeacherWriter) {
 		if !ok {
 			return
 		}
-		var req models.UpdateTeacherHouseRequest
+		var req UpdateTeacherHouseRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -90,7 +89,7 @@ func RegisterTeacherWriteRoutes(admin *gin.RouterGroup, writer TeacherWriter) {
 		if !ok {
 			return
 		}
-		var req models.UpdateTeacherEmploymentStatusRequest
+		var req UpdateTeacherEmploymentStatusRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -122,7 +121,7 @@ func RegisterTeacherWriteRoutes(admin *gin.RouterGroup, writer TeacherWriter) {
 		if !ok {
 			return
 		}
-		var req models.AssignSubjectToTeacherRequest
+		var req AssignSubjectToTeacherRequest
 		if err := httpx.BindStrict(c, &req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
