@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterIdentityReconciliationRoutes(admin *gin.RouterGroup, pool *pgxpool.Pool) {
-	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
+	auditSvc := newAuditRecorder(pool)
 	service := services.NewIdentityReconciliationService(newIdentityProvider(), repositories.NewUserRepository(pool), auditSvc)
 	handler := handlers.NewIdentityReconciliationHandler(service)
 

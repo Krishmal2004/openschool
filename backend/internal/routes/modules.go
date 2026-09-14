@@ -49,7 +49,6 @@ func RegisterAdminOperationsModule(admin, teacherOrAdmin, studentAccess *gin.Rou
 	RegisterPrefectRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterSocietyRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterPositionRoutes(admin, teacherOrAdmin, pool)
-	RegisterAuditRoutes(admin, pool)
 	RegisterIdentityReconciliationRoutes(admin, pool)
 	RegisterDashboardRoutes(admin, pool)
 	RegisterReportExportRoutes(admin, pool)

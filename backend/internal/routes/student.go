@@ -8,11 +8,10 @@ import (
 	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
-	"github.com/openschool-org/openschool/internal/services"
 )
 
 func RegisterStudentRoutes(admin *gin.RouterGroup, teacherOrAdmin *gin.RouterGroup, houseAssignments ports.HouseAssignments, pool *pgxpool.Pool) {
-	auditSvc := services.NewAuditService(repositories.NewAuditRepository(pool))
+	auditSvc := newAuditRecorder(pool)
 	studentStore := peoplemodule.NewStudentStore(pool)
 	schoolRepo := repositories.NewSchoolRepository(pool)
 	service := peoplemodule.NewStudentService(studentStore, newIdentityProvider(), houseAssignments, auditSvc, func(ctx context.Context) (string, error) {

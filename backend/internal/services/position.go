@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/openschool-org/openschool/db/sqlc"
 	"github.com/openschool-org/openschool/internal/models"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
@@ -18,10 +19,10 @@ var ErrPositionNotFound = errors.New("position assignment not found")
 type PositionService struct {
 	repo            *repositories.PositionRepository
 	sectionHeadRepo *repositories.SectionHeadRepository
-	audit           *AuditService
+	audit           ports.AuditRecorder
 }
 
-func NewPositionService(repo *repositories.PositionRepository, sectionHeadRepo *repositories.SectionHeadRepository, audit *AuditService) *PositionService {
+func NewPositionService(repo *repositories.PositionRepository, sectionHeadRepo *repositories.SectionHeadRepository, audit ports.AuditRecorder) *PositionService {
 	return &PositionService{repo: repo, sectionHeadRepo: sectionHeadRepo, audit: audit}
 }
 

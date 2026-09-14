@@ -12,6 +12,7 @@ import (
 	"github.com/openschool-org/openschool/internal/models"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
+	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
 	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
 	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
 	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
@@ -48,7 +49,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterCoreModule(groups.Admin, groups.Protected, pool)
 	curriculummodule.RegisterMediumRoutes(groups.Admin, groups.Protected, pool)
 	curriculummodule.RegisterLevelRoutes(groups.Admin, groups.Protected, pool)
-	auditService := services.NewAuditService(repositories.NewAuditRepository(pool))
+	auditService := auditmodule.NewService(auditmodule.NewRepository(pool))
+	auditmodule.RegisterRoutes(groups.Admin, auditService)
 	houseService := schoolmodule.NewHouseService(pool, auditService)
 	schoolmodule.RegisterHouseRoutes(groups.Admin, groups.TeacherOrAdmin, houseService)
 	schoolmodule.RegisterSchoolRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Protected, pool)

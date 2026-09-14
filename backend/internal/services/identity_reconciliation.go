@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/repositories"
 )
 
@@ -23,10 +24,10 @@ type OrphanedIdentity struct {
 type IdentityReconciliationService struct {
 	idp   identity.Provider
 	users *repositories.UserRepository
-	audit *AuditService
+	audit ports.AuditRecorder
 }
 
-func NewIdentityReconciliationService(idp identity.Provider, users *repositories.UserRepository, audit *AuditService) *IdentityReconciliationService {
+func NewIdentityReconciliationService(idp identity.Provider, users *repositories.UserRepository, audit ports.AuditRecorder) *IdentityReconciliationService {
 	return &IdentityReconciliationService{idp: idp, users: users, audit: audit}
 }
 

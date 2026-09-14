@@ -106,21 +106,22 @@ cmd/api
 | DONE | Student attendance | Migrated sessions, records, authorization, 24-hour locking, correction auditing, absence notifications, self-service reads, and report reads | `internal/modules/attendance` |
 | DONE | Staff attendance | Migrated daily marking, directories, monthly summaries, staff histories, and teacher self-service attendance | `internal/modules/attendance` |
 | DONE | Notifications | Migrated composer authorization, recipient resolution, drafts, delivery, inbox, unread/archive state, and system delivery | `internal/modules/notifications` |
+| DONE | Audit | Migrated append-only audit recording, admin audit-log reads, and the shared recorder port | `internal/modules/audit`, `internal/ports` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Twenty-eight have now been migrated out of the legacy service layer.
+sqlc. Twenty-nine have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 28 |
-| Remaining legacy sqlc service files | 7 |
+| Migrated legacy sqlc service files | 29 |
+| Remaining legacy sqlc service files | 6 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 65% |
+| Feature migration estimate | Approximately 70% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -154,7 +155,7 @@ sqlc. Twenty-eight have now been migrated out of the legacy service layer.
 | TODO | Prefects | Prefect assignments and student leadership | Academic-year scoped |
 | TODO | Societies | Society management and membership | Includes student access |
 | TODO | Reports | Report export and report-facing queries | Preserve existing output formats |
-| TODO | Audit | Audit-log service and endpoints | Cross-cutting capability; should become a narrow port |
+| DONE | Audit | None | Recording is exposed through a narrow shared port; admin reads and persistence are module-owned |
 | TODO | Dashboard | Dashboard aggregates and house distributions | Depends on people and attendance data |
 | TODO | Search | Cross-entity search | Should be isolated behind a search capability |
 | TODO | Automation | Jobs, scheduler, and admin job endpoints | Keep process lifecycle ownership in `internal/app` |
@@ -206,7 +207,8 @@ The architecture test also verifies:
    as the People module.
 5. Migrate Student, Parent, and Teacher self-service endpoints.
 6. Student and Staff Attendance are complete.
-7. Migrate Notifications, Audit, Reports, Dashboard, Search, and Automation.
+7. Notifications and Audit are complete; migrate Reports, Dashboard, Search,
+   and Automation.
 8. Remove compatibility repositories and the legacy route bridge.
 9. Run full integration/API tests and update this document before deleting it.
 

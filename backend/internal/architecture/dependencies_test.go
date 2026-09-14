@@ -16,15 +16,12 @@ const modulePath = "github.com/openschool-org/openschool/"
 // sqlcServiceDebt is a ratchet: existing files may be migrated away from sqlc,
 // but new service-layer imports are rejected. Remove entries as modules move.
 var sqlcServiceDebt = map[string]bool{
-	"services/audit.go": true, "services/class.go": true,
-	"services/curriculum.go": true, "services/curriculum_preset.go": true,
-	"services/position.go": true,
-	"services/prefect.go":  true, "services/promotion.go": true, "services/report_export.go": true,
-	"services/section_head.go": true, "services/setup.go": true,
-	"services/society.go":             true,
-	"services/term_mark.go":           true,
-	"services/timetable/generate.go":  true,
-	"services/timetable/timetable.go": true,
+	"services/position.go":      true,
+	"services/prefect.go":       true,
+	"services/report_export.go": true,
+	"services/section_head.go":  true,
+	"services/setup.go":         true,
+	"services/society.go":       true,
 }
 
 func TestDependencyBoundaries(t *testing.T) {
