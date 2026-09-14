@@ -20,7 +20,7 @@ type UpdateSocietyRequest struct {
 // AssignSocietyMemberRequest appoints (or re-appoints, changing role) a
 // student to a society's roster. The society is taken from the URL path,
 // and the membership's academic_year_id is always the society's own year
-// (SocietyService.AssignMember) — never client-supplied, so a caller can't
+// (studentleadership.Service.AssignSocietyMember) — never client-supplied, so a caller can't
 // create a membership row whose year doesn't match its society. Only the
 // society's Teacher-in-Charge (or an admin) may call this — enforced in the
 // service layer, not here. Role must be one of: leader, deputy_leader,

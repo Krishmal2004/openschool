@@ -109,21 +109,23 @@ cmd/api
 | DONE | Audit | Migrated append-only audit recording, admin audit-log reads, and the shared recorder port | `internal/modules/audit`, `internal/ports` |
 | DONE | Leadership positions | Migrated Principal and Vice Principal appointments, scoped grants, rank resolution, auditing, and leadership overview | `internal/modules/leadership` |
 | DONE | Section heads | Migrated grade/stream TIC assignment, listing, deletion, and leadership-scope resolution | `internal/modules/leadership` |
+| DONE | Prefects | Migrated academic-year appointments, rank updates, archive years, student history, and routes | `internal/modules/studentleadership` |
+| DONE | Societies | Migrated society CRUD, archives, rosters, TIC authorization, student memberships, and teacher self-service reads | `internal/modules/studentleadership` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
 ## 4. Migration progress
 
 The architecture guard originally tracked 35 legacy service files importing
-sqlc. Thirty-one have now been migrated out of the legacy service layer.
+sqlc. Thirty-three have now been migrated out of the legacy service layer.
 
 | Measure | Current status |
 |---|---:|
 | Original legacy sqlc service files | 35 |
-| Migrated legacy sqlc service files | 31 |
-| Remaining legacy sqlc service files | 4 |
+| Migrated legacy sqlc service files | 33 |
+| Remaining legacy sqlc service files | 2 |
 | Foundation and composition work | DONE |
-| Feature migration estimate | Approximately 75% |
+| Feature migration estimate | Approximately 85% |
 
 > Note: the exact service-file debt is the authoritative metric. Run
 > `rg -l 'db/sqlc' internal/services | sort` from `backend/` to inspect it.
@@ -154,8 +156,8 @@ sqlc. Thirty-one have now been migrated out of the legacy service layer.
 | DONE | Notifications | None | Composer, scoped recipients, drafts, delivery, inbox state, and system-triggered delivery are module-owned |
 | DONE | Positions | None | Appointments, scoped grants, rank resolution, audit recording, overview, and routes are module-owned |
 | DONE | Section heads | None | Grade/stream assignments, reads, deletion, and leadership scope are module-owned |
-| TODO | Prefects | Prefect assignments and student leadership | Academic-year scoped |
-| TODO | Societies | Society management and membership | Includes student access |
+| DONE | Prefects | None | Appointments, rank updates, archive years, student history, and routes are module-owned |
+| DONE | Societies | None | CRUD, roster authorization, membership history, and teacher self-service are module-owned |
 | TODO | Reports | Report export and report-facing queries | Preserve existing output formats |
 | DONE | Audit | None | Recording is exposed through a narrow shared port; admin reads and persistence are module-owned |
 | TODO | Dashboard | Dashboard aggregates and house distributions | Depends on people and attendance data |
@@ -211,8 +213,9 @@ The architecture test also verifies:
 6. Student and Staff Attendance are complete.
 7. Notifications and Audit are complete; migrate Reports, Dashboard, Search,
    and Automation.
-8. Positions and Section Heads are complete; migrate Prefects and Societies.
-9. Remove compatibility repositories and the legacy route bridge.
+8. Positions, Section Heads, Prefects, and Societies are complete.
+9. Migrate School Setup and Report Export, then remove compatibility
+   repositories and the legacy route bridge.
 10. Run full integration/API tests and update this document before deleting it.
 
 ## 9. Definition of complete

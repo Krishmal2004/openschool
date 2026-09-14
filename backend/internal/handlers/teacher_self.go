@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/openschool-org/openschool/internal/middleware"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
+	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/services"
@@ -18,7 +19,7 @@ type TeacherSelfHandler struct {
 	teacherSelf *services.TeacherSelfService
 	school      ports.CurrentAcademicYearReader
 	positions   *leadershipmodule.Service
-	societies   *services.SocietyService
+	societies   *studentleadershipmodule.Service
 	dashboard   *services.DashboardService
 	timetables  *timetablemodule.Reader
 }
@@ -28,7 +29,7 @@ func NewTeacherSelfHandler(
 	teacherSelf *services.TeacherSelfService,
 	school ports.CurrentAcademicYearReader,
 	positions *leadershipmodule.Service,
-	societies *services.SocietyService,
+	societies *studentleadershipmodule.Service,
 	dashboard *services.DashboardService,
 	timetables *timetablemodule.Reader,
 ) *TeacherSelfHandler {
@@ -141,9 +142,9 @@ func (h *TeacherSelfHandler) Society(c *gin.Context) {
 		return
 	}
 
-	society, err := h.societies.GetForTeacher(c.Request.Context(), teacherID, yearID)
+	society, err := h.societies.GetSocietyForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
-		if errors.Is(err, services.ErrSocietyNotFound) {
+		if errors.Is(err, studentleadershipmodule.ErrSocietyNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "you are not the Teacher-in-Charge of any society this year"})
 			return
 		}

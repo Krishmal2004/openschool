@@ -18,6 +18,7 @@ import (
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
+	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
 	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
 	"github.com/openschool-org/openschool/internal/repositories"
 	"github.com/openschool-org/openschool/internal/routes"
@@ -54,6 +55,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	auditmodule.RegisterRoutes(groups.Admin, auditService)
 	leadershipService := leadershipmodule.NewService(leadershipmodule.NewRepository(pool), auditService)
 	leadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, leadershipService)
+	studentLeadershipService := studentleadershipmodule.NewService(studentleadershipmodule.NewRepository(pool))
+	studentleadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, studentLeadershipService)
 	houseService := schoolmodule.NewHouseService(pool, auditService)
 	schoolmodule.RegisterHouseRoutes(groups.Admin, groups.TeacherOrAdmin, houseService)
 	schoolmodule.RegisterSchoolRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Protected, pool)
@@ -86,7 +89,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) *jobs.Scheduler {
 	routes.RegisterAdminOperationsModule(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, pool)
 
 	timetableReader := timetablemodule.NewReader(pool)
-	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, leadershipService, pool)
+	routes.RegisterParentAndTeacherSelfModule(groups.Parent, groups.Teacher, timetableReader, leadershipService, studentLeadershipService, pool)
 	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
 
 	return routes.RegisterAutomationModule(groups.Admin, pool)

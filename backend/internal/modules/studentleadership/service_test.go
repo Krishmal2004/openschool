@@ -1,0 +1,119 @@
+package studentleadership
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/openschool-org/openschool/internal/models"
+)
+
+type studentLeadershipStore struct {
+	store
+	society          Society
+	societyErr       error
+	teacherID        uuid.UUID
+	teacherErr       error
+	member           SocietyMember
+	memberSocietyID  uuid.UUID
+	memberStudentID  uuid.UUID
+	memberYearID     uuid.UUID
+	removedSocietyID uuid.UUID
+	removedMemberID  uuid.UUID
+	removeCount      int64
+	prefect          Prefect
+	prefectYearID    uuid.UUID
+	prefectStudentID uuid.UUID
+	prefectRank      string
+}
+
+func (s *studentLeadershipStore) getSociety(context.Context, uuid.UUID) (Society, error) {
+	return s.society, s.societyErr
+}
+
+func (s *studentLeadershipStore) teacherIDByUser(context.Context, uuid.UUID) (uuid.UUID, error) {
+	return s.teacherID, s.teacherErr
+}
+
+func (s *studentLeadershipStore) upsertSocietyMember(_ context.Context, societyID, studentID uuid.UUID, _ string, yearID uuid.UUID) (SocietyMember, error) {
+	s.memberSocietyID, s.memberStudentID, s.memberYearID = societyID, studentID, yearID
+	return s.member, nil
+}
+
+func (s *studentLeadershipStore) removeSocietyMember(_ context.Context, societyID, memberID uuid.UUID) (int64, error) {
+	s.removedSocietyID, s.removedMemberID = societyID, memberID
+	return s.removeCount, nil
+}
+
+func (s *studentLeadershipStore) upsertPrefect(_ context.Context, yearID, studentID uuid.UUID, rank string) (Prefect, error) {
+	s.prefectYearID, s.prefectStudentID, s.prefectRank = yearID, studentID, rank
+	return s.prefect, nil
+}
+
+func TestAssignPrefectParsesAndPassesAppointment(t *testing.T) {
+	store := &studentLeadershipStore{prefect: Prefect{ID: uuid.New()}}
+	yearID, studentID := uuid.New(), uuid.New()
+	result, err := NewService(store).AssignPrefect(context.Background(), models.AssignPrefectRequest{
+		AcademicYearID: yearID.String(), StudentID: studentID.String(), Rank: "head",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.ID != store.prefect.ID || store.prefectYearID != yearID || store.prefectStudentID != studentID || store.prefectRank != "head" {
+		t.Fatalf("unexpected appointment: result=%#v year=%s student=%s rank=%s", result, store.prefectYearID, store.prefectStudentID, store.prefectRank)
+	}
+}
+
+func TestAssignSocietyMemberUsesAuthoritativeSocietyYear(t *testing.T) {
+	societyID, yearID, teacherID, userID, studentID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	store := &studentLeadershipStore{
+		society:   Society{ID: societyID, AcademicYearID: yearID, TeacherInChargeID: teacherID},
+		teacherID: teacherID,
+		member:    SocietyMember{ID: uuid.New()},
+	}
+	result, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: userID, Role: models.RoleTeacher}, societyID, models.AssignSocietyMemberRequest{StudentID: studentID.String(), Role: "leader"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.ID != store.member.ID || store.memberSocietyID != societyID || store.memberStudentID != studentID || store.memberYearID != yearID {
+		t.Fatalf("unexpected membership: result=%#v society=%s student=%s year=%s", result, store.memberSocietyID, store.memberStudentID, store.memberYearID)
+	}
+}
+
+func TestAdminCanManageSocietyWithoutTeacherProfile(t *testing.T) {
+	societyID := uuid.New()
+	store := &studentLeadershipStore{society: Society{ID: societyID, AcademicYearID: uuid.New()}, teacherErr: errors.New("teacher lookup must not run")}
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: models.RoleAdmin}, societyID, models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTeacherCannotManageAnotherSociety(t *testing.T) {
+	store := &studentLeadershipStore{society: Society{TeacherInChargeID: uuid.New()}, teacherID: uuid.New()}
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{ID: uuid.New(), Role: models.RoleTeacher}, uuid.New(), models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	if !errors.Is(err, ErrNotTeacherInCharge) {
+		t.Fatalf("error=%v, want ErrNotTeacherInCharge", err)
+	}
+}
+
+func TestMissingSocietyMapsToDomainError(t *testing.T) {
+	store := &studentLeadershipStore{societyErr: pgx.ErrNoRows}
+	_, err := NewService(store).AssignSocietyMember(context.Background(), Actor{Role: models.RoleAdmin}, uuid.New(), models.AssignSocietyMemberRequest{StudentID: uuid.NewString(), Role: "member"})
+	if !errors.Is(err, ErrSocietyNotFound) {
+		t.Fatalf("error=%v, want ErrSocietyNotFound", err)
+	}
+}
+
+func TestRemoveMemberKeepsDeleteScopedToSociety(t *testing.T) {
+	societyID, memberID := uuid.New(), uuid.New()
+	store := &studentLeadershipStore{society: Society{ID: societyID}, removeCount: 1}
+	if err := NewService(store).RemoveSocietyMember(context.Background(), Actor{Role: models.RoleAdmin}, societyID, memberID); err != nil {
+		t.Fatal(err)
+	}
+	if store.removedSocietyID != societyID || store.removedMemberID != memberID {
+		t.Fatalf("delete was not scoped correctly: society=%s member=%s", store.removedSocietyID, store.removedMemberID)
+	}
+}
