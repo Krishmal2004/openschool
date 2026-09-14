@@ -30,7 +30,6 @@ func RegisterPeopleModule(admin, teacherOrAdmin, studentAccess *gin.RouterGroup,
 	RegisterGuardianRoutes(admin, teacherOrAdmin, studentAccess, pool)
 	RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin, pool)
 	RegisterStudentPortfolioRoutes(teacherOrAdmin, studentAccess, pool)
-	RegisterSearchRoutes(admin, pool)
 }
 
 func RegisterSelfServiceModule(student *gin.RouterGroup, pool *pgxpool.Pool) {

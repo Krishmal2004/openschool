@@ -20,7 +20,6 @@ var legacyRepositoryDebt = map[string]bool{
 	"repositories/job_checks.go":    true,
 	"repositories/job_scheduler.go": true,
 	"repositories/school.go":        true,
-	"repositories/search.go":        true,
 	"repositories/student.go":       true,
 	"repositories/teacher.go":       true,
 	"repositories/user.go":          true,
