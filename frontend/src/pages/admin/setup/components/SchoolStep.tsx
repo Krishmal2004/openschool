@@ -16,7 +16,7 @@ interface Props {
 export default function SchoolStep({ school, setSchool, schoolTouched, gradeRangeInvalid }: Props) {
   return (
     <StepShell icon={Enterprise} title="School details" subtitle="The basics - you can fill in the rest later from Settings.">
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="os-school-details-form">
         <TextInput
           id="ss-name"
           labelText="School Name"
@@ -26,7 +26,7 @@ export default function SchoolStep({ school, setSchool, schoolTouched, gradeRang
           invalid={schoolTouched && !school.name.trim()}
           invalidText="School name is required."
         />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div className="os-school-details-form__two-column">
           <TextInput
             id="ss-phone"
             labelText="Phone"
@@ -71,7 +71,7 @@ export default function SchoolStep({ school, setSchool, schoolTouched, gradeRang
           <SelectItem value="boys" text="Boys" />
           <SelectItem value="girls" text="Girls" />
         </Select>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div className="os-school-details-form__two-column">
           <NumberInput
             id="ss-grade-from"
             label="Lowest grade"

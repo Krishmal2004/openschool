@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 )
 
 // StringOrSlice unmarshals a JSON value that may be either a single string or an array of strings.
@@ -96,6 +97,12 @@ func (t *stripX5CTransport) RoundTrip(req *http.Request) (*http.Response, error)
 
 // InitJWKS fetches and caches the JWKS key set at jwksURL, with a transport that skips TLS verification in development and strips x5c from every response.
 func InitJWKS(jwksURL string) error {
+	if strings.TrimSpace(jwksURL) == "" {
+		return errors.New("THUNDERID_JWKS_URL is required")
+	}
+	if strings.TrimSpace(idp.Issuer()) == "" {
+		return errors.New("THUNDERID_ISSUER is required")
+	}
 	baseTransport := http.DefaultTransport
 	if os.Getenv("APP_ENV") == "development" {
 		baseTransport = &http.Transport{
@@ -144,9 +151,9 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		parserOpts := []jwt.ParserOption{
 			jwt.WithValidMethods([]string{"RS256"}),
-			jwt.WithIssuer(identity.Issuer()),
+			jwt.WithIssuer(idp.Issuer()),
 		}
-		if aud := identity.Audience(); aud != "" {
+		if aud := idp.Audience(); aud != "" {
 			parserOpts = append(parserOpts, jwt.WithAudience(aud))
 		}
 

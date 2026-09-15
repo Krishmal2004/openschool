@@ -10,11 +10,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/openschool-org/openschool/internal/app"
 	"github.com/openschool-org/openschool/internal/config"
 	"github.com/openschool-org/openschool/internal/database"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/middleware"
-	"github.com/openschool-org/openschool/internal/routes"
 
 	_ "github.com/openschool-org/openschool/docs"
 	swaggerFiles "github.com/swaggo/files"
@@ -72,7 +72,7 @@ func main() {
 	log.Println("database connected")
 
 	// init JWKS for JWT validation
-	jwksURL := identity.JWKSURL()
+	jwksURL := idp.JWKSURL()
 	if err := middleware.InitJWKS(jwksURL); err != nil {
 		log.Fatalf("failed to init JWKS: %v", err)
 	}
@@ -99,7 +99,7 @@ func main() {
 	// Generous per-IP rate limit prevents throttling users behind shared school networks.
 	r.Use(middleware.RateLimit(envFloat("API_RATE_LIMIT_RPS", 30), envInt("API_RATE_LIMIT_BURST", 60)))
 
-	scheduler := routes.Setup(r, db)
+	scheduler := app.Setup(r, db)
 	scheduler.Start()
 	defer scheduler.Stop()
 

@@ -8,7 +8,7 @@ THUNDERID_COMPOSE=docker compose -f quickstart-compose.yml -f compose.override.y
 .PHONY: help setup \
         dev dev-backend dev-frontend \
         build build-backend build-frontend \
-        lint lint-backend lint-frontend \
+        lint lint-backend lint-frontend test-integration-backend \
         migrate migrate-down sqlc \
         thunderid-up thunderid-down thunderid-logs thunderid-reset \
         down clean
@@ -21,6 +21,7 @@ help:
 	@echo "  dev-frontend    - Run only the Vite dev server (:5173)"
 	@echo "  build           - Build backend binary + frontend production bundle"
 	@echo "  lint            - Lint backend (go vet) and frontend (eslint)"
+	@echo "  test-integration-backend - Run database-backed backend integration tests"
 	@echo "  migrate         - Apply DB migrations"
 	@echo "  migrate-down    - Roll back the last migration"
 	@echo "  sqlc            - Regenerate typed Go code from db/queries/"
@@ -60,6 +61,9 @@ lint-backend:
 
 lint-frontend:
 	cd $(FRONTEND_DIR) && pnpm lint
+
+test-integration-backend:
+	cd $(BACKEND_DIR) && go test -count=1 -tags=integration ./internal/modules/setup ./internal/modules/auth ./internal/modules/people ./internal/modules/academics ./internal/modules/attendance ./internal/modules/timetable ./internal/modules/notifications ./internal/modules/identity ./internal/modules/school ./internal/modules/curriculum ./internal/modules/leadership ./internal/modules/studentleadership ./internal/modules/search ./internal/modules/dashboard ./internal/modules/reports ./internal/modules/selfservice ./internal/modules/automation ./internal/modules/audit
 
 migrate:
 	cd $(BACKEND_DIR) && migrate -path db/migrations \

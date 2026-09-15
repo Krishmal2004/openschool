@@ -11,7 +11,7 @@ export default function StepShell({
 }) {
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
+      <div className="os-wizard-step-header">
         <div
           style={{
             width: "2.5rem",

@@ -113,11 +113,11 @@ SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC
 `
 
 // Ad-hoc, read-mostly queries backing the background agents in
-// internal/jobs/*.go (five consolidated agents, each running several of
-// these checks concurrently — see internal/jobs/agent_*.go). Grouped in
+// internal/modules/automation (five consolidated algorithms, each running
+// several checks concurrently in its own clearly named file). Grouped in
 // one file since each is a one-off used by exactly one check, not a full
 // entity's CRUD.
-// used by internal/jobs to resolve who gets notified, and to attribute
+// used by the Automation module to resolve who gets notified, and to attribute
 // system-triggered notifications' created_by (NOT NULL FK to users).
 func (q *Queries) ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, listAdminUserIDs)
