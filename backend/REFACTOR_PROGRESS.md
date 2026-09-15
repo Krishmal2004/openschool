@@ -131,6 +131,13 @@ cmd/api
 | DONE | People integration slice | Added real-database student provisioning, duplicate rollback, role-assignment rollback, and student/guardian access coverage | `internal/modules/people` |
 | DONE | People identity integration | Added real-database teacher provisioning and guardian create/link/login workflows with uniqueness and rollback coverage | `internal/modules/people` |
 | DONE | Academics integration slice | Added enrollment validation, replacement, locking, promotion preview, transactional reassignment, and target-year validation coverage | `internal/modules/academics` |
+| DONE | Attendance integration slice | Added real-database student sessions and records, teacher scope, lock/correction auditing, guardian absence notification, staff upserts, directories, and summaries | `internal/modules/attendance` |
+| DONE | Term marks integration slice | Added real-database mark entry, absent-mark upserts, teacher subject authorization, enrollment rejection, class/student reads, and deletion coverage | `internal/modules/academics` |
+| DONE | Timetable integration slice | Added real-database draft entry, validation, submit/approve/publish, status history, notification, revision copy, and draft-lock coverage | `internal/modules/timetable` |
+| DONE | Notifications integration slice | Added real-database draft/update/send, class-recipient materialization, inbox, unread/read statistics, archive state, resend rejection, and draft deletion coverage | `internal/modules/notifications` |
+| DONE | Identity reconciliation integration | Added real-database orphan comparison, stale/local identity deletion protection, provider deletion, and persisted audit coverage | `internal/modules/identity` |
+| DONE | School configuration integration | Added real-database school, academic-year, grade, term, current-period, protected deletion, house balancing, and in-use constraint coverage | `internal/modules/school` |
+| DONE | Curriculum integration slice | Added real-database medium, level, selection-group, subject-link/tree, duplication, protected deletion, preset preview, apply, and idempotency coverage | `internal/modules/curriculum` |
 
 ## 4. Migration progress
 

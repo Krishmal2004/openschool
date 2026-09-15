@@ -63,7 +63,11 @@ func (r *presetRepository) withPresetTx(ctx context.Context, commit bool, fn fun
 type presetTxRepository struct{ queries *db.Queries }
 
 func (r *presetTxRepository) createSubject(ctx context.Context, v presetSubject) (presetSubjectRow, error) {
-	row, err := r.queries.CreateSubject(ctx, db.CreateSubjectParams{Name: v.Name, Code: v.Code, Type: curriculumOptionalText(v.Type)})
+	var maxMarks pgtype.Numeric
+	if err := maxMarks.Scan("100.00"); err != nil {
+		return presetSubjectRow{}, fmt.Errorf("create default subject mark limit: %w", err)
+	}
+	row, err := r.queries.CreateSubject(ctx, db.CreateSubjectParams{Name: v.Name, Code: v.Code, Type: curriculumOptionalText(v.Type), MaxMarks: maxMarks})
 	return presetSubjectRow{ID: row.ID, Code: row.Code}, err
 }
 func (r *presetTxRepository) listLevels(ctx context.Context) ([]Level, error) {

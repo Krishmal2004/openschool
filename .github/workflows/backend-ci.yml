@@ -69,7 +69,7 @@ jobs:
         run: go test ./...
 
       - name: Database integration tests
-        run: go test -count=1 -tags=integration ./internal/modules/setup ./internal/modules/auth ./internal/modules/people ./internal/modules/academics
+        run: go test -count=1 -tags=integration ./internal/modules/setup ./internal/modules/auth ./internal/modules/people ./internal/modules/academics ./internal/modules/attendance ./internal/modules/timetable ./internal/modules/notifications ./internal/modules/identity ./internal/modules/school ./internal/modules/curriculum
 
       - name: Vulnerability scan (govulncheck)
         # Informational only for now: this currently reports real findings
