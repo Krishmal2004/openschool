@@ -143,6 +143,8 @@ cmd/api
 | DONE | Search integration slice | Added real-database cross-directory global-search coverage for students, teachers, guardians, and non-academic staff | `internal/modules/search` |
 | DONE | Dashboard integration slice | Added real-database dashboard aggregation coverage for current-year student, grade, class, and timetable totals | `internal/modules/dashboard` |
 | DONE | Reports integration slice | Added real-database attendance and marks PDF export coverage | `internal/modules/reports` |
+| DONE | Self-service integration slice | Added real-database authenticated student portal profile and current-class lookup coverage | `internal/modules/selfservice` |
+| DONE | Automation integration slice | Added real-database job discovery, persisted enablement, and protected system-health setting coverage | `internal/modules/automation` |
 
 ## 4. Migration progress
 
