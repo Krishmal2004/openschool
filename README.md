@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="frontend/public/w-favicon.webp" alt="OpenSchool" width="120" />
+  <img src="frontend/public/w-favicon.webp" alt="OpenSchool" width="96" />
 </p>
 
 <h1 align="center">OpenSchool</h1>
 
 <p align="center">
-  Digital infrastructure for Sri Lankan government schools.
+  Open digital platform for Sri Lankan schools.
 </p>
 
 <p align="center">
@@ -17,88 +17,70 @@
 
 ---
 
-## What is this about
+## About OpenSchool
 
-OpenSchool is a self-hosted school management system built for the way Sri
-Lankan schools actually run - houses, grades, streams, terms, attendance,
-guardians, and the admin/teacher/student/parent roles around them. It's a
-monorepo with a Go REST API backend and a React (Carbon Design System)
-frontend, authenticating through [ThunderID](https://github.com/thunderid).
+OpenSchool is an open-source school management platform for Sri Lankan government schools. It brings everyday school work into one place: student and staff records, classes, attendance, curriculum, timetables, marks, notifications, reports, and school administration.
 
-See [`docs/FEATURES.md`](docs/FEATURES.md) for the full, current feature
-list, or [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's built.
+Many schools still depend on paper records or several disconnected tools. This makes information harder to find, update, and share safely. OpenSchool is built to give schools one clear system for managing that work.
 
-## System at a glance
+OpenSchool can be self-hosted, so a school or public-sector organisation can run it on infrastructure it controls. Student and administrative data can remain under local control instead of depending on a commercial foreign-hosted service. It is licensed under Apache License 2.0, with no licence fees and no vendor lock-in.
 
-One Go (Gin) backend, one React (Carbon Design System) frontend, one
-Postgres database, one external identity provider (ThunderID) - no queue,
-cache, or extra services to operate. The backend groups its REST endpoints
-into feature modules (People & Academics, Daily Operations, Engagement,
-Automation), each role-gated per route. See
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full component
-breakdown, data model, and layering within the backend.
+## Features
 
-## Who uses what
+- School setup, academic years, grades, classes, houses, and streams
+- Student, teacher, guardian, and non-academic staff records
+- Daily student and staff attendance
+- Subjects, curriculum choices, term marks, and promotions
+- Timetable planning, review, and publishing
+- In-app notifications, reports, dashboards, and automation checks
+- Separate portals for administrators, teachers, students, and parents
 
-There's one sign-in page - which portal a user lands on is decided
-entirely by the `roles` claim on their token, never a separate URL per
-role:
+Read the [feature guide](docs/FEATURES.md) for the full list.
 
-- **Admin** - people, school setup & curriculum, grades/classes/timetable,
-  attendance oversight, promotion & reports, automation.
-- **Teacher** - their classes & subjects, marking attendance, recording
-  marks, their timetable, and (Section Head and above) timetable review.
-- **Student** - their own profile, attendance history, term marks, and
-  timetable.
-- **Parent** - their linked children's attendance, marks, and timetable.
+## Built with
 
-Every portal also has its own Notification Center. A parent or student can
-only ever see their own (or their own child's) data - enforced
-server-side, not just hidden in the UI. See
-[`docs/FEATURES.md`](docs/FEATURES.md) § Portals at a glance for the full
-per-role breakdown, or [`docs/SETUP.md`](docs/SETUP.md) to walk through
-every module hands-on.
+| Part | Technology |
+| --- | --- |
+| Backend | Go and Gin |
+| Frontend | React, TypeScript, Vite, and Carbon Design System |
+| Database | PostgreSQL |
+| Identity and access management | [ThunderID](https://github.com/thunderid) |
 
-## Getting started
+The backend is a modular monolith: one application, one database, and clear feature modules. See the [architecture guide](docs/ARCHITECTURE.md) for more detail.
 
-New to the project? Start here, in order:
+## Get started
 
-1. [`CONTRIBUTING.md`](CONTRIBUTING.md) - set up the full local dev
-   environment (Postgres, ThunderID, backend, frontend) from scratch.
-2. [`docs/THUNDERID.md`](docs/THUNDERID.md) - one-time identity-provider
-   configuration, if you haven't already got a ThunderID instance running.
-3. [`docs/SETUP.md`](docs/SETUP.md) - walk through first-run admin
-   registration, the school setup wizard, and every module hands-on.
+You need Go, Node.js with pnpm, Docker, and Docker Compose.
+
+```bash
+git clone https://github.com/openschool-org/openschool.git
+cd openschool
+```
+
+Then follow these guides:
+
+1. [Set up ThunderID](docs/THUNDERID.md).
+2. [Set up and run OpenSchool](docs/SETUP.md).
+3. Open `http://localhost:5173` and create the first administrator account.
 
 ## Documentation
 
-| Doc | What's in it |
+| Guide | Use it for |
 | --- | --- |
-| [`docs/FEATURES.md`](docs/FEATURES.md) | What OpenSchool does today, module by module |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Component layout, layering, data model, external interfaces, non-functional design |
-| [`docs/adr/`](docs/adr/) | Architecture Decision Records - the *why* behind non-obvious choices |
-| [`docs/SETUP.md`](docs/SETUP.md) | End-to-end operational setup walkthrough |
-| [`docs/THUNDERID.md`](docs/THUNDERID.md) | Identity-provider configuration |
-| [`docs/plan.md`](docs/plan.md) | Historical, phase-by-phase build log this project grew from |
-| [`audit.md`](audit.md) | Standing code-quality and security audit, with severity |
-| [`CLAUDE.md`](CLAUDE.md) | Quick architecture reference for AI coding assistants / new contributors |
+| [Setup](docs/SETUP.md) | Running OpenSchool locally and setting up a new school |
+| [Features](docs/FEATURES.md) | Understanding what the system can do |
+| [Architecture](docs/ARCHITECTURE.md) | Understanding the project structure and data model |
+| [Architecture decisions](docs/adr/) | Understanding why key technical decisions were made |
+| [Contributing](CONTRIBUTING.md) | Setting up a development environment and opening a pull request |
 
 ## Contributing
 
-Contributions are welcome - see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
-the local dev setup and PR workflow. Please also read the
-[Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request, and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Security
 
-Found a security issue? Please **don't** open a public GitHub issue - see
-[`SECURITY.md`](SECURITY.md) for how to report it privately.
-
-## Maintainers
-
-This project is maintained by its open-source contributors - see the
-[contributors graph](https://github.com/openschool-org/openschool/graphs/contributors).
+If you find a security issue, please do not report it in a public issue. Follow [SECURITY.md](SECURITY.md).
 
 ## License
 
-[Apache 2.0](LICENSE) - see the [`LICENSE`](LICENSE) file for the full text.
+OpenSchool is licensed under the [Apache License 2.0](LICENSE).
