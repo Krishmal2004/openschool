@@ -130,6 +130,7 @@ cmd/api
 | DONE | Integration foundation | Added isolated migrated PostgreSQL test databases and setup/auth API integration coverage in CI | `internal/testutil/testdb`, backend CI |
 | DONE | People integration slice | Added real-database student provisioning, duplicate rollback, role-assignment rollback, and student/guardian access coverage | `internal/modules/people` |
 | DONE | People identity integration | Added real-database teacher provisioning and guardian create/link/login workflows with uniqueness and rollback coverage | `internal/modules/people` |
+| DONE | Academics integration slice | Added enrollment validation, replacement, locking, promotion preview, transactional reassignment, and target-year validation coverage | `internal/modules/academics` |
 
 ## 4. Migration progress
 

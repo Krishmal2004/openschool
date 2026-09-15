@@ -63,7 +63,7 @@ lint-frontend:
 	cd $(FRONTEND_DIR) && pnpm lint
 
 test-integration-backend:
-	cd $(BACKEND_DIR) && go test -count=1 -tags=integration ./internal/modules/setup ./internal/modules/auth ./internal/modules/people
+	cd $(BACKEND_DIR) && go test -count=1 -tags=integration ./internal/modules/setup ./internal/modules/auth ./internal/modules/people ./internal/modules/academics
 
 migrate:
 	cd $(BACKEND_DIR) && migrate -path db/migrations \
