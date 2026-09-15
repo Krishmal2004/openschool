@@ -185,12 +185,11 @@ func (s *generationService) generate(ctx context.Context, request GenerationRequ
 				}
 				teacherUnavailable[teacher.TeacherID] = map[generationSlot]bool{}
 				for _, slot := range blocked {
-					teacherUnavailable[teacher.TeacherID][generationSlot{slot.Day, slot.Period}] = true
+					teacherUnavailable[teacher.TeacherID][generationSlot(slot)] = true
 				}
 			}
 			for block := int32(0); block < req.DoubleBlocks; block++ {
 				task := generationTask{ClassID: class.ID, SubjectID: req.SubjectID, SubjectName: req.SubjectName, TeacherID: teacher.TeacherID, TeacherName: teacher.TeacherName, Lab: block*2 < req.LabPeriods, Double: true, HomeClassroomID: class.HomeClassroomID}
-				placements[task.ClassID] = placements[task.ClassID]
 				required[class.ID] += 2
 				placed, err := s.placeTask(ctx, task, slots, doubles, teacherBusy, teacherUnavailable, classroomBusy, classBusy, usedDays, &placements)
 				if err != nil {

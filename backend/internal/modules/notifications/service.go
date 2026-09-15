@@ -644,11 +644,7 @@ func (s *NotificationService) ListMine(ctx context.Context, userID uuid.UUID) ([
 	}
 	result := make([]MyNotificationResponse, len(rows))
 	for i, row := range rows {
-		result[i] = MyNotificationResponse{
-			RecipientID: row.RecipientID, NotificationID: row.NotificationID, Title: row.Title, Message: row.Message,
-			Category: row.Category, Priority: row.Priority, SenderName: row.SenderName, SentAt: row.SentAt,
-			IsRead: row.IsRead, IsArchived: row.IsArchived,
-		}
+		result[i] = MyNotificationResponse(row)
 	}
 	return result, nil
 }
@@ -660,11 +656,7 @@ func (s *NotificationService) ListMyArchived(ctx context.Context, userID uuid.UU
 	}
 	result := make([]MyNotificationResponse, len(rows))
 	for i, row := range rows {
-		result[i] = MyNotificationResponse{
-			RecipientID: row.RecipientID, NotificationID: row.NotificationID, Title: row.Title, Message: row.Message,
-			Category: row.Category, Priority: row.Priority, SenderName: row.SenderName, SentAt: row.SentAt,
-			IsRead: row.IsRead, IsArchived: row.IsArchived,
-		}
+		result[i] = MyNotificationResponse(row)
 	}
 	return result, nil
 }

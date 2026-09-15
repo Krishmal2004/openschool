@@ -2,7 +2,6 @@ package people
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -172,7 +171,7 @@ func studentID(c *gin.Context) (uuid.UUID, bool) {
 func studentActor(c *gin.Context) (uuid.UUID, bool) {
 	id, e := middleware.UserIDFromContext(c)
 	if e != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("invalid caller identity")})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid caller identity"})
 		return uuid.Nil, false
 	}
 	return id, true

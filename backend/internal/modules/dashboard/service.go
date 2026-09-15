@@ -128,7 +128,7 @@ func (s *Service) Analytics(ctx context.Context) (DashboardAnalyticsResponse, er
 	if err != nil {
 		return response, err
 	}
-	response.Staff.AttendanceThisMonth = StaffAttendanceTotals{PresentCount: staffAttendance.PresentCount, LateCount: staffAttendance.LateCount, AbsentCount: staffAttendance.AbsentCount, LeaveCount: staffAttendance.LeaveCount}
+	response.Staff.AttendanceThisMonth = StaffAttendanceTotals(staffAttendance)
 	subjects, err := s.store.subjectPerformance(ctx)
 	if err != nil {
 		return response, err

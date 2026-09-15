@@ -192,7 +192,7 @@ func (h *schoolHandler) createYear(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	value, err := h.service.store.createYear(c.Request.Context(), yearValues{Label: command.Label, StartDate: command.StartDate, EndDate: command.EndDate, IsCurrent: command.IsCurrent})
+	value, err := h.service.store.createYear(c.Request.Context(), yearValues(command))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

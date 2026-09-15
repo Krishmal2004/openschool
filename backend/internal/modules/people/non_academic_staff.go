@@ -82,7 +82,7 @@ func (s *NonAcademicStaffService) Update(ctx context.Context, id uuid.UUID, req 
 	if !validation.IsValidSriLankanPhone(req.Phone) {
 		return nil, validation.ErrInvalidPhone
 	}
-	return s.store.updateStaff(ctx, id, staffUpdate{FullName: req.FullName, Designation: req.Designation, Phone: req.Phone, Gender: req.Gender})
+	return s.store.updateStaff(ctx, id, staffUpdate(req))
 }
 func (s *NonAcademicStaffService) SetEmploymentStatus(ctx context.Context, id uuid.UUID, status string) (any, error) {
 	if status != "active" && status != "resigned" && status != "transferred" {
