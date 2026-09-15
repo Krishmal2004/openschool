@@ -138,6 +138,11 @@ cmd/api
 | DONE | Identity reconciliation integration | Added real-database orphan comparison, stale/local identity deletion protection, provider deletion, and persisted audit coverage | `internal/modules/identity` |
 | DONE | School configuration integration | Added real-database school, academic-year, grade, term, current-period, protected deletion, house balancing, and in-use constraint coverage | `internal/modules/school` |
 | DONE | Curriculum integration slice | Added real-database medium, level, selection-group, subject-link/tree, duplication, protected deletion, preset preview, apply, and idempotency coverage | `internal/modules/curriculum` |
+| DONE | Leadership integration slice | Added real-database principal, vice-principal scope, section-head, rank, overview, deletion, and audit coverage | `internal/modules/leadership` |
+| DONE | Student leadership integration slice | Added real-database prefect appointments, society roster authorization, membership updates, portfolio reads, and deletion coverage | `internal/modules/studentleadership` |
+| DONE | Search integration slice | Added real-database cross-directory global-search coverage for students, teachers, guardians, and non-academic staff | `internal/modules/search` |
+| DONE | Dashboard integration slice | Added real-database dashboard aggregation coverage for current-year student, grade, class, and timetable totals | `internal/modules/dashboard` |
+| DONE | Reports integration slice | Added real-database attendance and marks PDF export coverage | `internal/modules/reports` |
 
 ## 4. Migration progress
 
