@@ -129,6 +129,7 @@ cmd/api
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 | DONE | Integration foundation | Added isolated migrated PostgreSQL test databases and setup/auth API integration coverage in CI | `internal/testutil/testdb`, backend CI |
 | DONE | People integration slice | Added real-database student provisioning, duplicate rollback, role-assignment rollback, and student/guardian access coverage | `internal/modules/people` |
+| DONE | People identity integration | Added real-database teacher provisioning and guardian create/link/login workflows with uniqueness and rollback coverage | `internal/modules/people` |
 
 ## 4. Migration progress
 
