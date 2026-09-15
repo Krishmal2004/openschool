@@ -15,8 +15,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 )
+
+// requestTimeout bounds token and management API calls when the caller does
+// not already provide a shorter context deadline.
+const requestTimeout = 15 * time.Second
 
 // idpError logs the raw ThunderID response server-side and returns a sanitized error safe to surface to an HTTP caller (the raw body can leak internals; see audit.md M-6).
 func idpError(op string, statusCode int, body []byte) error {
@@ -24,7 +28,7 @@ func idpError(op string, statusCode int, body []byte) error {
 	return fmt.Errorf("identity provider request failed (status %d)", statusCode)
 }
 
-// Client is a ThunderID API client implementing identity.Provider, backed by one cached client-credentials token.
+// Client is a ThunderID API client implementing idp.Provider, backed by one cached client-credentials token.
 type Client struct {
 	baseUrl     string
 	ouID        string
@@ -46,7 +50,7 @@ func NewClient() *Client {
 	return &Client{
 		baseUrl:    os.Getenv("THUNDERID_BASE_URL"),
 		ouID:       os.Getenv("THUNDERID_OU_ID"),
-		httpClient: &http.Client{Transport: transport},
+		httpClient: &http.Client{Transport: transport, Timeout: requestTimeout},
 	}
 }
 
@@ -117,7 +121,7 @@ func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("thunderid token error (%d): %s", resp.StatusCode, string(bodyBytes))
+		return "", idpError("GetAccessToken", resp.StatusCode, bodyBytes)
 	}
 
 	var result struct {
@@ -182,7 +186,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any) (
 }
 
 // CreateUser provisions a new ThunderID account and returns its identity-provider ID.
-func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[string]any) (*identity.User, error) {
+func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[string]any) (*idp.User, error) {
 	status, body, err := c.doRequest(ctx, http.MethodPost, "/users", createUserRequest{
 		OuID: c.ouID, Type: userType, Attributes: attrs,
 	})
@@ -191,7 +195,7 @@ func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[stri
 	}
 	if status != http.StatusCreated {
 		if thunderErrorCode(body) == "USR-1014" {
-			return nil, identity.ErrDuplicateUser
+			return nil, idp.ErrDuplicateUser
 		}
 		return nil, idpError("CreateUser", status, body)
 	}
@@ -200,7 +204,7 @@ func (c *Client) CreateUser(ctx context.Context, userType string, attrs map[stri
 	if err := json.Unmarshal(body, &user); err != nil {
 		return nil, err
 	}
-	return &identity.User{ID: user.ID}, nil
+	return &idp.User{ID: user.ID}, nil
 }
 
 // UpdateUser replaces the given ThunderID account's type and attributes.
@@ -263,8 +267,8 @@ type thunderIDListedUser struct {
 }
 
 // ListUsers pages through GET /users and returns every account, best-effort extracting username/email from each user's attributes for display purposes only.
-func (c *Client) ListUsers(ctx context.Context) ([]identity.User, error) {
-	var out []identity.User
+func (c *Client) ListUsers(ctx context.Context) ([]idp.User, error) {
+	var out []idp.User
 	offset := 0
 	for pageNum := 0; pageNum < thunderIDListMaxPages; pageNum++ {
 		path := fmt.Sprintf("/users?limit=%d&offset=%d", thunderIDListPageSize, offset)
@@ -287,7 +291,7 @@ func (c *Client) ListUsers(ctx context.Context) ([]identity.User, error) {
 				Email    string `json:"email"`
 			}
 			_ = json.Unmarshal(u.Attributes, &attrs)
-			out = append(out, identity.User{ID: u.ID, Username: attrs.Username, Email: attrs.Email})
+			out = append(out, idp.User{ID: u.ID, Username: attrs.Username, Email: attrs.Email})
 		}
 
 		offset += parsed.Count

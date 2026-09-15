@@ -422,7 +422,7 @@ readable admin-only at `/settings` → Audit Log.
 
 ## Automation
 
-Five background agents (`internal/jobs/`) run scheduled checks that keep
+Five background agents (`internal/modules/automation`) run scheduled checks that keep
 the school's data healthy - no user-facing feature depends on them, so any
 can be disabled from `/automation` (admin-only) except System Health.
 Every check is plain SQL and arithmetic (no AI/LLM, no external service),

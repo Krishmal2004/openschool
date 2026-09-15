@@ -33,7 +33,6 @@ function Header() {
         <p className="os-setup-header__title">
           Open<span className="os-signin-card__title-accent">School</span>
         </p>
-        <p className="os-setup-header__subtitle">School management, self-hosted</p>
       </div>
     </div>
   );
@@ -110,7 +109,7 @@ export default function Setup() {
   if (done) {
     return (
       <div className="os-signin-wrapper">
-        <div className="os-setup-card" style={{ textAlign: "center" }}>
+        <div className="os-setup-card os-setup-card--success">
           <div className="os-setup-success-icon">
             <CheckmarkFilled size={28} />
           </div>
@@ -128,30 +127,38 @@ export default function Setup() {
   }
 
   return (
-    <div className="os-signin-wrapper">
-      <div className="os-setup-card">
-        <Header />
+    <div className="os-setup-wrapper">
+      <div className="os-setup-shell">
+        <section className="os-setup-card" aria-labelledby="setup-title">
+          <Header />
 
-        <CustomStepper currentIndex={0} steps={STEPS} />
+          <CustomStepper currentIndex={0} steps={STEPS} />
 
-        <p className="os-setup-card__intro">
-          This looks like a new instance. Create the admin account to get
-          started - <strong>this can only be done once.</strong>
-        </p>
+          <div className="os-setup-card__heading">
+            <h2 id="setup-title">Create your admin account</h2>
+            <p>
+              Start with the account you’ll use to configure and run your school.
+              <strong> This can only be done once.</strong>
+            </p>
+          </div>
 
-        {errorMessage && (
-          <InlineNotification
-            kind="error"
-            title="Could not register admin"
-            subtitle={errorMessage}
-            hideCloseButton
-            lowContrast
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
-          />
-        )}
+          {errorMessage && (
+            <InlineNotification
+              kind="error"
+              title="Could not register admin"
+              subtitle={errorMessage}
+              hideCloseButton
+              lowContrast
+              className="os-setup-card__error"
+            />
+          )}
 
-        <Stack gap={5}>
-          <div className="os-setup-name-grid">
+          <Stack gap={3} className="os-setup-form">
+            <div className="os-setup-form__section">
+              <div className="os-setup-form__section-heading">
+                <h3>Personal details</h3>
+              </div>
+              <div className="os-setup-name-grid">
             <TextInput
               id="setup-given-name"
               labelText="First Name"
@@ -161,93 +168,100 @@ export default function Setup() {
               invalid={!!givenNameInvalid}
               invalidText="First name is required."
             />
-            <TextInput
-              id="setup-family-name"
+                <TextInput
+                  id="setup-family-name"
               labelText="Last Name"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
               onBlur={() => markTouched("familyName")}
-              invalid={!!familyNameInvalid}
-              invalidText="Last name is required."
-            />
-          </div>
+                  invalid={!!familyNameInvalid}
+                  invalidText="Last name is required."
+                />
+                <TextInput
+                  id="setup-phone"
+                  labelText="Phone Number (optional)"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onBlur={() => markTouched("phone")}
+                  invalid={!!phoneInvalid}
+                  invalidText={PHONE_INVALID_TEXT}
+                />
+                <TextInput
+                  id="setup-email"
+                  labelText="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => markTouched("email")}
+                  invalid={!!emailInvalid}
+                  invalidText="Enter a valid email address."
+                />
+                <TextInput
+                  id="setup-username"
+                  labelText="Username (sign-in name)"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onBlur={() => markTouched("username")}
+                  invalid={!!usernameInvalid}
+                  invalidText="Username is required."
+                />
+              </div>
+            </div>
 
-          <TextInput
-            id="setup-email"
-            labelText="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => markTouched("email")}
-            invalid={!!emailInvalid}
-            invalidText="Enter a valid email address."
-          />
+            <div className="os-setup-form__section">
+              <div className="os-setup-form__section-heading">
+                <h3>Secure your account</h3>
+              </div>
+              <div className="os-setup-security-grid">
+                <PasswordInput
+                  id="setup-password"
+                  labelText="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => markTouched("password")}
+                  invalid={!!passwordInvalid}
+                  invalidText="Password must be at least 8 characters."
+                  helperText="At least 8 characters."
+                />
+                <PasswordInput
+                  id="setup-confirm-password"
+                  labelText="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onBlur={() => markTouched("confirmPassword")}
+                  invalid={!!confirmPasswordInvalid}
+                  invalidText="Passwords do not match."
+                />
+              </div>
+            </div>
 
-          <TextInput
-            id="setup-username"
-            labelText="Username"
-            helperText="Used to sign in - separate from your email."
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onBlur={() => markTouched("username")}
-            invalid={!!usernameInvalid}
-            invalidText="Username is required."
-          />
+            <div className="os-setup-form__footer">
+              <Button
+                onClick={handleSubmit}
+                disabled={registerAdmin.isPending}
+                className="os-full-width-btn"
+              >
+                {registerAdmin.isPending ? "Creating admin account…" : "Create Admin Account"}
+              </Button>
 
-          <TextInput
-            id="setup-phone"
-            labelText="Phone Number (optional)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            onBlur={() => markTouched("phone")}
-            invalid={!!phoneInvalid}
-            invalidText={PHONE_INVALID_TEXT}
-          />
-
-          <PasswordInput
-            id="setup-password"
-            labelText="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => markTouched("password")}
-            invalid={!!passwordInvalid}
-            invalidText="Password must be at least 8 characters."
-            helperText="At least 8 characters."
-          />
-          <PasswordInput
-            id="setup-confirm-password"
-            labelText="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            onBlur={() => markTouched("confirmPassword")}
-            invalid={!!confirmPasswordInvalid}
-            invalidText="Passwords do not match."
-          />
-
-          <Button
-            onClick={handleSubmit}
-            disabled={registerAdmin.isPending}
-            className="os-full-width-btn"
-          >
-            {registerAdmin.isPending ? "Creating admin account…" : "Create Admin Account"}
-          </Button>
-
-          <div className="os-setup-signin-link">
-            Already set up an admin account?{" "}
-            <SignInButton>
-              {({ signIn, isLoading: signInLoading }) => (
-                <button
-                  type="button"
-                  onClick={() => signIn()}
-                  disabled={signInLoading}
-                  className="os-setup-signin-link__btn"
-                >
-                  {signInLoading ? "Signing in…" : "Sign in instead"}
-                </button>
-              )}
-            </SignInButton>
-          </div>
-        </Stack>
+              <div className="os-setup-signin-link">
+                Already set up an admin account?{" "}
+                <SignInButton>
+                  {({ signIn, isLoading: signInLoading }) => (
+                    <button
+                      type="button"
+                      onClick={() => signIn()}
+                      disabled={signInLoading}
+                      className="os-setup-signin-link__btn"
+                    >
+                      {signInLoading ? "Signing in…" : "Sign in instead"}
+                    </button>
+                  )}
+                </SignInButton>
+              </div>
+            </div>
+          </Stack>
+        </section>
       </div>
     </div>
   );

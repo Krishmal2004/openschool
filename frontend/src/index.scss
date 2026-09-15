@@ -139,39 +139,180 @@ html, body, #root {
 .os-full-width-btn { width: 100%; max-width: 100%; }
 
 // ─── First-run setup (admin registration) ──────────────────────────────────
-.os-setup-card {
-  width: 100%;
-  max-width: 34rem;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem;
-  margin: 2rem 0;
+.os-setup-wrapper {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 0.5rem 1rem;
+  background: #f4f7fb;
+}
 
-  &__title { font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; color: $os-text-primary; }
-  &__subtitle { color: $os-text-secondary; margin-bottom: 2rem; }
-  &__intro { color: $os-text-secondary; margin-bottom: 1.5rem; font-size: 0.875rem; }
+// ─── School setup wizard ───────────────────────────────────────────────────
+.os-school-setup-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem 1rem;
+  background: #f4f7fb;
+}
+
+.os-school-setup-card {
+  width: min(100%, 54rem);
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.os-school-setup-title {
+  margin: 0 0 1rem;
+  color: $os-text-primary;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.os-school-setup-corner-logo {
+  position: fixed;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 10;
+  display: block;
+  filter: grayscale(1) brightness(0);
+}
+
+.os-school-setup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+
+  img { display: block; flex: 0 0 auto; }
+  &__title { margin: 0; color: $os-text-primary; font-size: 1.125rem; font-weight: 600; }
+  &__subtitle { margin: 0.125rem 0 0; color: $os-text-tertiary; font-size: 0.75rem; }
+}
+
+.os-school-setup-error { max-width: 100%; margin-bottom: 0.75rem; }
+
+.os-wizard-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+
+  > div:first-child {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+  }
+
+  h2 { font-size: 1rem !important; }
+  p { font-size: 0.75rem !important; line-height: 1.35; }
+}
+
+.os-school-details-form {
+  display: grid;
+  gap: 0.75rem;
+
+  .cds--text-input,
+  .cds--select-input,
+  .cds--number input {
+    background-color: #ffffff;
+    border-bottom-color: $os-border-strong;
+  }
+
+  &__two-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+.os-school-setup-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+
+  &__right { display: flex; gap: 0.5rem; }
 }
 
 @media (max-width: 560px) {
-  .os-setup-card { padding: 1.5rem; }
+  .os-school-setup-page { padding: 1.5rem 1rem 1rem; }
+  .os-school-details-form__two-column { grid-template-columns: 1fr; }
+  .os-school-setup-actions { align-items: stretch; flex-direction: column-reverse; }
+  .os-school-setup-actions__right { justify-content: flex-end; }
+}
+
+.os-setup-shell {
+  position: relative;
+  width: min(100%, 48rem);
+}
+
+.os-setup-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.25rem 0 0.5rem;
+  background: transparent;
+
+  &--success { max-width: 34rem; text-align: center; }
+  &__title { font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; color: $os-text-primary; }
+  &__subtitle { color: $os-text-secondary; margin-bottom: 2rem; }
+  &__heading { margin: 1rem 0 0.875rem; }
+  &__heading h2 { margin: 0 0 0.375rem; color: $os-text-primary; font-size: 1.5rem; font-weight: 500; }
+  &__heading p { margin: 0; color: $os-text-secondary; font-size: 0.875rem; line-height: 1.45; }
+  &__error { max-width: 100%; margin-bottom: 1.25rem; }
+}
+
+.os-setup-form {
+  &__section { padding-top: 0.75rem; border-top: 1px solid $os-border-subtle; }
+  &__section-heading { margin-bottom: 0.625rem; }
+  &__section-heading h3 { margin: 0 0 0.25rem; color: $os-text-primary; font-size: 0.9375rem; font-weight: 600; }
+  &__section-heading p { margin: 0; color: $os-text-tertiary; font-size: 0.75rem; }
+  &__footer { display: grid; gap: 1rem; padding-top: 0.25rem; }
+
+  // Keep the fields distinct from the pale page surface without adding
+  // another container around the form.
+  .cds--text-input {
+    background-color: #ffffff;
+    border-bottom-color: $os-border-strong;
+  }
+
+  .cds--text-input:hover {
+    background-color: #ffffff;
+    border-bottom-color: $os-text-primary;
+  }
 }
 
 .os-setup-header {
+  position: fixed;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 10;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 0;
 
-  &__logo { display: block; flex-shrink: 0; }
+  &__logo { display: block; width: 2rem; height: 2rem; flex-shrink: 0; filter: grayscale(1) brightness(0); }
   &__title { margin: 0; font-size: 1.125rem; font-weight: 600; color: $os-text-primary; }
   &__subtitle { margin: 0; font-size: 0.75rem; color: $os-text-tertiary; }
 }
 
+.os-setup-header .os-signin-card__title-accent { color: $os-text-primary; }
+
 .os-setup-name-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.os-setup-security-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .os-setup-success-icon {
@@ -202,6 +343,13 @@ html, body, #root {
     cursor: pointer;
     text-decoration: underline;
   }
+}
+
+@media (max-width: 560px) {
+  .os-setup-wrapper { place-items: start center; }
+  .os-setup-card { padding: 1.5rem; }
+  .os-setup-name-grid,
+  .os-setup-security-grid { grid-template-columns: 1fr; }
 }
 
 // ─── Status views (404, coming soon, access restricted) ──────────────────────
@@ -932,8 +1080,8 @@ html, body, #root {
   display: flex;
   align-items: flex-start;
   width: 100%;
-  margin-bottom: 2rem;
-  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  padding: 0.25rem 0;
   user-select: none;
 }
 
@@ -961,7 +1109,7 @@ html, body, #root {
     margin-bottom: 0.5rem;
     position: relative;
     z-index: 2;
-    box-shadow: 0 0 0 4px var(--os-layer);
+    box-shadow: none;
   }
 
   .os-step-check {
@@ -1006,13 +1154,13 @@ html, body, #root {
 
   &.active {
     .os-step-circle {
-      border-color: $os-accent;
-      background-color: $os-accent;
+      border-color: $os-text-primary;
+      background-color: $os-text-primary;
       color: var(--os-layer);
-      box-shadow: 0 0 0 4px var(--os-layer), 0 0 10px rgba($os-accent, 0.3);
+      box-shadow: none;
     }
     .os-step-label {
-      color: $os-accent;
+      color: $os-text-primary;
       font-weight: 600;
     }
   }
@@ -1020,9 +1168,11 @@ html, body, #root {
   &.completed {
     .os-step-circle {
       border-color: var(--os-success);
-      background-color: var(--os-status-present-bg);
-      color: var(--os-success);
+      background-color: var(--os-success);
+      color: #ffffff;
+      box-shadow: none;
     }
+    .os-step-check { stroke: #ffffff; }
     .os-step-label {
       color: var(--os-text-primary);
       font-weight: 500;
@@ -1169,5 +1319,3 @@ html, body, #root {
     font-family: 'IBM Plex Sans', sans-serif !important;
   }
 }
-
-

@@ -8,7 +8,7 @@ OpenSchool needs authentication, JWT issuance, and per-user role
 assignment (`admin`/`teacher`/`student`/`parent`). The project initially
 integrated with Asgardeo, then migrated to ThunderID. Rather than build
 OpenSchool's own credential store, both integrations were built behind a
-provider-neutral seam (`internal/identity.Provider`:
+provider-neutral seam (`internal/idp.Provider`:
 `CreateUser`/`UpdateUser`/`DeleteUser`/`AssignRole`), so the concrete
 client could be swapped without touching the services that call it.
 
@@ -19,7 +19,7 @@ roles. The backend never stores a primary login password. Token
 validation happens against ThunderID's JWKS endpoint
 (`internal/middleware/auth.go`); provisioning (account create/update/
 delete, role assignment) happens through `internal/thunderid.Client`,
-which implements `identity.Provider`.
+which implements `idp.Provider`.
 
 ## Consequences
 
@@ -27,7 +27,7 @@ which implements `identity.Provider`.
   degraded/offline authentication mode - if ThunderID is unreachable,
   sign-in and account provisioning both fail.
 - **Swapping identity providers again is possible but not free.** A new
-  provider needs its own `identity.Provider` implementation plus a
+  provider needs its own `idp.Provider` implementation plus a
   migration plan for existing local `users` rows (which store no
   provider-specific data beyond the shared UUID and role).
 - **Two prior production incidents** were caused by hand-typed ThunderID

@@ -180,20 +180,16 @@ export default function SchoolSetup() {
   }
 
   return (
-    <div className="os-signin-wrapper" style={{ alignItems: "flex-start", paddingTop: "0.5rem" }}>
-      <div className="os-setup-card" style={{ maxWidth: "42rem", marginTop: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.75rem" }}>
-          <img src="/favicon.webp" alt="" width={44} height={44} style={{ display: "block", flexShrink: 0 }} />
-          <div>
-            <p style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600, color: "var(--os-text-primary)" }}>
-              Set Up Your School
-            </p>
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
-              A few steps to get OpenSchool ready - you can change any of this later.
-            </p>
-          </div>
-        </div>
-
+    <div className="os-school-setup-page">
+      <img
+        src="/favicon.webp"
+        alt="OpenSchool"
+        width={32}
+        height={32}
+        className="os-school-setup-corner-logo"
+      />
+      <div className="os-school-setup-card">
+        <h1 className="os-school-setup-title">School onboarding</h1>
         <CustomStepper currentIndex={step} steps={STEPS} />
 
         {error && (
@@ -203,7 +199,7 @@ export default function SchoolSetup() {
             subtitle={error}
             hideCloseButton
             lowContrast
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
+            className="os-school-setup-error"
           />
         )}
 
@@ -273,11 +269,11 @@ export default function SchoolSetup() {
         )}
 
         {step < DONE_STEP && (
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1.75rem" }}>
+          <div className="os-school-setup-actions">
             <Button kind="ghost" onClick={goBack} disabled={step === 0}>
               Back
             </Button>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="os-school-setup-actions__right">
               {(step === 1 || step === 3 || step === CLASSES_STEP || step === LAST_INPUT_STEP) && (
                 <Button
                   kind="secondary"

@@ -12,6 +12,9 @@ import (
 )
 
 type Querier interface {
+	// Atomically claims a valid token. This prevents two concurrent reset
+	// requests from both changing the account password with the same token.
+	ConsumePasswordResetToken(ctx context.Context, tokenHash string) (PasswordResetToken, error)
 	// ── group subjects ──────────────────────────────────────────────────────────
 	AddGroupSubject(ctx context.Context, arg AddGroupSubjectParams) (GroupSubject, error)
 	ApproveTimetable(ctx context.Context, arg ApproveTimetableParams) (Timetable, error)
@@ -225,7 +228,6 @@ type Querier interface {
 	GetNonAcademicStaffByID(ctx context.Context, id uuid.UUID) (NonAcademicStaff, error)
 	GetNotificationByID(ctx context.Context, id uuid.UUID) (Notification, error)
 	GetNotificationRecipientStats(ctx context.Context, notificationID uuid.UUID) (GetNotificationRecipientStatsRow, error)
-	GetPasswordResetTokenByHash(ctx context.Context, tokenHash string) (PasswordResetToken, error)
 	GetPrimaryGuardian(ctx context.Context, studentID uuid.UUID) (Guardian, error)
 	GetPublishedTimetableForClass(ctx context.Context, arg GetPublishedTimetableForClassParams) (Timetable, error)
 	GetSchool(ctx context.Context) (School, error)
@@ -311,11 +313,11 @@ type Querier interface {
 	// ── Zero-guardian student watcher ───────────────────────────────────────────
 	ListActiveStudentsWithoutGuardian(ctx context.Context) ([]ListActiveStudentsWithoutGuardianRow, error)
 	// Ad-hoc, read-mostly queries backing the background agents in
-	// internal/jobs/*.go (five consolidated agents, each running several of
-	// these checks concurrently — see internal/jobs/agent_*.go). Grouped in
+	// internal/modules/automation (five consolidated algorithms, each running
+	// several checks concurrently in its own clearly named file). Grouped in
 	// one file since each is a one-off used by exactly one check, not a full
 	// entity's CRUD.
-	// used by internal/jobs to resolve who gets notified, and to attribute
+	// used by the Automation module to resolve who gets notified, and to attribute
 	// system-triggered notifications' created_by (NOT NULL FK to users).
 	ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error)
 	ListAllSentNotifications(ctx context.Context) ([]ListAllSentNotificationsRow, error)
@@ -603,7 +605,6 @@ type Querier interface {
 	MarkAttendance(ctx context.Context, arg MarkAttendanceParams) (AttendanceRecord, error)
 	MarkNotificationRecipientRead(ctx context.Context, arg MarkNotificationRecipientReadParams) error
 	MarkNotificationSent(ctx context.Context, id uuid.UUID) (Notification, error)
-	MarkPasswordResetTokenUsed(ctx context.Context, id uuid.UUID) error
 	MonthlyNonAcademicStaffAttendanceSummary(ctx context.Context, arg MonthlyNonAcademicStaffAttendanceSummaryParams) ([]MonthlyNonAcademicStaffAttendanceSummaryRow, error)
 	// one row per teacher with a count for each status in the given date range
 	// (the caller passes the first/last day of the month).
