@@ -2,13 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project intends to adopt [Semantic Versioning](https://semver.org/)
-once the first tagged release is cut. No versioned releases exist yet - this
-file currently tracks development history on `main`/`development` under
-`[Unreleased]`.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-09-15
 
 ### Added
 
@@ -48,6 +47,9 @@ file currently tracks development history on `main`/`development` under
 
 ### Changed
 
+- Completed the backend modular-monolith refactor. Each feature now owns its
+  HTTP routes, business logic, database adapter, and API contracts. The old
+  shared handler, service, repository, model, and route layers were removed.
 - API-wide per-IP rate limiting (previously limited to the first-run admin
   registration endpoint only).
 - Database connection pool sizing tuned for expected load.
@@ -57,6 +59,12 @@ file currently tracks development history on `main`/`development` under
 - Broken access control on attendance and term-marks endpoints.
 - Two N+1 query patterns in list endpoints, batched.
 - Swagger UI no longer served outside development builds.
+- Restored the snake_case JSON API fields used by class and curriculum screens.
+
+### Testing
+
+- Added isolated PostgreSQL integration coverage for every backend module and
+  added the suite to backend CI.
 
 ### Documentation
 
@@ -71,6 +79,14 @@ file currently tracks development history on `main`/`development` under
 - Corrected stale claims in `docs/SETUP.md` (teacher dashboard mock-data
   note; the "starting over" `TRUNCATE TABLE` table list, which was missing
   ~20 tables added by later migrations).
+- Added backend and frontend README files, refreshed the root README and
+  contributor guide, and simplified environment example files.
+
+## [0.1.0] - 2026-08-11
+
+### Added
+
+- First tagged OpenSchool release.
 
 ---
 
