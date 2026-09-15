@@ -127,6 +127,7 @@ cmd/api
 | DONE | Model ownership cleanup | Moved all active contracts to their owning modules, moved roles to Authorization, removed obsolete DTOs, and deleted the global models package | Feature modules, `internal/authz` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
+| DONE | Integration foundation | Added isolated migrated PostgreSQL test databases and setup/auth API integration coverage in CI | `internal/testutil/testdb`, backend CI |
 
 ## 4. Migration progress
 
@@ -213,8 +214,8 @@ The architecture test also verifies:
 The structural migration is done. Remaining work is normal hardening rather
 than package migration:
 
-1. Run database-backed integration and API compatibility tests in the deployed
-   environment.
+1. Expand database-backed integration and API compatibility coverage from the
+   completed setup/auth foundation to the remaining critical workflows.
 2. Keep module tests and architecture guards in CI.
 3. Add new behavior inside the owning module and expose cross-module needs as
    narrow ports.
