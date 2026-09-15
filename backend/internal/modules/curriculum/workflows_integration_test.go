@@ -64,7 +64,7 @@ func TestCurriculumConfigurationAPIWithPostgres(t *testing.T) {
 		t.Fatalf("link group subject: code=%d body=%s", linked.Code, linked.Body.String())
 	}
 	tree := performCurriculumRequest(t, router, http.MethodGet, "/levels/"+level.ID+"/tree", nil)
-	if tree.Code != http.StatusOK || !bytes.Contains(tree.Body.Bytes(), []byte(`"Label":"Core"`)) || !bytes.Contains(tree.Body.Bytes(), []byte(`"SubjectCode":"CUR-MATH"`)) || !bytes.Contains(tree.Body.Bytes(), []byte(`"MediumName":"English Medium"`)) {
+	if tree.Code != http.StatusOK || !bytes.Contains(tree.Body.Bytes(), []byte(`"label":"Core"`)) || !bytes.Contains(tree.Body.Bytes(), []byte(`"subject_code":"CUR-MATH"`)) || !bytes.Contains(tree.Body.Bytes(), []byte(`"medium_name":"English Medium"`)) {
 		t.Fatalf("curriculum tree: code=%d body=%s", tree.Code, tree.Body.String())
 	}
 
@@ -77,7 +77,7 @@ func TestCurriculumConfigurationAPIWithPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	copyTree := performCurriculumRequest(t, router, http.MethodGet, "/levels/"+copyLevel.ID+"/tree", nil)
-	if copyTree.Code != http.StatusOK || !bytes.Contains(copyTree.Body.Bytes(), []byte(`"SubjectCode":"CUR-MATH"`)) {
+	if copyTree.Code != http.StatusOK || !bytes.Contains(copyTree.Body.Bytes(), []byte(`"subject_code":"CUR-MATH"`)) {
 		t.Fatalf("duplicated curriculum tree: code=%d body=%s", copyTree.Code, copyTree.Body.String())
 	}
 	mediumInUse := performCurriculumRequest(t, router, http.MethodDelete, "/mediums/"+medium.ID, nil)
