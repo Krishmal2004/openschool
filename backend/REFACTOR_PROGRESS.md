@@ -128,6 +128,7 @@ cmd/api
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 | DONE | Integration foundation | Added isolated migrated PostgreSQL test databases and setup/auth API integration coverage in CI | `internal/testutil/testdb`, backend CI |
+| DONE | People integration slice | Added real-database student provisioning, duplicate rollback, role-assignment rollback, and student/guardian access coverage | `internal/modules/people` |
 
 ## 4. Migration progress
 
