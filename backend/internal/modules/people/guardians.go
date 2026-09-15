@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -47,11 +48,11 @@ type guardianStore interface {
 
 type GuardianService struct {
 	store guardianStore
-	idp   identity.Provider
+	idp   idp.Provider
 	audit ports.AuditRecorder
 }
 
-func NewGuardianService(store guardianStore, idp identity.Provider, audit ports.AuditRecorder) *GuardianService {
+func NewGuardianService(store guardianStore, idp idp.Provider, audit ports.AuditRecorder) *GuardianService {
 	return &GuardianService{store: store, idp: idp, audit: audit}
 }
 
@@ -123,7 +124,7 @@ func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req Provi
 		return nil, ErrGuardianMissingNIC
 	}
 
-	idpUser, err := s.idp.CreateUser(ctx, identity.RoleParent, map[string]any{
+	idpUser, err := s.idp.CreateUser(ctx, authz.RoleParent, map[string]any{
 		"username": req.Username, "email": guardian.Email, "given_name": req.GivenName,
 		"family_name": req.FamilyName, "phone": guardian.Phone, "password": guardian.NIC,
 	})
@@ -138,7 +139,7 @@ func (s *GuardianService) Provision(ctx context.Context, id uuid.UUID, req Provi
 		s.rollbackIdentity(ctx, idpUser.ID)
 		return nil, fmt.Errorf("failed to create local user record: %w", err)
 	}
-	if err := s.idp.AssignRole(ctx, identity.RoleID(identity.RoleParent), idpUser.ID); err != nil {
+	if err := s.idp.AssignRole(ctx, idp.RoleID(authz.RoleParent), idpUser.ID); err != nil {
 		s.rollbackWithCleanup(idpUser.ID, userID)
 		return nil, fmt.Errorf("failed to assign parent role: %w", err)
 	}

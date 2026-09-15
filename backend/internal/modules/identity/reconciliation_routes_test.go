@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
+	idp "github.com/openschool-org/openschool/internal/idp"
 )
 
 type reconciliationRouteProvider struct{ reconciliationProviderStub }
 
-func (*reconciliationRouteProvider) CreateUser(context.Context, string, map[string]any) (*identitycore.User, error) {
+func (*reconciliationRouteProvider) CreateUser(context.Context, string, map[string]any) (*idp.User, error) {
 	return nil, nil
 }
 

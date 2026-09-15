@@ -1,4 +1,5 @@
-package identity
+// Package authz owns OpenSchool application roles and role resolution.
+package authz
 
 import "slices"
 

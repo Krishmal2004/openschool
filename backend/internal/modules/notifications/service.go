@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 var (
@@ -164,10 +164,10 @@ func (s *NotificationService) isTeacherAuthorizedForGrade(ctx context.Context, t
 
 // authorizeSender enforces that a non-admin sender only targets audiences they're actually responsible for: their own classes, grades/sections they head, subjects they teach, and the students/guardians under those.
 func (s *NotificationService) authorizeSender(ctx context.Context, callerRole string, callerUserID uuid.UUID, rules []RecipientRule) error {
-	if callerRole == identity.RoleAdmin {
+	if callerRole == authz.RoleAdmin {
 		return nil
 	}
-	if callerRole != identity.RoleTeacher {
+	if callerRole != authz.RoleTeacher {
 		return ErrForbiddenRecipients
 	}
 	teacherID, err := s.repo.TeacherIDByUser(ctx, callerUserID)
@@ -481,7 +481,7 @@ func (s *NotificationService) UpdateDraft(ctx context.Context, id uuid.UUID, req
 	if existing.Status != StatusDraft {
 		return NotificationResponse{}, ErrNotADraft
 	}
-	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+	if existing.CreatedBy != callerUserID && callerRole != authz.RoleAdmin {
 		return NotificationResponse{}, ErrForbiddenRecipients
 	}
 	if err := s.authorizeSender(ctx, callerRole, callerUserID, req.RecipientRules); err != nil {
@@ -510,7 +510,7 @@ func (s *NotificationService) SendDraft(ctx context.Context, id, callerUserID uu
 	if existing.Status != StatusDraft {
 		return NotificationResponse{}, ErrNotADraft
 	}
-	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+	if existing.CreatedBy != callerUserID && callerRole != authz.RoleAdmin {
 		return NotificationResponse{}, ErrForbiddenRecipients
 	}
 
@@ -537,7 +537,7 @@ func (s *NotificationService) DeleteDraft(ctx context.Context, id, callerUserID 
 	if err != nil {
 		return ErrNotificationNotFound
 	}
-	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+	if existing.CreatedBy != callerUserID && callerRole != authz.RoleAdmin {
 		return ErrForbiddenRecipients
 	}
 	n, err := s.repo.DeleteDraft(ctx, id)
@@ -551,7 +551,7 @@ func (s *NotificationService) DeleteDraft(ctx context.Context, id, callerUserID 
 }
 
 func (s *NotificationService) ListSent(ctx context.Context, callerUserID uuid.UUID, callerRole string) ([]NotificationResponse, error) {
-	if callerRole == identity.RoleAdmin {
+	if callerRole == authz.RoleAdmin {
 		rows, err := s.repo.ListAllSent(ctx)
 		if err != nil {
 			return nil, err
@@ -615,7 +615,7 @@ func (s *NotificationService) GetStats(ctx context.Context, id, callerUserID uui
 	if err != nil {
 		return NotificationStatsResponse{}, ErrNotificationNotFound
 	}
-	if existing.CreatedBy != callerUserID && callerRole != identity.RoleAdmin {
+	if existing.CreatedBy != callerUserID && callerRole != authz.RoleAdmin {
 		return NotificationStatsResponse{}, ErrForbiddenRecipients
 	}
 

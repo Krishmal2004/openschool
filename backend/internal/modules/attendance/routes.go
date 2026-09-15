@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -46,7 +46,7 @@ func actorFromContext(c *gin.Context) (Actor, error) {
 	if value, ok := c.Get("roles"); ok {
 		roles, _ = value.([]string)
 	}
-	return Actor{ID: id, Email: c.GetString("email"), FullName: strings.TrimSpace(c.GetString("given_name") + " " + c.GetString("family_name")), Role: identity.ResolveAppRole(roles)}, nil
+	return Actor{ID: id, Email: c.GetString("email"), FullName: strings.TrimSpace(c.GetString("given_name") + " " + c.GetString("family_name")), Role: authz.ResolveAppRole(roles)}, nil
 }
 
 func actorOrAbort(c *gin.Context) (Actor, bool) {

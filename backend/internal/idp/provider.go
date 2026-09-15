@@ -1,4 +1,5 @@
-package identity
+// Package idp defines the provider-neutral external identity contract and configuration.
+package idp
 
 import (
 	"context"

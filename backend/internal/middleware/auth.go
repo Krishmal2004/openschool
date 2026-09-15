@@ -16,7 +16,7 @@ import (
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 )
 
 // StringOrSlice unmarshals a JSON value that may be either a single string or an array of strings.
@@ -100,7 +100,7 @@ func InitJWKS(jwksURL string) error {
 	if strings.TrimSpace(jwksURL) == "" {
 		return errors.New("THUNDERID_JWKS_URL is required")
 	}
-	if strings.TrimSpace(identity.Issuer()) == "" {
+	if strings.TrimSpace(idp.Issuer()) == "" {
 		return errors.New("THUNDERID_ISSUER is required")
 	}
 	baseTransport := http.DefaultTransport
@@ -151,9 +151,9 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		parserOpts := []jwt.ParserOption{
 			jwt.WithValidMethods([]string{"RS256"}),
-			jwt.WithIssuer(identity.Issuer()),
+			jwt.WithIssuer(idp.Issuer()),
 		}
-		if aud := identity.Audience(); aud != "" {
+		if aud := idp.Audience(); aud != "" {
 			parserOpts = append(parserOpts, jwt.WithAudience(aud))
 		}
 

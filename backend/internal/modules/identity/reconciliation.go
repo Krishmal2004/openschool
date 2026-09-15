@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
+	idp "github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -21,7 +21,7 @@ type OrphanedIdentity struct {
 }
 
 type reconciliationProvider interface {
-	ListUsers(context.Context) ([]identitycore.User, error)
+	ListUsers(context.Context) ([]idp.User, error)
 	DeleteUser(context.Context, string) error
 }
 

@@ -8,7 +8,8 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
+	"github.com/openschool-org/openschool/internal/idp"
 )
 
 var ErrAlreadyDone = errors.New("setup already completed")
@@ -26,15 +27,15 @@ type store interface {
 
 type Service struct {
 	store store
-	idp   identity.Provider
+	idp   idp.Provider
 }
 
-func NewService(store store, idp identity.Provider) *Service {
+func NewService(store store, idp idp.Provider) *Service {
 	return &Service{store: store, idp: idp}
 }
 
 func (s *Service) NeedsSetup(ctx context.Context) (bool, error) {
-	count, err := s.store.countUsersByRole(ctx, identity.RoleAdmin)
+	count, err := s.store.countUsersByRole(ctx, authz.RoleAdmin)
 	if err != nil {
 		return false, err
 	}
@@ -50,7 +51,7 @@ func (s *Service) RegisterFirstAdmin(ctx context.Context, req RegisterAdminReque
 		return AdminUser{}, ErrAlreadyDone
 	}
 
-	idpUser, err := s.idp.CreateUser(ctx, identity.RoleAdmin, map[string]interface{}{
+	idpUser, err := s.idp.CreateUser(ctx, authz.RoleAdmin, map[string]interface{}{
 		"username": req.Username, "email": req.Email, "given_name": req.GivenName,
 		"family_name": req.FamilyName, "phone_number": req.PhoneNumber, "password": req.Password,
 	})
@@ -79,7 +80,7 @@ func (s *Service) RegisterFirstAdmin(ctx context.Context, req RegisterAdminReque
 		return AdminUser{}, fmt.Errorf("failed to create user record: %w", err)
 	}
 
-	if err := s.idp.AssignRole(ctx, identity.RoleID(identity.RoleAdmin), idpUser.ID); err != nil {
+	if err := s.idp.AssignRole(ctx, idp.RoleID(authz.RoleAdmin), idpUser.ID); err != nil {
 		if deleteErr := s.store.deleteUser(ctx, userID); deleteErr != nil {
 			log.Printf("RegisterFirstAdmin: failed to roll back local user row %s: %v (local admin row now orphaned, instance may be unbootstrappable)", userID, deleteErr)
 		}

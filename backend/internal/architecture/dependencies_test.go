@@ -41,15 +41,18 @@ func TestDependencyBoundaries(t *testing.T) {
 		if strings.HasPrefix(rel, "services/") {
 			t.Errorf("%s adds a horizontal service; add the use case to its owning module", rel)
 		}
+		if strings.HasPrefix(rel, "identity/") {
+			t.Errorf("%s adds an ambiguous shared identity package; use internal/idp, internal/authz, or internal/modules/identity", rel)
+		}
+		if imports[modulePath+"db/sqlc"] && (!strings.HasPrefix(rel, "modules/") || filepath.Base(rel) != "repository.go") {
+			t.Errorf("%s imports sqlc outside a module repository adapter", rel)
+		}
 
 		if strings.HasPrefix(rel, "modules/") {
 			for _, legacy := range []string{"internal/handlers", "internal/services", "internal/repositories"} {
 				if imports[modulePath+legacy] {
 					t.Errorf("%s imports legacy package %s", rel, legacy)
 				}
-			}
-			if imports[modulePath+"db/sqlc"] && filepath.Base(rel) != "repository.go" {
-				t.Errorf("%s imports sqlc outside a module repository adapter", rel)
 			}
 		}
 		return nil

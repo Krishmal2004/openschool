@@ -23,6 +23,29 @@ func NewStudentReader(pool *pgxpool.Pool) StudentReader {
 func NewStudentWriter(pool *pgxpool.Pool) StudentStatusWriter {
 	return &studentRepository{queries: db.New(pool)}
 }
+
+type studentAccessAuthorizer struct{ queries *db.Queries }
+
+// NewStudentAccessAuthorizer exposes only the relationship checks required by
+// middleware that protects student-scoped resources.
+func NewStudentAccessAuthorizer(pool *pgxpool.Pool) ports.StudentAccessAuthorizer {
+	return &studentAccessAuthorizer{queries: db.New(pool)}
+}
+
+func (r *studentAccessAuthorizer) StudentIDForUser(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
+	student, err := r.queries.GetStudentByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return student.ID, nil
+}
+
+func (r *studentAccessAuthorizer) IsGuardianOfStudent(ctx context.Context, userID, studentID uuid.UUID) (bool, error) {
+	return r.queries.IsGuardianOfStudent(ctx, db.IsGuardianOfStudentParams{
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		StudentID: studentID,
+	})
+}
 func (r *studentRepository) Get(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetStudentByID(c, id)
 }

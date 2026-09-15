@@ -4,7 +4,7 @@ package identity
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
+	idp "github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -16,7 +16,7 @@ func Register(protected *gin.RouterGroup, pool *pgxpool.Pool) {
 }
 
 // RegisterReconciliation mounts the admin-only orphaned-account operations.
-func RegisterReconciliation(admin *gin.RouterGroup, pool *pgxpool.Pool, provider identitycore.Provider, audit ports.AuditRecorder) {
+func RegisterReconciliation(admin *gin.RouterGroup, pool *pgxpool.Pool, provider idp.Provider, audit ports.AuditRecorder) {
 	handler := newReconciliationHandler(newReconciliationService(provider, newUserRepository(pool), audit))
 	admin.GET("/admin/orphaned-accounts", handler.listOrphaned)
 	admin.DELETE("/admin/orphaned-accounts/:id", handler.deleteOrphaned)

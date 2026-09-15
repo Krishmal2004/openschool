@@ -43,8 +43,8 @@ cmd/api
 4. sqlc rows must be mapped to module-owned types at the repository boundary.
 5. New legacy service-layer sqlc imports are prohibited.
 6. Cross-module capabilities must use narrow interfaces from `internal/ports`.
-7. The composition root in `internal/app` wires modules and compatibility
-   dependencies together.
+7. The composition root in `internal/app` wires modules and shared
+   dependencies together using capability-specific wiring files.
 8. Existing API paths, request payloads, response payloads, business rules,
    and authorization behavior must remain compatible unless explicitly
    changed.
@@ -53,12 +53,12 @@ cmd/api
 
 | Status | Area | Completed work | Current location |
 |---|---|---|---|
-| DONE | Composition root | Centralized router groups and module wiring | `internal/app/app.go` |
+| DONE | Composition root | Centralized router groups and split capability wiring into focused files | `internal/app` |
 | DONE | Route bridge removal | Wired every feature module directly from the composition root and deleted the compatibility routes package | `internal/app/app.go` |
 | DONE | Architecture guard | Added automated dependency-boundary and sqlc-debt checks | `internal/architecture/dependencies_test.go` |
 | DONE | Architecture documentation | Documented the modular-monolith direction and dependency rules | `ARCHITECTURE.md` |
 | DONE | HTTP binding | Added shared strict JSON binding infrastructure | `internal/platform/httpx` |
-| DONE | Identity role seam | Added provider-neutral role resolution | `internal/identity/roles.go` |
+| DONE | Authorization role seam | Isolated application role constants and token-role resolution | `internal/authz` |
 | DONE | Identity `/me` | Migrated the current-user endpoint | `internal/modules/identity` |
 | DONE | School profile | Migrated school profile create, read, and update | `internal/modules/school` |
 | DONE | Academic years | Migrated academic-year CRUD and current-year operations | `internal/modules/school` |
@@ -121,8 +121,10 @@ cmd/api
 | DONE | Authentication hardening | Added atomic one-time reset-token consumption, JWT contract tests, required issuer/JWKS validation, bounded provider calls, and sanitized provider errors | Auth module, middleware, and ThunderID adapter |
 | DONE | Identity reconciliation | Migrated orphan discovery, stale-state protection, provider deletion, auditing, persistence, and admin routes | `internal/modules/identity` |
 | DONE | Legacy handler/service cleanup | Removed the horizontal handler and service packages after migrating their final Identity Reconciliation consumer | Module-owned HTTP and use-case files |
-| DONE | Shared role cleanup | Moved application role constants from the compatibility models package to the provider-neutral Identity package | `internal/identity` |
-| DONE | Model ownership cleanup | Moved all active contracts to their owning modules, moved roles to Identity, removed obsolete DTOs, and deleted the global models package | Feature modules, `internal/identity` |
+| DONE | Shared role cleanup | Moved application role constants from the compatibility models package to the Authorization package | `internal/authz` |
+| DONE | Identity naming cleanup | Separated external provider contracts/configuration from the Identity feature module | `internal/idp`, `internal/modules/identity` |
+| DONE | Student-access boundary | Replaced middleware sqlc access with a narrow People-owned authorization adapter | `internal/ports`, `internal/modules/people`, `internal/middleware` |
+| DONE | Model ownership cleanup | Moved all active contracts to their owning modules, moved roles to Authorization, removed obsolete DTOs, and deleted the global models package | Feature modules, `internal/authz` |
 | DONE | Module tests | Added focused unit tests for migrated business rules and adapters | Module `*_test.go` files |
 | DONE | Verification | `go test ./...`, `go vet ./...`, `go build ./...`, architecture checks, and `git diff --check` pass | Backend repository |
 
@@ -150,7 +152,7 @@ sqlc. All thirty-five have now been migrated out of the legacy service layer.
 | Status | Domain | Remaining work | Notes |
 |---|---|---|---|
 | DONE | Authentication | None | Password lifecycle is module-owned; ThunderID remains the identity provider and JWT verification remains cross-cutting middleware |
-| DONE | Identity reconciliation | None | Admin reconciliation is module-owned and provider operations remain behind `internal/identity` |
+| DONE | Identity reconciliation | None | Admin reconciliation is module-owned and provider operations remain behind `internal/idp` |
 | DONE | School setup | None | Setup status, one-time admin provisioning, role assignment, and rollbacks are module-owned |
 | DONE | Curriculum | None | Levels, groups, subjects, tree, and mediums are module-owned |
 | DONE | Curriculum presets | None | Preview and transactional, idempotent preset seeding are module-owned |
@@ -206,25 +208,18 @@ The architecture test also verifies:
 - Modules do not import legacy handlers, services, or repositories.
 - Module sqlc access is limited to `repository.go`.
 
-## 8. Recommended migration order
+## 8. Post-refactor follow-ups
 
-1. Complete the remaining timetable engine dependencies and move timetable
-   generation, review, and publication into the Timetable module.
-2. Migrate Curriculum and Curriculum Presets as one related aggregate.
-3. Migrate Classes, Enrollments, Promotions, and Term Marks as an academic
-   workflow group.
-4. Migrate Students, Teachers, Guardians, Non-academic Staff, and portfolios
-   as the People module.
-5. Student, Parent, and Teacher self-service endpoints are complete.
-6. Student and Staff Attendance are complete.
-7. Notifications, Audit, Report Export, Dashboard, Search, and Automation are
-   complete.
-8. Positions, Section Heads, Prefects, and Societies are complete.
-9. School Setup, Authentication, Identity Reconciliation, Report Export, and
-   all feature migrations are complete.
-10. Compatibility DTO and constant ownership migration is complete.
-11. Legacy route bridge removal is complete.
-12. Run full integration/API tests and update this document before deleting it.
+The structural migration is done. Remaining work is normal hardening rather
+than package migration:
+
+1. Run database-backed integration and API compatibility tests in the deployed
+   environment.
+2. Keep module tests and architecture guards in CI.
+3. Add new behavior inside the owning module and expose cross-module needs as
+   narrow ports.
+4. Delete this temporary tracker after the refactor branch is merged and the
+   deployment checks pass.
 
 ## 9. Definition of complete
 
@@ -236,5 +231,7 @@ The refactor is complete when:
 - sqlc is accessed only by repository adapters.
 - Cross-module dependencies use narrow interfaces.
 - Compatibility repositories and route bridges are removed.
-- Unit, integration, API, vet, build, and architecture checks pass.
+- Unit, vet, build, and architecture checks pass locally; database-backed
+  integration and deployed API compatibility checks pass in their target
+  environment.
 - This temporary progress document is no longer needed and can be deleted.

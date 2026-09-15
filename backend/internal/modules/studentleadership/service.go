@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 var (
@@ -145,7 +145,7 @@ func (s *Service) authorizeTeacherInCharge(ctx context.Context, actor Actor, soc
 	if err != nil {
 		return Society{}, err
 	}
-	if actor.Role == identity.RoleAdmin {
+	if actor.Role == authz.RoleAdmin {
 		return society, nil
 	}
 	teacherID, err := s.store.teacherIDByUser(ctx, actor.ID)

@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -53,12 +54,12 @@ type teacherUpdate struct{ FullName, NIC, Phone, Title, Gender string }
 
 type TeacherService struct {
 	store  teacherStore
-	idp    identity.Provider
+	idp    idp.Provider
 	houses ports.HouseAssignments
 	audit  ports.AuditRecorder
 }
 
-func NewTeacherService(store teacherStore, idp identity.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder) *TeacherService {
+func NewTeacherService(store teacherStore, idp idp.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder) *TeacherService {
 	return &TeacherService{store: store, idp: idp, houses: houses, audit: audit}
 }
 func (s *TeacherService) Create(ctx context.Context, req CreateTeacherRequest, actor uuid.UUID) (any, error) {
@@ -69,7 +70,7 @@ func (s *TeacherService) Create(ctx context.Context, req CreateTeacherRequest, a
 	if err != nil {
 		return nil, fmt.Errorf("failed to assign employee number: %w", err)
 	}
-	u, err := s.idp.CreateUser(ctx, identity.RoleTeacher, map[string]any{"username": req.Email, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "employee_number": employee, "password": req.NICNumber})
+	u, err := s.idp.CreateUser(ctx, authz.RoleTeacher, map[string]any{"username": req.Email, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "employee_number": employee, "password": req.NICNumber})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity provider user: %w", err)
 	}
@@ -83,7 +84,7 @@ func (s *TeacherService) Create(ctx context.Context, req CreateTeacherRequest, a
 		return nil, fmt.Errorf("failed to create user record: %w", err)
 	}
 	rollback := func() { _ = s.idp.DeleteUser(ctx, u.ID); _ = s.store.DeleteUser(ctx, uid) }
-	if err = s.idp.AssignRole(ctx, identity.RoleID(identity.RoleTeacher), u.ID); err != nil {
+	if err = s.idp.AssignRole(ctx, idp.RoleID(authz.RoleTeacher), u.ID); err != nil {
 		rollback()
 		return nil, fmt.Errorf("failed to assign teacher role: %w", err)
 	}
@@ -113,7 +114,7 @@ func (s *TeacherService) Update(ctx context.Context, id uuid.UUID, req UpdateTea
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
-	if err := s.idp.UpdateUser(ctx, t.UserID.String(), identity.RoleTeacher, map[string]any{"username": email, "email": email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
+	if err := s.idp.UpdateUser(ctx, t.UserID.String(), authz.RoleTeacher, map[string]any{"username": email, "email": email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
 		log.Printf("UpdateTeacher: failed to update identity provider user: %v", err)
 	}
 	return s.store.UpdateTeacher(ctx, id, teacherUpdate{FullName: req.GivenName + " " + req.FamilyName, NIC: req.NICNumber, Phone: req.PhoneNumber, Title: req.Title, Gender: req.Gender})

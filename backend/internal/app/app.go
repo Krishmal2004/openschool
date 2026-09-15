@@ -2,167 +2,25 @@
 package app
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
-	"github.com/openschool-org/openschool/internal/middleware"
-	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
-	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
-	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
-	authmodule "github.com/openschool-org/openschool/internal/modules/auth"
 	automationmodule "github.com/openschool-org/openschool/internal/modules/automation"
-	curriculummodule "github.com/openschool-org/openschool/internal/modules/curriculum"
-	dashboardmodule "github.com/openschool-org/openschool/internal/modules/dashboard"
-	identitymodule "github.com/openschool-org/openschool/internal/modules/identity"
-	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
 	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
-	reportsmodule "github.com/openschool-org/openschool/internal/modules/reports"
-	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
-	searchmodule "github.com/openschool-org/openschool/internal/modules/search"
-	selfservicemodule "github.com/openschool-org/openschool/internal/modules/selfservice"
-	setupmodule "github.com/openschool-org/openschool/internal/modules/setup"
-	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
-	timetablemodule "github.com/openschool-org/openschool/internal/modules/timetable"
-	"github.com/openschool-org/openschool/internal/thunderid"
 )
-
-// HTTPGroups contains the authorization-scoped route groups shared by modules.
-type HTTPGroups struct {
-	API            *gin.RouterGroup
-	Protected      *gin.RouterGroup
-	Admin          *gin.RouterGroup
-	TeacherOrAdmin *gin.RouterGroup
-	Parent         *gin.RouterGroup
-	Student        *gin.RouterGroup
-	Teacher        *gin.RouterGroup
-	StudentAccess  *gin.RouterGroup
-}
 
 // Setup composes the API modules and returns the scheduler owned by the process lifecycle.
 func Setup(router *gin.Engine, pool *pgxpool.Pool) *automationmodule.Scheduler {
-	groups := newHTTPGroups(router, pool)
-	notifications := notificationmodule.NewNotificationService(notificationmodule.NewNotificationRepository(pool))
-
-	groups.API.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
-	setupmodule.RegisterRoutes(groups.API, setupmodule.NewService(setupmodule.NewRepository(pool), thunderid.NewClient()))
-	authmodule.RegisterRoutes(groups.API, groups.Protected, pool, peoplemodule.NewGuardianAuthenticator(pool), thunderid.NewClient())
-	identitymodule.Register(groups.Protected, pool)
-	auditService := auditmodule.NewService(auditmodule.NewRepository(pool))
-	identitymodule.RegisterReconciliation(groups.Admin, pool, thunderid.NewClient(), auditService)
-	curriculummodule.RegisterPresetRoutes(groups.Admin, pool)
-	curriculummodule.RegisterMediumRoutes(groups.Admin, groups.Protected, pool)
-	curriculummodule.RegisterLevelRoutes(groups.Admin, groups.Protected, pool)
-	auditmodule.RegisterRoutes(groups.Admin, auditService)
-	leadershipService := leadershipmodule.NewService(leadershipmodule.NewRepository(pool), auditService)
-	leadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, leadershipService)
-	studentLeadershipService := studentleadershipmodule.NewService(studentleadershipmodule.NewRepository(pool))
-	studentleadershipmodule.RegisterRoutes(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, studentLeadershipService)
-	dashboardService := dashboardmodule.NewService(dashboardmodule.NewRepository(pool))
-	dashboardmodule.RegisterRoutes(groups.Admin, dashboardService)
-	searchmodule.RegisterRoutes(groups.Admin, searchmodule.NewService(searchmodule.NewRepository(pool)))
-	houseService := schoolmodule.NewHouseService(pool, auditService)
-	schoolmodule.RegisterHouseRoutes(groups.Admin, groups.TeacherOrAdmin, houseService)
-	schoolmodule.RegisterSchoolRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Protected, pool)
-	schoolmodule.RegisterGradeRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	schoolmodule.RegisterTermRoutes(groups.Admin, groups.Protected, pool)
-	timetablemodule.RegisterSettingsRoutes(groups.Admin, pool)
-	timetablemodule.RegisterClassroomRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterSubjectPeriodRequirementRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterTeacherAvailabilityRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterGradeSectionRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterTimetableEntryRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterTimetableValidationRoute(groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterTimetableCRUDRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	timetablemodule.RegisterTimetableStatusHistoryRoute(groups.TeacherOrAdmin, pool)
-	timetableRepository := timetablemodule.NewWorkflowRepository(pool)
-	timetablemodule.RegisterTimetableWorkflowRoutes(groups.Admin, groups.TeacherOrAdmin, groups.Teacher, timetableRepository, timetablemodule.NewWorkflowValidator(pool), notifications)
-	timetablemodule.RegisterTimetablePortalRoutes(groups.Teacher, groups.Student, groups.TeacherOrAdmin, timetableRepository)
-	timetablemodule.RegisterTimetableGenerationRoute(groups.Admin, timetableRepository)
-	academicsmodule.RegisterSubjectRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	academicsmodule.RegisterStreamRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	academicsmodule.RegisterClassRoutes(groups.Admin, groups.TeacherOrAdmin, pool)
-	academicsmodule.RegisterEnrollmentRoutes(groups.Admin, groups.TeacherOrAdmin, groups.StudentAccess, groups.Protected, academicsmodule.NewEnrollmentRepository(pool))
-	academicsmodule.RegisterPromotionRoutes(groups.Admin, academicsmodule.NewPromotionService(academicsmodule.NewPromotionRepository(pool)))
-	academicsmodule.RegisterTermMarkRoutes(groups.TeacherOrAdmin, academicsmodule.NewTermMarkService(academicsmodule.NewTermMarkRepository(pool)))
-
-	studentStore := peoplemodule.NewStudentStore(pool)
-	studentService := peoplemodule.NewStudentService(studentStore, thunderid.NewClient(), houseService, auditService, schoolmodule.NewSchoolTypeReader(pool))
-	peoplemodule.RegisterStudentRoutes(groups.Admin, groups.TeacherOrAdmin, studentService, studentStore, studentService)
-	teacherService := peoplemodule.NewTeacherService(studentStore, thunderid.NewClient(), houseService, auditService)
-	peoplemodule.RegisterTeacherReadRoutes(groups.TeacherOrAdmin, groups.Admin, peoplemodule.NewTeacherReader(pool))
-	peoplemodule.RegisterTeacherWriteRoutes(groups.Admin, teacherService)
-	guardianStore := peoplemodule.NewGuardianStore(pool)
-	guardianService := peoplemodule.NewGuardianService(guardianStore, thunderid.NewClient(), auditService)
-	peoplemodule.RegisterGuardianReadRoutes(groups.TeacherOrAdmin, groups.StudentAccess, peoplemodule.NewGuardianReader(pool))
-	peoplemodule.RegisterGuardianWriteRoutes(groups.Admin, guardianService)
-	peoplemodule.RegisterGuardianNotificationRoute(groups.Admin, peoplemodule.NewGuardianNotificationReader(pool))
-	peoplemodule.RegisterNonAcademicStaffRoutes(groups.Admin, groups.TeacherOrAdmin, peoplemodule.NewNonAcademicStaffService(peoplemodule.NewNonAcademicStaffStore(pool), auditService))
-	studentPortfolioService := peoplemodule.NewStudentPortfolioService(peoplemodule.NewStudentPortfolioStore(pool))
-	peoplemodule.RegisterStudentPortfolioRoutes(groups.TeacherOrAdmin, groups.StudentAccess, studentPortfolioService)
-
-	attendanceService := attendancemodule.NewService(attendancemodule.NewRepository(pool), notifications, auditService, attendanceLeadership{positions: leadershipService})
-	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
-	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService))
-	staffAttendanceService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
-	selfRepository := selfservicemodule.NewRepository(pool)
-	studentProfiles := selfservicemodule.NewStudentProfiles(selfRepository)
-	teacherProfiles := selfservicemodule.NewTeacherProfiles(selfRepository)
-	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffAttendanceService, teacherProfiles)
-	timetableReader := timetablemodule.NewReader(pool)
-	selfservicemodule.RegisterRoutes(groups.Student, groups.Parent, groups.Teacher, pool, studentProfiles, teacherProfiles, peoplemodule.NewGuardianAccess(pool), timetableReader, leadershipService, studentLeadershipService, dashboardService)
-	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, notifications)
+	groups := newHTTPGroups(router, peoplemodule.NewStudentAccessAuthorizer(pool))
+	shared := registerCore(groups, pool)
+	houseService := registerSchool(groups, pool, shared.audit)
+	registerTimetable(groups, pool, shared.notifications)
+	registerAcademics(groups, pool)
+	registerPeople(groups, pool, houseService, shared.audit)
+	profiles := newPortalProfiles(pool)
+	registerAttendanceAndReports(groups, pool, shared.notifications, shared.audit, shared.leadership, profiles.teacher)
+	registerSelfService(groups, pool, profiles, shared)
+	notificationmodule.RegisterRoutes(groups.TeacherOrAdmin, groups.Protected, shared.notifications)
 
 	return automationmodule.RegisterRoutes(groups.Admin, pool)
-}
-
-func newHTTPGroups(router *gin.Engine, pool *pgxpool.Pool) HTTPGroups {
-	api := router.Group("/api/v1")
-	protected := api.Group("")
-	protected.Use(middleware.AuthMiddleware())
-	protected.Use(middleware.PerAccountRateLimit(
-		envFloatOr("API_PER_ACCOUNT_RATE_LIMIT_RPS", 30),
-		envIntOr("API_PER_ACCOUNT_RATE_LIMIT_BURST", 60),
-	))
-
-	admin := protected.Group("")
-	admin.Use(middleware.RequireRole(identitycore.RoleAdmin))
-	teacherOrAdmin := protected.Group("")
-	teacherOrAdmin.Use(middleware.RequireRole(identitycore.RoleAdmin, identitycore.RoleTeacher))
-	parent := protected.Group("")
-	parent.Use(middleware.RequireRole(identitycore.RoleParent))
-	student := protected.Group("")
-	student.Use(middleware.RequireRole(identitycore.RoleStudent))
-	teacher := protected.Group("")
-	teacher.Use(middleware.RequireRole(identitycore.RoleTeacher))
-	studentAccess := protected.Group("")
-	studentAccess.Use(middleware.RequireStudentAccess(pool))
-
-	return HTTPGroups{
-		API: api, Protected: protected, Admin: admin, TeacherOrAdmin: teacherOrAdmin,
-		Parent: parent, Student: student, Teacher: teacher, StudentAccess: studentAccess,
-	}
-}
-
-func envFloatOr(key string, fallback float64) float64 {
-	if value := os.Getenv(key); value != "" {
-		if parsed, err := strconv.ParseFloat(value, 64); err == nil {
-			return parsed
-		}
-	}
-	return fallback
-}
-
-func envIntOr(key string, fallback int) int {
-	if value := os.Getenv(key); value != "" {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			return parsed
-		}
-	}
-	return fallback
 }

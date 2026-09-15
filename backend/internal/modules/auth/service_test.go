@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 type authStoreStub struct {
@@ -108,11 +108,11 @@ func newTestService(store *authStoreStub, guardian guardianStub, provider *passw
 
 func TestForgotPasswordIssuesOnlyHashedShortLivedToken(t *testing.T) {
 	userID := uuid.New()
-	store := &authStoreStub{user: userAccount{ID: userID, Email: "student@example.com", Role: identity.RoleStudent}, studentMatch: true}
+	store := &authStoreStub{user: userAccount{ID: userID, Email: "student@example.com", Role: authz.RoleStudent}, studentMatch: true}
 	provider, mail := &passwordUpdaterStub{}, &mailerStub{}
 	service := newTestService(store, guardianStub{}, provider, mail)
 
-	response, err := service.ForgotPassword(context.Background(), ForgotPasswordRequest{Role: identity.RoleStudent, Identifier: "student@example.com", Secret: "S001"})
+	response, err := service.ForgotPassword(context.Background(), ForgotPasswordRequest{Role: authz.RoleStudent, Identifier: "student@example.com", Secret: "S001"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,10 +139,10 @@ func TestForgotPasswordRejectsMismatchedRoleAndSecrets(t *testing.T) {
 		store    *authStoreStub
 		guardian guardianStub
 	}{
-		{name: "role", request: ForgotPasswordRequest{Role: identity.RoleTeacher}, store: &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleStudent}}},
-		{name: "teacher secret", request: ForgotPasswordRequest{Role: identity.RoleTeacher}, store: &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleTeacher}}},
-		{name: "student secret", request: ForgotPasswordRequest{Role: identity.RoleStudent}, store: &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleStudent}}},
-		{name: "parent secret", request: ForgotPasswordRequest{Role: identity.RoleParent}, store: &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleParent}}, guardian: guardianStub{err: errors.New("mismatch")}},
+		{name: "role", request: ForgotPasswordRequest{Role: authz.RoleTeacher}, store: &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleStudent}}},
+		{name: "teacher secret", request: ForgotPasswordRequest{Role: authz.RoleTeacher}, store: &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleTeacher}}},
+		{name: "student secret", request: ForgotPasswordRequest{Role: authz.RoleStudent}, store: &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleStudent}}},
+		{name: "parent secret", request: ForgotPasswordRequest{Role: authz.RoleParent}, store: &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleParent}}, guardian: guardianStub{err: errors.New("mismatch")}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestForgotPasswordRejectsMismatchedRoleAndSecrets(t *testing.T) {
 func TestResetPasswordConsumesTokenBeforeUpdatingProvider(t *testing.T) {
 	userID := uuid.New()
 	events := []string{}
-	store := &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleTeacher}, consumed: resetToken{UserID: userID}, events: &events}
+	store := &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleTeacher}, consumed: resetToken{UserID: userID}, events: &events}
 	provider := &passwordUpdaterStub{events: &events}
 	service := newTestService(store, guardianStub{}, provider, &mailerStub{})
 
@@ -170,7 +170,7 @@ func TestResetPasswordConsumesTokenBeforeUpdatingProvider(t *testing.T) {
 	if store.consumeHash != hashResetToken("one-time-token") {
 		t.Fatal("raw reset token was passed to persistence")
 	}
-	if provider.userID != userID.String() || provider.role != identity.RoleTeacher || provider.attrs["password"] != "new-password" {
+	if provider.userID != userID.String() || provider.role != authz.RoleTeacher || provider.attrs["password"] != "new-password" {
 		t.Fatalf("unexpected identity-provider update: %+v", provider)
 	}
 	if !store.setCalled || store.setValue {
@@ -189,7 +189,7 @@ func TestResetPasswordMapsConsumeFailureToSafeError(t *testing.T) {
 
 func TestProviderFailureDoesNotClearFirstLoginFlag(t *testing.T) {
 	userID := uuid.New()
-	store := &authStoreStub{user: userAccount{ID: userID, Role: identity.RoleStudent}}
+	store := &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleStudent}}
 	provider := &passwordUpdaterStub{err: errors.New("provider unavailable")}
 	err := newTestService(store, guardianStub{}, provider, &mailerStub{}).ChangePassword(context.Background(), userID, "new-password")
 	if err == nil || store.setCalled {

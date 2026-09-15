@@ -13,7 +13,7 @@ import (
 	"github.com/openschool-org/openschool/internal/app"
 	"github.com/openschool-org/openschool/internal/config"
 	"github.com/openschool-org/openschool/internal/database"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/middleware"
 
 	_ "github.com/openschool-org/openschool/docs"
@@ -72,7 +72,7 @@ func main() {
 	log.Println("database connected")
 
 	// init JWKS for JWT validation
-	jwksURL := identity.JWKSURL()
+	jwksURL := idp.JWKSURL()
 	if err := middleware.InitJWKS(jwksURL); err != nil {
 		log.Fatalf("failed to init JWKS: %v", err)
 	}

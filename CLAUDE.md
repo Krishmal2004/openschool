@@ -78,9 +78,10 @@ See `.env.example`. Key vars: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PA
 
 The backend authenticates against ThunderID exclusively.
 
-- `internal/identity/` - provider-neutral seam: the `Provider` interface (CreateUser/UpdateUser/DeleteUser/AssignRole), the shared `User` return type, and env helpers `JWKSURL()`, `Issuer()`, `RoleID(role)` that resolve to the `THUNDERID_*` vars.
-- `internal/thunderid/` - the concrete client; satisfies `identity.Provider`.
-- `internal/app/app.go` constructs the ThunderID client and injects the provider-neutral `identity.Provider` capability into modules.
+- `internal/idp/` - provider-neutral seam: the `Provider` interface (CreateUser/UpdateUser/DeleteUser/AssignRole), the shared `User` return type, and env helpers `JWKSURL()`, `Issuer()`, `RoleID(role)` that resolve to the `THUNDERID_*` vars.
+- `internal/authz/` - OpenSchool role constants and token-role resolution, separate from external identity-provider concerns.
+- `internal/thunderid/` - the concrete client; satisfies `idp.Provider`.
+- `internal/app/` constructs the ThunderID client and injects the provider-neutral `idp.Provider` capability into modules.
 - Token validation reads `JWKSURL()`/`Issuer()`; provisioning uses the injected `Provider` and `RoleID(...)`.
 
 ## Frontend

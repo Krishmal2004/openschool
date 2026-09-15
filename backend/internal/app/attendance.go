@@ -5,8 +5,13 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
+	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
+	notificationmodule "github.com/openschool-org/openschool/internal/modules/notifications"
+	reportsmodule "github.com/openschool-org/openschool/internal/modules/reports"
+	selfservicemodule "github.com/openschool-org/openschool/internal/modules/selfservice"
 )
 
 // attendanceLeadership adapts Leadership's rank error to Attendance's
@@ -19,4 +24,22 @@ func (a attendanceLeadership) LeadershipScope(ctx context.Context, teacherID, ac
 		return false, nil, attendancemodule.ErrInsufficientRank
 	}
 	return wholeSchool, gradeIDs, err
+}
+
+func registerAttendanceAndReports(
+	groups HTTPGroups,
+	pool *pgxpool.Pool,
+	notifications *notificationmodule.NotificationService,
+	audit *auditmodule.Service,
+	leadership *leadershipmodule.Service,
+	teacherProfiles *selfservicemodule.TeacherProfiles,
+) {
+	attendanceService := attendancemodule.NewService(
+		attendancemodule.NewRepository(pool), notifications, audit,
+		attendanceLeadership{positions: leadership},
+	)
+	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
+	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService))
+	staffService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
+	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffService, teacherProfiles)
 }

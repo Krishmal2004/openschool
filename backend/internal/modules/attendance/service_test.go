@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 type fakeStore struct {
@@ -103,7 +103,7 @@ func TestTeacherCannotEditLockedSession(t *testing.T) {
 	service := NewService(store, nil, nil, nil)
 	service.now = func() time.Time { return now }
 
-	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: identity.RoleTeacher}, store.session.ID, MarkAttendanceRequest{})
+	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: authz.RoleTeacher}, store.session.ID, MarkAttendanceRequest{})
 	if !errors.Is(err, ErrSessionLocked) {
 		t.Fatalf("expected ErrSessionLocked, got %v", err)
 	}
@@ -118,7 +118,7 @@ func TestMarkAttendanceValidatesWholeBatchBeforeWrite(t *testing.T) {
 	service := NewService(store, nil, nil, nil)
 	service.now = func() time.Time { return now }
 
-	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: identity.RoleAdmin}, store.session.ID, MarkAttendanceRequest{Records: []AttendanceRecord{{StudentID: uuid.NewString(), Status: AttendanceStatusPresent}, {StudentID: "bad-id", Status: AttendanceStatusAbsent}}})
+	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: authz.RoleAdmin}, store.session.ID, MarkAttendanceRequest{Records: []AttendanceRecord{{StudentID: uuid.NewString(), Status: AttendanceStatusPresent}, {StudentID: "bad-id", Status: AttendanceStatusAbsent}}})
 	if err == nil {
 		t.Fatal("expected invalid student error")
 	}
@@ -136,7 +136,7 @@ func TestAdminLockedCorrectionIsAuditedAndNewAbsenceNotified(t *testing.T) {
 	service := NewService(store, notifier, auditor, nil)
 	service.now = func() time.Time { return now }
 
-	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: identity.RoleAdmin}, store.session.ID, MarkAttendanceRequest{Records: []AttendanceRecord{{StudentID: studentID.String(), Status: AttendanceStatusAbsent}}, Reason: "verified correction"})
+	err := service.MarkAttendance(context.Background(), Actor{ID: uuid.New(), Role: authz.RoleAdmin}, store.session.ID, MarkAttendanceRequest{Records: []AttendanceRecord{{StudentID: studentID.String(), Status: AttendanceStatusAbsent}}, Reason: "verified correction"})
 	if err != nil {
 		t.Fatalf("mark attendance: %v", err)
 	}

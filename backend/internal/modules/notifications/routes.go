@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -46,12 +46,12 @@ func (h *NotificationHandler) caller(c *gin.Context) (uuid.UUID, string, bool) {
 	role := ""
 	if list, ok := roles.([]string); ok {
 		for _, r := range list {
-			if r == identity.RoleAdmin {
-				role = identity.RoleAdmin
+			if r == authz.RoleAdmin {
+				role = authz.RoleAdmin
 				break
 			}
-			if r == identity.RoleTeacher {
-				role = identity.RoleTeacher
+			if r == authz.RoleTeacher {
+				role = authz.RoleTeacher
 			}
 		}
 	}

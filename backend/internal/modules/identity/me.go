@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
+	authz "github.com/openschool-org/openschool/internal/authz"
 )
 
 type userProvisioner interface {
@@ -51,7 +51,7 @@ func (h *meHandler) get(c *gin.Context) {
 	mustChangePassword := false
 	if parsedID, err := uuid.Parse(userID); err == nil {
 		user, provisionErr := h.service.ensureProvisioned(c.Request.Context(), ensureUserCommand{
-			ID: parsedID, Email: email, FullName: givenName + " " + familyName, Role: identitycore.ResolveAppRole(roleList),
+			ID: parsedID, Email: email, FullName: givenName + " " + familyName, Role: authz.ResolveAppRole(roleList),
 		})
 		if provisionErr != nil {
 			log.Printf("/me: failed to provision local user %s: %v", parsedID, provisionErr)

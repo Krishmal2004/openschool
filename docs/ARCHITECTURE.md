@@ -151,8 +151,9 @@ flowchart LR
     Module -. "narrow interfaces" .-> Ports["internal/ports<br/>cross-module capabilities"]
 ```
 
-- **`internal/app/`** - the composition root. It creates shared adapters and
-  authorization-scoped Gin groups, then injects them into feature modules.
+- **`internal/app/`** - the composition root. `app.go` orchestrates focused
+  capability wiring files, which create shared adapters and inject them into
+  feature modules through authorization-scoped Gin groups.
 - **`internal/modules/`** - capability-oriented vertical slices such as
   School, People, Academics, Attendance, Identity, and Timetable. HTTP
   handlers depend on module use cases; use cases depend on narrow interfaces.
@@ -179,10 +180,13 @@ Cross-cutting packages:
   applied only inside the `protected` route group, on top of the per-IP
   one), `BodySizeLimit` (caps every request body at 5 MiB via
   `http.MaxBytesReader`, since Gin applies no cap by default), `SecurityHeaders`.
-- **`internal/identity/`** - the provider-neutral seam
+- **`internal/idp/`** - the provider-neutral seam
   (`Provider` interface: `CreateUser`/`UpdateUser`/`DeleteUser`/`AssignRole`)
   that `internal/thunderid` implements. See
   [`adr/0001-thunderid-as-sole-identity-provider.md`](./adr/0001-thunderid-as-sole-identity-provider.md).
+- **`internal/authz/`** - application role constants and token-role
+  resolution. This is intentionally separate from both the external IdP seam
+  and the `/me` and reconciliation workflows in `internal/modules/identity`.
 - **`internal/modules/automation/`** - an in-process, cron-scheduled (`robfig/cron/v3`)
   background job runner, started/stopped alongside the HTTP server from
   `main.go` (`scheduler.Start()`/`defer scheduler.Stop()`) - not a separate
@@ -380,7 +384,7 @@ variables (see [`THUNDERID.md`](./THUNDERID.md)):
    and cached in-process (`MicahParks/keyfunc`, `internal/middleware/auth.go`).
 2. **Provisioning API** - account create/update/delete and role
    assignment, via `internal/thunderid.Client`, behind the
-   `internal/identity.Provider` interface.
+   `internal/idp.Provider` interface.
 
 OpenSchool never stores a primary login password; see
 [`adr/0001-thunderid-as-sole-identity-provider.md`](./adr/0001-thunderid-as-sole-identity-provider.md).

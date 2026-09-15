@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 type fakeStore struct {
@@ -41,7 +41,7 @@ func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: tru
 
 func TestNonTeacherCannotComposeNotifications(t *testing.T) {
 	service := NewNotificationService(&fakeStore{})
-	err := service.authorizeSender(context.Background(), identity.RoleStudent, uuid.New(), []RecipientRule{{Type: RuleTeacher, TeacherID: pointer(uuid.New())}})
+	err := service.authorizeSender(context.Background(), authz.RoleStudent, uuid.New(), []RecipientRule{{Type: RuleTeacher, TeacherID: pointer(uuid.New())}})
 	if !errors.Is(err, ErrForbiddenRecipients) {
 		t.Fatalf("expected forbidden recipients, got %v", err)
 	}

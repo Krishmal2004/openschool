@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -32,7 +32,7 @@ func RegisterRoutes(public *gin.RouterGroup, service *Service) {
 			switch {
 			case errors.Is(err, ErrAlreadyDone):
 				c.JSON(http.StatusForbidden, gin.H{"error": "An admin account already exists. Setup can only be run once."})
-			case errors.Is(err, identity.ErrDuplicateUser):
+			case errors.Is(err, idp.ErrDuplicateUser):
 				c.JSON(http.StatusConflict, gin.H{"error": "An account with that email, username, or phone number already exists."})
 			default:
 				log.Printf("setup: RegisterFirstAdmin failed: %v", err)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
@@ -29,7 +29,7 @@ func routeActor(c *gin.Context) (Actor, error) {
 	}
 	roles, _ := c.Get("roles")
 	roleList, _ := roles.([]string)
-	return Actor{ID: id, Role: identity.ResolveAppRole(roleList)}, nil
+	return Actor{ID: id, Role: authz.ResolveAppRole(roleList)}, nil
 }
 
 func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, service *Service) {

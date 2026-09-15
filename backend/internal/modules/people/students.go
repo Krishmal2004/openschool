@@ -8,7 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/ports"
 	"github.com/openschool-org/openschool/internal/validation"
 )
@@ -64,13 +65,13 @@ type studentUpdate struct {
 
 type StudentService struct {
 	store  studentStore
-	idp    identity.Provider
+	idp    idp.Provider
 	houses ports.HouseAssignments
 	audit  ports.AuditRecorder
 	school schoolTypeReader
 }
 
-func NewStudentService(store studentStore, idp identity.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder, school schoolTypeReader) *StudentService {
+func NewStudentService(store studentStore, idp idp.Provider, houses ports.HouseAssignments, audit ports.AuditRecorder, school schoolTypeReader) *StudentService {
 	return &StudentService{store: store, idp: idp, houses: houses, audit: audit, school: school}
 }
 
@@ -98,7 +99,7 @@ func (s *StudentService) Create(ctx context.Context, req CreateStudentRequest, a
 	if err := s.store.FindByIndex(ctx, req.IndexNumber); err == nil {
 		return nil, fmt.Errorf("index number already exists")
 	}
-	idpUser, err := s.idp.CreateUser(ctx, identity.RoleStudent, map[string]any{"username": req.IndexNumber, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "password": req.IndexNumber})
+	idpUser, err := s.idp.CreateUser(ctx, authz.RoleStudent, map[string]any{"username": req.IndexNumber, "email": req.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber, "password": req.IndexNumber})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity provider user: %w", err)
 	}
@@ -112,7 +113,7 @@ func (s *StudentService) Create(ctx context.Context, req CreateStudentRequest, a
 		_ = s.idp.DeleteUser(ctx, idpUser.ID)
 		return nil, fmt.Errorf("failed to create user record: %w", err)
 	}
-	if err = s.idp.AssignRole(ctx, identity.RoleID(identity.RoleStudent), idpUser.ID); err != nil {
+	if err = s.idp.AssignRole(ctx, idp.RoleID(authz.RoleStudent), idpUser.ID); err != nil {
 		rollback()
 		return nil, fmt.Errorf("failed to assign student role: %w", err)
 	}
@@ -146,7 +147,7 @@ func (s *StudentService) Update(ctx context.Context, id uuid.UUID, req UpdateStu
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
-	if err := s.idp.UpdateUser(ctx, student.UserID.String(), identity.RoleStudent, map[string]any{"username": student.IndexNumber, "email": user.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
+	if err := s.idp.UpdateUser(ctx, student.UserID.String(), authz.RoleStudent, map[string]any{"username": student.IndexNumber, "email": user.Email, "given_name": req.GivenName, "family_name": req.FamilyName, "phone": req.PhoneNumber}); err != nil {
 		log.Printf("UpdateStudent: failed to update identity provider user: %v", err)
 	}
 	return s.store.Update(ctx, id, studentUpdate{FullName: req.GivenName + " " + req.FamilyName, Address: req.Address, Phone: req.PhoneNumber, WhatsApp: req.WhatsApp, Remarks: req.SpecialRemarks, Gender: req.Gender})

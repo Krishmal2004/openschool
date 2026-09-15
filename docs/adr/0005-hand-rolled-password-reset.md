@@ -5,7 +5,7 @@
 ## Context
 
 Per [ADR 0001](./0001-thunderid-as-sole-identity-provider.md), ThunderID
-is the identity provider, but its `identity.Provider` interface exposes
+is the identity provider, but its `idp.Provider` interface exposes
 only `CreateUser`/`UpdateUser`/`DeleteUser`/`AssignRole` - no
 temporary-credential, forced-password-change, or self-service-reset
 primitive. OpenSchool needed all three: NIC/index-number default

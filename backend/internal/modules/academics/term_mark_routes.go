@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
@@ -133,5 +133,5 @@ func termMarkActor(c *gin.Context) (TermMarkActor, bool) {
 	}
 	roles, _ := c.Get("roles")
 	roleList, _ := roles.([]string)
-	return TermMarkActor{ID: id, Role: identity.ResolveAppRole(roleList)}, true
+	return TermMarkActor{ID: id, Role: authz.ResolveAppRole(roleList)}, true
 }

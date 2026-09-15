@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/idp"
 )
 
 type setupStore struct {
@@ -43,7 +43,7 @@ func (s *setupStore) deleteUser(_ context.Context, id uuid.UUID) error {
 type setupIdentity struct {
 	created       bool
 	attributes    map[string]any
-	user          *identity.User
+	user          *idp.User
 	createErr     error
 	assigned      bool
 	assignedUser  string
@@ -51,7 +51,7 @@ type setupIdentity struct {
 	deletedUserID string
 }
 
-func (i *setupIdentity) CreateUser(_ context.Context, _ string, attributes map[string]any) (*identity.User, error) {
+func (i *setupIdentity) CreateUser(_ context.Context, _ string, attributes map[string]any) (*idp.User, error) {
 	i.created, i.attributes = true, attributes
 	return i.user, i.createErr
 }
@@ -68,7 +68,7 @@ func (i *setupIdentity) AssignRole(_ context.Context, _ string, userID string) e
 	return i.assignErr
 }
 
-func (*setupIdentity) ListUsers(context.Context) ([]identity.User, error) { return nil, nil }
+func (*setupIdentity) ListUsers(context.Context) ([]idp.User, error) { return nil, nil }
 
 func adminRequest() RegisterAdminRequest {
 	return RegisterAdminRequest{Email: "admin@example.test", Username: "admin", GivenName: "Open", FamilyName: "School", PhoneNumber: "0700000000", Password: "password"}
@@ -92,7 +92,7 @@ func TestRegisterFirstAdminRejectsCompletedSetupBeforeIdentityWrite(t *testing.T
 func TestRegisterFirstAdminCreatesBothAccountsAndAssignsRole(t *testing.T) {
 	userID := uuid.New()
 	store := &setupStore{counts: []int64{0, 0}, createResult: AdminUser{ID: userID, Email: "admin@example.test"}}
-	idp := &setupIdentity{user: &identity.User{ID: userID.String()}}
+	idp := &setupIdentity{user: &idp.User{ID: userID.String()}}
 	user, err := NewService(store, idp).RegisterFirstAdmin(context.Background(), adminRequest())
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +107,7 @@ func TestRegisterFirstAdminCreatesBothAccountsAndAssignsRole(t *testing.T) {
 
 func TestRegisterFirstAdminRollsBackIdentityWhenRaceIsLost(t *testing.T) {
 	userID := uuid.New()
-	idp := &setupIdentity{user: &identity.User{ID: userID.String()}}
+	idp := &setupIdentity{user: &idp.User{ID: userID.String()}}
 	_, err := NewService(&setupStore{counts: []int64{0, 1}}, idp).RegisterFirstAdmin(context.Background(), adminRequest())
 	if !errors.Is(err, ErrAlreadyDone) || idp.deletedUserID != userID.String() {
 		t.Fatalf("error=%v deletedIdentity=%q", err, idp.deletedUserID)
@@ -116,7 +116,7 @@ func TestRegisterFirstAdminRollsBackIdentityWhenRaceIsLost(t *testing.T) {
 
 func TestRegisterFirstAdminRollsBackIdentityWhenLocalCreateFails(t *testing.T) {
 	userID := uuid.New()
-	idp := &setupIdentity{user: &identity.User{ID: userID.String()}}
+	idp := &setupIdentity{user: &idp.User{ID: userID.String()}}
 	_, err := NewService(&setupStore{counts: []int64{0, 0}, createErr: errors.New("database unavailable")}, idp).RegisterFirstAdmin(context.Background(), adminRequest())
 	if err == nil || idp.deletedUserID != userID.String() {
 		t.Fatalf("error=%v deletedIdentity=%q", err, idp.deletedUserID)
@@ -126,7 +126,7 @@ func TestRegisterFirstAdminRollsBackIdentityWhenLocalCreateFails(t *testing.T) {
 func TestRegisterFirstAdminRollsBackBothAccountsWhenRoleAssignmentFails(t *testing.T) {
 	userID := uuid.New()
 	store := &setupStore{counts: []int64{0, 0}, createResult: AdminUser{ID: userID}}
-	idp := &setupIdentity{user: &identity.User{ID: userID.String()}, assignErr: errors.New("role assignment failed")}
+	idp := &setupIdentity{user: &idp.User{ID: userID.String()}, assignErr: errors.New("role assignment failed")}
 	_, err := NewService(store, idp).RegisterFirstAdmin(context.Background(), adminRequest())
 	if err == nil || store.deletedID != userID || idp.deletedUserID != userID.String() {
 		t.Fatalf("error=%v localDelete=%s identityDelete=%q", err, store.deletedID, idp.deletedUserID)

@@ -6,20 +6,20 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	identitycore "github.com/openschool-org/openschool/internal/identity"
+	idp "github.com/openschool-org/openschool/internal/idp"
 )
 
 var errReconciliationTest = errors.New("reconciliation test error")
 
 type reconciliationProviderStub struct {
-	users        []identitycore.User
+	users        []idp.User
 	listErr      error
 	deleteErr    error
 	deletedID    string
 	deleteCalled bool
 }
 
-func (s *reconciliationProviderStub) ListUsers(context.Context) ([]identitycore.User, error) {
+func (s *reconciliationProviderStub) ListUsers(context.Context) ([]idp.User, error) {
 	return s.users, s.listErr
 }
 
@@ -61,7 +61,7 @@ func (s *reconciliationAuditStub) Record(_ context.Context, entityType string, _
 
 func TestFindOrphanedReturnsOnlyProviderAccountsWithoutLocalUsers(t *testing.T) {
 	localID := uuid.New()
-	provider := &reconciliationProviderStub{users: []identitycore.User{
+	provider := &reconciliationProviderStub{users: []idp.User{
 		{ID: localID.String(), Username: "local"},
 		{ID: "provider-only", Username: "orphan", Email: "orphan@example.test"},
 	}}

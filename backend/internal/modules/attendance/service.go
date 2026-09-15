@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openschool-org/openschool/internal/identity"
+	"github.com/openschool-org/openschool/internal/authz"
 )
 
 var (
@@ -142,7 +142,7 @@ func NewService(store store, notifier Notifier, auditor Auditor, leadership Lead
 func NewReader(repo *Repository) Reader { return NewService(repo, nil, nil, nil) }
 
 func (s *Service) authorizeClass(ctx context.Context, actor Actor, classID uuid.UUID) error {
-	if actor.Role == identity.RoleAdmin {
+	if actor.Role == authz.RoleAdmin {
 		return nil
 	}
 	teacherID, err := s.store.teacherByUser(ctx, actor.ID)
@@ -225,7 +225,7 @@ func (s *Service) DeleteSession(ctx context.Context, actor Actor, id uuid.UUID) 
 		return err
 	}
 	locked := s.locked(session)
-	if locked && actor.Role != identity.RoleAdmin {
+	if locked && actor.Role != authz.RoleAdmin {
 		return ErrSessionLocked
 	}
 	if err := s.store.deleteSession(ctx, id); err != nil {
@@ -249,7 +249,7 @@ func (s *Service) ListSessionsByDate(ctx context.Context, actor Actor, rawDate s
 	if err != nil {
 		return nil, fmt.Errorf("invalid date format, use YYYY-MM-DD")
 	}
-	if actor.Role == identity.RoleAdmin {
+	if actor.Role == authz.RoleAdmin {
 		return s.store.listSessionsByDate(ctx, date, nil)
 	}
 	teacherID, err := s.store.teacherByUser(ctx, actor.ID)
@@ -285,7 +285,7 @@ func (s *Service) MarkAttendance(ctx context.Context, actor Actor, sessionID uui
 		return err
 	}
 	locked := s.locked(session)
-	if locked && actor.Role != identity.RoleAdmin {
+	if locked && actor.Role != authz.RoleAdmin {
 		return ErrSessionLocked
 	}
 	takenBy, err := s.resolveActor(ctx, actor)
@@ -368,7 +368,7 @@ func (s *Service) ListByStudent(ctx context.Context, studentID uuid.UUID) ([]Stu
 }
 
 func (s *Service) ListByStudentForTeacher(ctx context.Context, actor Actor, studentID uuid.UUID) ([]StudentRecord, error) {
-	if actor.Role != identity.RoleAdmin {
+	if actor.Role != authz.RoleAdmin {
 		classID, err := s.store.studentClass(ctx, studentID)
 		if err != nil {
 			return nil, ErrNotAssignedToClass
