@@ -15,27 +15,48 @@ import (
 var ErrTeacherNotQualified = errors.New("teacher does not hold this subject as a qualification — assign it on the Teacher Subjects page first")
 
 type Class struct {
-	ID, GradeID, AcademicYearID                                                                    uuid.UUID
-	FormTeacherID, StreamID, StreamGroupID, GirlMonitorID, BoyMonitorID, MediumID, HomeClassroomID *uuid.UUID
-	Name, CreatedAt                                                                                string
+	ID              uuid.UUID  `json:"id"`
+	GradeID         uuid.UUID  `json:"grade_id"`
+	AcademicYearID  uuid.UUID  `json:"academic_year_id"`
+	FormTeacherID   *uuid.UUID `json:"form_teacher_id"`
+	StreamID        *uuid.UUID `json:"stream_id"`
+	StreamGroupID   *uuid.UUID `json:"stream_group_id"`
+	GirlMonitorID   *uuid.UUID `json:"girl_monitor_id"`
+	BoyMonitorID    *uuid.UUID `json:"boy_monitor_id"`
+	MediumID        *uuid.UUID `json:"medium_id"`
+	HomeClassroomID *uuid.UUID `json:"home_classroom_id"`
+	Name            string     `json:"name"`
+	CreatedAt       string     `json:"created_at"`
 }
 type ClassDetails struct {
 	Class
-	GradeName, AcademicYearLabel  string
-	MediumName, HomeClassroomName *string
+	GradeName         string  `json:"grade_name"`
+	AcademicYearLabel string  `json:"academic_year_label"`
+	MediumName        *string `json:"medium_name"`
+	HomeClassroomName *string `json:"home_classroom_name"`
 }
 type SubjectTeacher struct {
-	SubjectID, TeacherID                  uuid.UUID
-	SubjectName, SubjectCode, TeacherName string
+	SubjectID   uuid.UUID `json:"subject_id"`
+	TeacherID   uuid.UUID `json:"teacher_id"`
+	SubjectName string    `json:"subject_name"`
+	SubjectCode string    `json:"subject_code"`
+	TeacherName string    `json:"teacher_name"`
 }
 type createClassRequest struct {
-	GradeID, AcademicYearID                                           uuid.UUID
-	Name                                                              string
-	FormTeacherID, StreamID, StreamGroupID, MediumID, HomeClassroomID *uuid.UUID
+	GradeID         uuid.UUID  `json:"grade_id" binding:"required"`
+	AcademicYearID  uuid.UUID  `json:"academic_year_id" binding:"required"`
+	Name            string     `json:"name" binding:"required"`
+	FormTeacherID   *uuid.UUID `json:"form_teacher_id"`
+	StreamID        *uuid.UUID `json:"stream_id"`
+	StreamGroupID   *uuid.UUID `json:"stream_group_id"`
+	MediumID        *uuid.UUID `json:"medium_id"`
+	HomeClassroomID *uuid.UUID `json:"home_classroom_id"`
 }
 type updateClassRequest struct {
-	Name                                     string
-	FormTeacherID, MediumID, HomeClassroomID *uuid.UUID
+	Name            string     `json:"name" binding:"required"`
+	FormTeacherID   *uuid.UUID `json:"form_teacher_id"`
+	MediumID        *uuid.UUID `json:"medium_id"`
+	HomeClassroomID *uuid.UUID `json:"home_classroom_id"`
 }
 type formTeacherRequest struct {
 	TeacherID uuid.UUID `json:"teacher_id" binding:"required"`

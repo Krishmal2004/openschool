@@ -21,25 +21,38 @@ var (
 )
 
 type Level struct {
-	ID, Label string
-	GradeID   *string
-	SortOrder int32
-	CreatedAt string
+	ID        string  `json:"id"`
+	Label     string  `json:"label"`
+	GradeID   *string `json:"grade_id"`
+	SortOrder int32   `json:"sort_order"`
+	CreatedAt string  `json:"created_at"`
 }
 type SelectionGroup struct {
-	ID, LevelID, Label              string
-	MinSelect, MaxSelect, SortOrder int32
-	CreatedAt                       string
+	ID        string `json:"id"`
+	LevelID   string `json:"level_id"`
+	Label     string `json:"label"`
+	MinSelect int32  `json:"min_select"`
+	MaxSelect int32  `json:"max_select"`
+	SortOrder int32  `json:"sort_order"`
+	CreatedAt string `json:"created_at"`
 }
 type GroupSubject struct {
-	SubjectID, SubjectName, SubjectCode                 string
-	SubjectType, MediumID, MediumName, PrerequisiteNote *string
-	SortOrder                                           int32
+	SubjectID        string  `json:"subject_id"`
+	SubjectName      string  `json:"subject_name"`
+	SubjectCode      string  `json:"subject_code"`
+	SubjectType      *string `json:"subject_type"`
+	MediumID         *string `json:"medium_id"`
+	MediumName       *string `json:"medium_name"`
+	PrerequisiteNote *string `json:"prerequisite_note"`
+	SortOrder        int32   `json:"sort_order"`
 }
 type CurriculumGroup struct {
-	ID, Label                       string
-	MinSelect, MaxSelect, SortOrder int32
-	Subjects                        []GroupSubject
+	ID        string         `json:"id"`
+	Label     string         `json:"label"`
+	MinSelect int32          `json:"min_select"`
+	MaxSelect int32          `json:"max_select"`
+	SortOrder int32          `json:"sort_order"`
+	Subjects  []GroupSubject `json:"subjects"`
 }
 type CurriculumTree struct {
 	Level  Level             `json:"level"`
