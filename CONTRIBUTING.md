@@ -1,64 +1,83 @@
 # Contributing to OpenSchool
 
-Thanks for considering a contribution. This guide covers how to propose
-changes - for how to actually get the app running, see
-[`docs/SETUP.md`](docs/SETUP.md) and [`docs/THUNDERID.md`](docs/THUNDERID.md)
-(the one-time identity-provider setup).
+Thanks for helping improve OpenSchool. This guide is for first-time contributors and covers the usual workflow from setup to pull request.
 
-By participating, you agree to follow our
-[Code of Conduct](CODE_OF_CONDUCT.md).
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). For a security problem, do not open a public issue; follow [SECURITY.md](SECURITY.md) instead.
 
-## Before you start
+## Before you begin
 
-- **Small fix or obvious bug?** Open a PR directly.
-- **New feature or larger change?** Open an issue first to discuss the
-  approach - saves everyone rework if the direction needs adjusting.
-- **Security issue?** Don't open a public issue - see
-  [`SECURITY.md`](SECURITY.md) for how to report it privately.
+- For a small bug fix, you can open a pull request directly.
+- For a new feature or a larger change, open an issue first so the approach can be discussed.
+- Look for an existing issue before creating a new one.
 
-## Getting a dev environment running
+## Set up your computer
 
-Follow [`docs/SETUP.md`](docs/SETUP.md) end to end, starting with
-[`docs/THUNDERID.md`](docs/THUNDERID.md). That covers prerequisites,
-starting Postgres/ThunderID/backend/frontend, and signing in.
+OpenSchool has a Go backend, a React frontend, PostgreSQL, and ThunderID for sign-in.
 
-## Orienting yourself
+1. Follow [ThunderID setup](docs/THUNDERID.md) once for your local machine.
+2. Follow [project setup](docs/SETUP.md) to start PostgreSQL, the backend, and the frontend.
+3. Open `http://localhost:5173` and confirm that you can sign in.
 
-- [`CLAUDE.md`](CLAUDE.md) - fast orientation: backend layering, frontend
-  structure, data model.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - the full picture.
-- [`docs/adr/`](docs/adr/) - *why* behind non-obvious decisions; check here
-  before "fixing" something that looks wrong but is deliberate.
+Useful project maps:
 
-## Making changes
+- [Architecture](docs/ARCHITECTURE.md) explains the main parts of the system.
+- [Feature list](docs/FEATURES.md) shows what each area does.
+- [Architecture decisions](docs/adr/) explain important design choices.
 
-**Backend (Go):**
+## Make a change
 
-- SQL lives in `backend/db/queries/*.sql`. After editing it, run `sqlc
-  generate` from `backend/` - never hand-edit `backend/db/sqlc/`.
-- Follow the existing layering for a feature module: `routes` →
-  `handlers` → `services` → `repositories`.
-- One clear doc-comment line per exported function/type - match the
-  existing style rather than writing long comment blocks.
-- Before submitting: `go build ./...` and `go vet ./...` must pass; run
-  `staticcheck ./...` too if you have it installed (CI does).
+Create a branch from `development`:
 
-**Frontend (React/TypeScript):**
+```bash
+git switch development
+git pull
+git switch -c feature/short-description
+```
 
-- Admin CRUD pages follow one shared template - list, a modal form,
-  confirm-delete - built from `src/components/common/`. Deviating from it
-  should be a deliberate choice, not an accident.
-- Before submitting: `pnpm build` and `pnpm lint` must pass.
+Keep each change focused. Avoid mixing formatting, refactoring, and a new feature in one pull request unless they need to be together.
 
-## Commit and PR conventions
+### Backend
 
-- Branch from `development`: `feature/your-feature-name`.
-- All PRs target `development`, not `main`.
-- Keep commits focused; explain *why* a change was made, not just what
-  changed.
-- Reference the issue a PR resolves, if there is one.
+Backend code is in `backend/`.
+
+- Keep feature code inside its owning module in `backend/internal/modules/`.
+- Put database queries in `backend/db/queries/`. Run `sqlc generate` after changing a query or migration. Do not edit `backend/db/sqlc/` by hand.
+- Add or update tests when behaviour changes.
+
+Before opening a pull request:
+
+```bash
+cd backend
+go test ./...
+go vet ./...
+go build ./...
+```
+
+### Frontend
+
+Frontend code is in `frontend/`.
+
+- Reuse shared components from `src/components/common/` where they fit.
+- Keep API types in `src/services/` aligned with backend JSON responses.
+- Add clear loading, empty, and error states for new data screens.
+
+Before opening a pull request:
+
+```bash
+cd frontend
+pnpm lint
+pnpm build
+```
+
+## Open a pull request
+
+- Target the `development` branch, not `main`.
+- Use a short title that explains the result.
+- Describe what changed, why it changed, and how you tested it.
+- Link the related issue when there is one.
+- Respond to review comments and keep the pull request up to date.
 
 ## Need help?
 
 - [Open an issue](https://github.com/openschool-org/openschool/issues)
-- [GitHub Discussions](https://github.com/openschool-org/openschool/discussions)
+- [Start a discussion](https://github.com/openschool-org/openschool/discussions)
