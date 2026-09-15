@@ -21,11 +21,3 @@ cmd/api -> internal/app -> internal/modules
   by `internal/app`.
 - `internal/platform` is reserved for shared technical infrastructure; business
   behavior must not be placed there.
-
-## Incremental migration
-
-The existing horizontal packages remain a migration bridge. New behavior must
-be added to a module, and existing behavior moves one vertical slice at a time.
-The architecture test rejects new legacy dependencies, all service-layer sqlc
-imports, and any new file in the horizontal repository package. Its explicit
-repository debt list is reduced whenever a remaining capability migrates.
