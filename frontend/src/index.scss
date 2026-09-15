@@ -3,55 +3,46 @@
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-// ─── Design tokens ───────────────────────────────────────────────────────────
-// Primary palette built from #406AAF
-$os-accent:        #406AAF;   // brand — interactive, borders, icons
-$os-accent-dark:   #2d5190;   // button hover, darker states
-$os-accent-deeper: $os-accent; // header background — matches the avatar/accent blue
-$os-accent-mid:    #6a93c8;   // lighter icon / disabled
-$os-accent-light:  #edf2fa;   // hover / active bg
-$os-accent-border: #9ab5d9;   // light border accent
-$os-brand-orange:  #FF6F1B;   // "School" wordmark accent — distinct from the UI accent
+// ─── Design Tokens ───────────────────────────────────────────────────────────
+// Harmonized Ocean Teal Palette (built around #007D9C)
+$os-accent:        #007D9C;
+$os-accent-dark:   #005F77;
+$os-accent-deeper: #004B5E;
+$os-accent-mid:    #1CB3D6;
+$os-accent-light:  #E6F7FA;
+$os-accent-border: #9DE5F3;
+$os-brand-orange:  #00A3C4;
 $os-sidebar-w:     15rem;
 
-// Categorical color for "teacher" as a record kind, distinct from the brand accent used for "student".
-$os-chart-purple: #8a3ffc;
+$os-chart-purple:  #6941C6;
 
-// Text grays reused across the auth screens (sign-in, setup, access-restricted)
-$os-text-primary:   #161616;
-$os-text-secondary: #525252;
-$os-text-tertiary:  #8d8d8d;
-$os-text-disabled:  #c6c6c6;
+$os-text-primary:   #002731;
+$os-text-secondary: #334D57;
+$os-text-tertiary:  #617B85;
+$os-text-disabled:  #94A8B0;
 
-// Neutral surface/border grays (Carbon's borderSubtle00/01 and layer01 tokens)
-$os-border-subtle:  #e0e0e0;
-$os-border-strong:  #c6c6c6;
-$os-layer-hover:    #f4f4f4;
+$os-border-subtle:  #E1EFF3;
+$os-border-strong:  #C4DCE3;
+$os-layer-hover:    #F0F8FA;
 
-// Carbon status/support colors (supportError/Success/Warning)
-$os-danger:  #da1e28;
-$os-success: #24a148;
-$os-warning: #f1c21b;
-$os-warning-text: #7d5a00; // readable-contrast amber for text/icons on a light background — $os-warning itself is too light to read as text
+$os-danger:       #D92D20;
+$os-success:      #079455;
+$os-warning:      #DC6803;
+$os-warning-text: #B54708;
 
-// Attendance status badges — tint background + matching border/text per status,
-// the one place these four statuses' colors are defined.
-$os-status-present-bg:      #defbe6;
-$os-status-present-border:  $os-success;
-$os-status-present-text:    #0e6027;
-$os-status-absent-bg:       #fff1f1;
-$os-status-absent-border:   $os-danger;
-$os-status-absent-text:     #a2191f;
-$os-status-late-bg:         #fdf6dd;
-$os-status-late-border:     $os-warning;
-$os-status-late-text:       #7d5a00;
-$os-status-excused-bg:      #f6f2ff;
-$os-status-excused-border:  #8a3ffc;
-$os-status-excused-text:    #6929c4;
+$os-status-present-bg:     #ECFDF3;
+$os-status-present-border: $os-success;
+$os-status-present-text:   #027A48;
+$os-status-absent-bg:      #FEF3F2;
+$os-status-absent-border:  $os-danger;
+$os-status-absent-text:    #B42318;
+$os-status-late-bg:        #FEF0C7;
+$os-status-late-border:    $os-warning;
+$os-status-late-text:      #B54708;
+$os-status-excused-bg:     #F4F3FF;
+$os-status-excused-border: $os-chart-purple;
+$os-status-excused-text:   #53389E;
 
-// Runtime custom properties mirroring the tokens above, for inline styles and
-// components that can't reach Sass variables — the single source of truth
-// every color in the app should reference instead of a hardcoded hex.
 :root {
   --os-accent: #{$os-accent};
   --os-accent-dark: #{$os-accent-dark};
@@ -85,8 +76,10 @@ $os-status-excused-text:    #6929c4;
   --os-status-excused-text: #{$os-status-excused-text};
 }
 
-// ─── Global font ────────────────────────────────────────────────────────────
-* { font-family: 'IBM Plex Sans', sans-serif; }
+// ─── Global Base ────────────────────────────────────────────────────────────
+* {
+  font-family: 'IBM Plex Sans', sans-serif;
+}
 
 .cds--progress-step .cds--assistive-text {
   position: absolute !important;
@@ -113,17 +106,14 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f4f4;
+  background-color: #F8FAFC;
 }
 
-// Full-viewport placeholder shown while App.tsx resolves role/session on
-// first load — same background as the rest of the app's neutral surfaces,
-// kept here instead of an inline style so it isn't the one spot with a
-// hardcoded color outside the stylesheet.
 .os-loading-placeholder {
   min-height: 100vh;
-  background-color: #f4f4f4;
+  background-color: #F8FAFC;
 }
+
 .os-signin-card {
   width: 100%;
   max-width: 480px;
@@ -133,22 +123,22 @@ html, body, #root {
   &__title-accent { color: $os-brand-orange; }
   &__subtitle { color: $os-text-secondary; margin-bottom: 2rem; }
 }
+
 .os-signin { padding: 2rem !important; }
 
-// Full-width submit button, reused on the sign-in and setup cards
 .os-full-width-btn { width: 100%; max-width: 100%; }
 
-// ─── First-run setup (admin registration) ──────────────────────────────────
+// ─── First-run Setup ────────────────────────────────────────────────────────
 .os-setup-wrapper {
   min-height: 100vh;
   display: grid;
   place-items: center;
   box-sizing: border-box;
   padding: 0.5rem 1rem;
-  background: #f4f7fb;
+  background: #F1F5F9;
 }
 
-// ─── School setup wizard ───────────────────────────────────────────────────
+// ─── School Setup Wizard ────────────────────────────────────────────────────
 .os-school-setup-page {
   min-height: 100vh;
   box-sizing: border-box;
@@ -156,7 +146,7 @@ html, body, #root {
   justify-content: center;
   align-items: flex-start;
   padding: 2rem 1rem 1rem;
-  background: #f4f7fb;
+  background: #F1F5F9;
 }
 
 .os-school-setup-card {
@@ -272,8 +262,6 @@ html, body, #root {
   &__section-heading p { margin: 0; color: $os-text-tertiary; font-size: 0.75rem; }
   &__footer { display: grid; gap: 1rem; padding-top: 0.25rem; }
 
-  // Keep the fields distinct from the pale page surface without adding
-  // another container around the form.
   .cds--text-input {
     background-color: #ffffff;
     border-bottom-color: $os-border-strong;
@@ -320,12 +308,12 @@ html, body, #root {
   height: 3.5rem;
   margin: 0 auto 1.25rem;
   border-radius: 50%;
-  background: #defbe6;
+  background: $os-status-present-bg;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  svg { fill: #24a148; }
+  svg { fill: $os-success; }
 }
 
 .os-setup-signin-link {
@@ -352,7 +340,7 @@ html, body, #root {
   .os-setup-security-grid { grid-template-columns: 1fr; }
 }
 
-// ─── Status views (404, coming soon, access restricted) ──────────────────────
+// ─── Status Views ───────────────────────────────────────────────────────────
 .os-status {
   display: flex;
   flex-direction: column;
@@ -360,13 +348,13 @@ html, body, #root {
   justify-content: center;
   text-align: center;
   padding: 4.5rem 1.5rem;
-  min-height: calc(100vh - 3rem - 3.5rem); // header + page padding, roughly
+  min-height: calc(100vh - 3rem - 3.5rem);
 
   &__icon {
     width: 4rem;
     height: 4rem;
     border-radius: 50%;
-    background: #f4f4f4;
+    background: $os-layer-hover;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -387,12 +375,11 @@ html, body, #root {
   &__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
 }
 
-// Fullscreen variant reuses the sign-in/setup card look
 .os-status-card {
   width: 100%;
   max-width: 28rem;
   background: #ffffff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid $os-border-subtle;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   padding: 2.5rem 2rem;
   display: flex;
@@ -416,7 +403,7 @@ html, body, #root {
   font-size: 1.25rem !important;
   letter-spacing: 0.01em;
   transition: background-color 0.15s ease;
-  &:hover { background-color: rgba(255,255,255,0.08); }
+  &:hover { background-color: rgba(255, 255, 255, 0.08); }
 }
 
 .cds--header__global {
@@ -435,8 +422,8 @@ html, body, #root {
   padding: 0 0.75rem;
   border-radius: 6px;
   transition: background-color 0.15s ease;
-  &:hover { background-color: rgba(255,255,255,0.14); color: #ffffff; }
-  &:focus { border-color: rgba(255,255,255,0.6); }
+  &:hover { background-color: rgba(255, 255, 255, 0.14); color: #ffffff; }
+  &:focus { border-color: rgba(255, 255, 255, 0.6); }
 }
 
 .cds--header__global button { color: #ffffff; }
@@ -480,7 +467,7 @@ html, body, #root {
   max-height: min(44rem, calc(100vh - 3rem)) !important;
 
   scrollbar-width: thin;
-  scrollbar-color: #c6c6c6 transparent;
+  scrollbar-color: $os-border-strong transparent;
 
   &::-webkit-scrollbar {
     width: 3px;
@@ -489,11 +476,11 @@ html, body, #root {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: #c6c6c6;
+    background-color: $os-border-strong;
     border-radius: 3px;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background-color: #a8a8a8;
+    background-color: $os-text-disabled;
   }
 }
 
@@ -501,7 +488,7 @@ html, body, #root {
 .cds--side-nav {
   width: $os-sidebar-w !important;
   background-color: #ffffff;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid $os-border-subtle;
   top: 3rem;
 }
 
@@ -509,7 +496,7 @@ html, body, #root {
 .cds--side-nav__navigation,
 .cds--side-nav__items {
   scrollbar-width: thin;
-  scrollbar-color: #c6c6c6 transparent;
+  scrollbar-color: $os-border-strong transparent;
 
   &::-webkit-scrollbar {
     width: 3px;
@@ -518,16 +505,16 @@ html, body, #root {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: #c6c6c6;
+    background-color: $os-border-strong;
     border-radius: 3px;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background-color: #a8a8a8;
+    background-color: $os-text-disabled;
   }
 }
 
 .cds--side-nav__link {
-  color: #161616;
+  color: $os-text-primary;
   font-size: 0.875rem;
 
   &:hover {
@@ -545,13 +532,11 @@ html, body, #root {
   }
 }
 
-.cds--side-nav__icon { fill: #525252; }
+.cds--side-nav__icon { fill: $os-text-secondary; }
 
-// Breathing room below the last nav item (System > Automation) so it isn't
-// flush against the bottom edge of the sidebar.
 .cds--side-nav__items { padding-bottom: 1.5rem; }
 
-// ─── Page layout ────────────────────────────────────────────────────────────
+// ─── Page Layout ────────────────────────────────────────────────────────────
 .os-layout {
   display: flex;
   min-height: 100vh;
@@ -566,12 +551,16 @@ html, body, #root {
     bottom: 0;
     overflow-y: auto;
     background-color: #ffffff;
-    border-right: 1px solid #e0e0e0;
+    border-right: 1px solid $os-border-subtle;
     z-index: 999;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-    // Thin scrollbar so long nav lists don't eat into the item width
+    &.is-collapsed {
+      transform: translateX(-100%);
+    }
+
     scrollbar-width: thin;
-    scrollbar-color: #c6c6c6 transparent;
+    scrollbar-color: $os-border-strong transparent;
 
     &::-webkit-scrollbar {
       width: 3px;
@@ -580,24 +569,29 @@ html, body, #root {
       background: transparent;
     }
     &::-webkit-scrollbar-thumb {
-      background-color: #c6c6c6;
+      background-color: $os-border-strong;
       border-radius: 3px;
     }
     &::-webkit-scrollbar-thumb:hover {
-      background-color: #a8a8a8;
+      background-color: $os-text-disabled;
     }
   }
 
   &__content {
     flex: 1;
     margin-left: $os-sidebar-w;
-    background-color: #f4f4f4;
+    background-color: #F8FAFC;
     min-height: calc(100vh - 3rem);
     min-width: 0;
+    transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-expanded {
+      margin-left: 0;
+    }
   }
 }
 
-// ─── Page chrome ────────────────────────────────────────────────────────────
+// ─── Page Chrome ────────────────────────────────────────────────────────────
 .os-page {
   padding: 1.5rem 2rem;
 
@@ -617,13 +611,13 @@ html, body, #root {
   &__title {
     font-size: 1.5rem;
     font-weight: 400;
-    color: #161616;
+    color: $os-text-primary;
     margin: 0 0 0.2rem;
   }
 
   &__subtitle {
     font-size: 0.8125rem;
-    color: #525252;
+    color: $os-text-secondary;
     margin: 0;
   }
 
@@ -632,14 +626,14 @@ html, body, #root {
     align-items: center;
     gap: 0.375rem;
     font-size: 0.75rem;
-    color: #525252;
+    color: $os-text-secondary;
     margin-bottom: 0.5rem;
-    a { color: $os-accent; text-decoration: none; &:hover { text-decoration: underline; } }
-    span { color: #8d8d8d; }
+    a { color: $os-accent-dark; text-decoration: none; &:hover { text-decoration: underline; } }
+    span { color: $os-text-tertiary; }
   }
 }
 
-// ─── Stat cards ─────────────────────────────────────────────────────────────
+// ─── Stat Cards ─────────────────────────────────────────────────────────────
 .os-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -657,7 +651,7 @@ html, body, #root {
   transition: border-color 0.2s ease;
 
   &:hover {
-    border-color: var(--os-text-disabled);
+    border-color: var(--os-border-strong);
   }
 
   &__label {
@@ -687,7 +681,7 @@ html, body, #root {
   }
 }
 
-// ─── Quick action cards ───────────────────────────────────────────────────────
+// ─── Quick Action Cards ──────────────────────────────────────────────────────
 .os-quick-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -697,8 +691,6 @@ html, body, #root {
   @media (max-width: 640px)  { grid-template-columns: 1fr; }
 }
 
-// A bordered card link (e.g. a dashboard's "Quick Actions" list) whose border
-// highlights on hover — CSS instead of onMouseEnter/onMouseLeave JS.
 .os-quick-action {
   display: flex;
   align-items: center;
@@ -712,7 +704,7 @@ html, body, #root {
   &:hover { border-color: var(--os-accent); }
 }
 
-// ─── Section card ────────────────────────────────────────────────────────────
+// ─── Section Card ────────────────────────────────────────────────────────────
 .os-section {
   background: var(--os-layer);
   border: 1px solid var(--os-border-subtle);
@@ -741,8 +733,6 @@ html, body, #root {
   &__body { padding: 1.5rem; }
 }
 
-// A single row within a section list — border-bottom on all but the last
-// row and a hover tint, both handled in CSS instead of per-row JS/index math.
 .os-list-row {
   display: flex;
   align-items: center;
@@ -757,7 +747,6 @@ html, body, #root {
 
   &--compact { padding: 0.625rem 0; }
 
-  // For a <button> acting as a selectable row — resets browser button chrome.
   &--button {
     width: 100%;
     border: none;
@@ -768,7 +757,7 @@ html, body, #root {
   }
 }
 
-// ─── Data table ──────────────────────────────────────────────────────────────
+// ─── Data Table ──────────────────────────────────────────────────────────────
 .os-table {
   width: 100%;
   border-collapse: collapse;
@@ -806,28 +795,28 @@ html, body, #root {
     &:hover { background-color: transparent; }
   }
 
-  .os-table__link  { color: var(--os-accent); font-weight: 500; text-decoration: none; &:hover { text-decoration: underline; } }
+  .os-table__link  { color: var(--os-accent-dark); font-weight: 500; text-decoration: none; &:hover { text-decoration: underline; } }
   .os-table__muted { color: var(--os-text-secondary); }
   .os-table__mono  { font-family: 'IBM Plex Mono', monospace; font-size: 0.8125rem; color: var(--os-text-secondary); }
 }
 
-// ─── Form layout ────────────────────────────────────────────────────────────
+// ─── Form Layout ────────────────────────────────────────────────────────────
 .os-form {
   max-width: 720px;
 
   &__section {
     background: #ffffff;
-    border: 1px solid #e0e0e0;
+    border: 1px solid $os-border-subtle;
     margin-bottom: 1.5rem;
   }
 
   &__section-header {
     padding: 0.875rem 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid $os-border-subtle;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #161616;
-    background-color: #f9f9f9;
+    color: $os-text-primary;
+    background-color: $os-layer-hover;
   }
 
   &__section-body {
@@ -849,7 +838,7 @@ html, body, #root {
   }
 }
 
-// ─── Profile / detail ────────────────────────────────────────────────────────
+// ─── Profile / Detail ────────────────────────────────────────────────────────
 .os-profile {
   &__banner {
     background: var(--os-layer);
@@ -896,7 +885,7 @@ html, body, #root {
   &__value  { font-size: 0.875rem; color: var(--os-text-primary); margin: 0; }
 }
 
-// ─── Search / toolbar ────────────────────────────────────────────────────────
+// ─── Search / Toolbar ────────────────────────────────────────────────────────
 .os-search {
   position: relative;
   flex: 1;
@@ -907,14 +896,14 @@ html, body, #root {
     left: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    fill: #525252;
+    fill: $os-text-secondary;
     pointer-events: none;
   }
 
   &__input {
     width: 100%;
     padding: 0.5625rem 0.75rem 0.5625rem 2.25rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid $os-border-subtle;
     font-size: 0.875rem;
     font-family: inherit;
     outline: none;
@@ -929,12 +918,12 @@ html, body, #root {
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid $os-border-subtle;
   background: #ffffff;
   flex-wrap: wrap;
 }
 
-// ─── Placeholder state ────────────────────────────────────────────────────────
+// ─── Placeholder State ──────────────────────────────────────────────────────
 .os-placeholder {
   display: flex;
   flex-direction: column;
@@ -947,34 +936,32 @@ html, body, #root {
   p { margin: 0; font-size: 0.875rem; }
 }
 
-// ─── Carbon overrides ─────────────────────────────────────────────────────────
+// ─── Carbon Overrides ────────────────────────────────────────────────────────
 .cds--btn--primary {
   background-color: $os-accent !important;
   border-color: $os-accent !important;
+  color: #ffffff !important;
   &:hover { background-color: $os-accent-dark !important; }
   &:active { background-color: $os-accent-deeper !important; }
 }
 
-// Carbon tab indicator
 .cds--tabs__nav-item--selected .cds--tabs__nav-link {
   border-bottom-color: $os-accent !important;
   color: $os-accent-dark !important;
 }
 
-// Carbon tag blue → remap to our accent
 .cds--tag--blue {
-  background-color: color.adjust($os-accent, $lightness: 38%) !important;
+  background-color: $os-accent-light !important;
   color: $os-accent-dark !important;
 }
 
-// ─── Teacher layout (top-nav only, no sidebar) ───────────────────────────────
+// ─── Teacher Layout ─────────────────────────────────────────────────────────
 .os-teacher-content {
   padding-top: 3rem;
-  background-color: #f4f4f4;
+  background-color: #F8FAFC;
   min-height: 100vh;
 }
 
-// Header top nav — override Carbon's white theme background on nav + ul
 .cds--header__nav,
 .cds--header > nav {
   background-color: $os-accent-deeper !important;
@@ -990,7 +977,6 @@ html, body, #root {
   background: $os-accent-deeper !important;
 }
 
-// Nav item text + hover + active
 .cds--header__menu-item {
   color: rgba(255, 255, 255, 0.75) !important;
   font-size: 0.875rem;
@@ -1009,10 +995,9 @@ html, body, #root {
   }
 }
 
-// Remove Carbon's before pseudo-element left divider on nav items
 .cds--header__menu-item::before { display: none; }
 
-// ─── Compact inline DatePicker (e.g. attendance session filter) ──────────────
+// ─── Compact Inline DatePicker ──────────────────────────────────────────────
 .os-session-date-filter {
   width: 11rem;
   overflow: hidden;
@@ -1025,8 +1010,7 @@ html, body, #root {
   }
 }
 
-// ─── Attendance status controls ───────────────────────────────────────────────
-// One toggle per status (present/absent/late/excused) in a student's row.
+// ─── Attendance Status Controls ─────────────────────────────────────────────
 .os-status-toggle {
   padding: 0.3rem 0.75rem;
   font-size: 0.75rem;
@@ -1051,7 +1035,6 @@ html, body, #root {
   }
 }
 
-// "Mark all" quick-action pills above the attendance table.
 .os-quick-mark {
   padding: 0.375rem 0.875rem;
   font-size: 0.75rem;
@@ -1286,12 +1269,12 @@ html, body, #root {
 .thunderid-dialog__content:has(.thunderid-user-profile) {
   border-radius: 0px !important;
   background-color: #ffffff !important;
-  border: 1px solid #e0e0e0 !important;
+  border: 1px solid $os-border-subtle !important;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
   font-family: 'IBM Plex Sans', sans-serif !important;
   z-index: 10000 !important;
   scrollbar-width: thin;
-  scrollbar-color: #c6c6c6 transparent;
+  scrollbar-color: $os-border-strong transparent;
 }
 
 .thunderid-dialog__header {
@@ -1301,7 +1284,7 @@ html, body, #root {
   .thunderid-dialog__title {
     font-size: 1.25rem !important;
     font-weight: 400 !important;
-    color: #161616 !important;
+    color: $os-text-primary !important;
     font-family: 'IBM Plex Sans', sans-serif !important;
   }
 }

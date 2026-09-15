@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Search, Add } from "@carbon/icons-react";
-import { Button, Select, SelectItem, Pagination } from "@carbon/react";
+import { Add, Close } from "@carbon/icons-react";
+import { Button, Select, SelectItem, Pagination, Tile, Tag, TableToolbarSearch, ClickableTile } from "@carbon/react";
 import { useNonAcademicStaffList } from "../../../queries/useNonAcademicStaff";
 import { NON_ACADEMIC_DESIGNATIONS } from "../../../services/nonAcademicStaff";
 import { usePagination } from "../../../hooks/usePagination";
@@ -35,8 +35,7 @@ export default function NonAcademicStaff() {
         <div className="os-page__header-left">
           <h1 className="os-page__title">Non-Academic Staff</h1>
           <p className="os-page__subtitle">
-            Lab assistants, librarians, office staff, and other staff without
-            a portal login.
+            Lab assistants, librarians, office staff, and other staff without a portal login.
           </p>
         </div>
         <Button renderIcon={Add} kind="primary" size="md" onClick={() => setCreating(true)}>
@@ -44,37 +43,55 @@ export default function NonAcademicStaff() {
         </Button>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <div className="os-search" style={{ maxWidth: "24rem" }}>
-          <Search size={16} className="os-search__icon" />
-          <input
-            className="os-search__input"
-            placeholder="Search staff…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="os-section" style={{ background: "#ffffff", marginBottom: "1.5rem", padding: "1rem 1.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 16rem", minWidth: "12rem" }}>
+            <TableToolbarSearch
+              persistent
+              placeholder="Search staff by name or employee number…"
+              value={search}
+              onChange={(e: any) => setSearch(e.target?.value ?? "")}
+            />
+          </div>
+          <div style={{ minWidth: "14rem" }}>
+            <Select
+              id="staff-designation-filter"
+              labelText="Designation"
+              hideLabel
+              size="md"
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
+            >
+              <SelectItem value="" text="All designations" />
+              {NON_ACADEMIC_DESIGNATIONS.map((d) => (
+                <SelectItem key={d.value} value={d.value} text={d.label} />
+              ))}
+            </Select>
+          </div>
         </div>
-        <Select
-          id="staff-designation-filter"
-          labelText="Designation"
-          hideLabel
-          value={designation}
-          onChange={(e) => setDesignation(e.target.value)}
-          style={{ maxWidth: "16rem" }}
-        >
-          <SelectItem value="" text="All designations" />
-          {NON_ACADEMIC_DESIGNATIONS.map((d) => (
-            <SelectItem key={d.value} value={d.value} text={d.label} />
-          ))}
-        </Select>
+
+        {(search || designation) && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--os-text-tertiary)" }}>Active Filters:</span>
+            {designation && (
+              <Tag type="teal" filter onClose={() => setDesignation("")}>
+                Role: {designationLabel(designation)}
+              </Tag>
+            )}
+            {search && <Tag type="blue" filter onClose={() => setSearch("")}>Search: "{search}"</Tag>}
+            <Button kind="ghost" size="sm" renderIcon={Close} onClick={() => { setSearch(""); setDesignation(""); }}>
+              Clear All
+            </Button>
+          </div>
+        )}
       </div>
 
-      {isError && <ErrorMessage message="Could not load staff." onRetry={refetch} />}
+      {isError && <ErrorMessage message="Could not load staff members." onRetry={refetch} />}
 
-      <div style={{ display: "grid", gridTemplateColumns: "20rem 1fr", gap: "1.5rem", alignItems: "start" }}>
-        <div className="os-section" style={{ marginTop: 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "22rem 1fr", gap: "1.5rem", alignItems: "start" }}>
+        <div className="os-section" style={{ background: "#ffffff", marginTop: 0, padding: 0, overflow: "hidden" }}>
           {isLoading && (
-            <div>
+            <div style={{ padding: "1rem" }}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <ListRowSkeleton key={i} leadingWidth="1.5rem" titleWidth="70%" subtitleWidth="40%" trailingWidth={null} />
               ))}
@@ -82,40 +99,53 @@ export default function NonAcademicStaff() {
           )}
 
           {!isLoading && !isError && ordered.length === 0 && (
-            <EmptyState
-              title="No staff yet"
-              description="Add lab assistants, librarians, office staff, and other non-academic staff."
-            />
+            <div style={{ padding: "1.5rem" }}>
+              <EmptyState
+                title="No staff found"
+                description="Add lab assistants, librarians, office staff, or adjust your filter."
+              />
+            </div>
           )}
 
           {!isLoading &&
-            pageItems.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSelectedId(s.id)}
-                className={`os-list-row os-list-row--button${selected?.id === s.id ? " is-selected" : ""}`}
-                style={{ gap: "0.75rem", padding: "0.75rem 1.5rem" }}
-              >
-                <Avatar name={s.full_name} size="sm" />
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "0.875rem",
-                      color: "var(--os-text-primary)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {s.full_name}
+            pageItems.map((s) => {
+              const isSelected = selected?.id === s.id;
+              return (
+                <ClickableTile
+                  key={s.id}
+                  onClick={() => setSelectedId(s.id)}
+                  className={`os-list-row${isSelected ? " is-selected" : ""}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    padding: "0.875rem 1.25rem",
+                    borderRadius: 0,
+                    borderBottom: "1px solid var(--os-border-subtle)",
+                    backgroundColor: isSelected ? "var(--os-accent-light)" : "#ffffff",
+                  }}
+                >
+                  <Avatar name={s.full_name} size="sm" />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        color: "var(--os-text-primary)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {s.full_name}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
+                      {designationLabel(s.designation)} · {s.employee_number}
+                    </div>
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>
-                    {designationLabel(s.designation)} · {s.employee_number}
-                  </div>
-                </div>
-              </button>
-            ))}
+                </ClickableTile>
+              );
+            })}
 
           {!isLoading && ordered.length > 0 && (
             <Pagination
@@ -132,9 +162,9 @@ export default function NonAcademicStaff() {
         {selected ? (
           <StaffDetail staff={selected} onDeleted={() => setSelectedId(null)} />
         ) : (
-          <div className="os-section" style={{ marginTop: 0 }}>
-            <EmptyState title="Select a staff member" description="Pick a staff member from the list to see their details." />
-          </div>
+          <Tile className="os-section" style={{ background: "#ffffff", marginTop: 0, textAlign: "center", padding: "3rem 1.5rem" }}>
+            <EmptyState title="Select a staff member" description="Choose a staff member from the left directory to view full profile details." />
+          </Tile>
         )}
       </div>
 
@@ -142,3 +172,5 @@ export default function NonAcademicStaff() {
     </div>
   );
 }
+
+

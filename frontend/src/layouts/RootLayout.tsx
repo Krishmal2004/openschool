@@ -1,8 +1,10 @@
 // This file defines the RootLayout component, which renders the global page shell containing the header navigation and sidebar navigation menu.
 
+import { useState } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router";
 import {
   Header,
+  HeaderMenuButton,
   SideNav,
   SideNavItems,
   SideNavLink,
@@ -115,6 +117,7 @@ const NAV_GROUPS: {
 
 export default function RootLayout() {
   const location = useLocation();
+  const [isSideNavExpanded, setIsSideNavExpanded] = useState(true);
 
   const { isLoading: schoolLoading, error: schoolError } = useSchool();
   const noSchoolYet = isNotFoundError(schoolError);
@@ -126,16 +129,22 @@ export default function RootLayout() {
   return (
     <>
       <Header aria-label="OpenSchool">
+        <HeaderMenuButton
+          aria-label={isSideNavExpanded ? "Close menu" : "Open menu"}
+          onClick={() => setIsSideNavExpanded(!isSideNavExpanded)}
+          isActive={isSideNavExpanded}
+          aria-expanded={isSideNavExpanded}
+        />
         <AppHeaderBrand />
         <AppHeaderActions showSearch />
       </Header>
 
       <div className="os-layout">
-        <aside className="os-layout__sidebar">
+        <aside className={`os-layout__sidebar ${!isSideNavExpanded ? "is-collapsed" : ""}`}>
           <SideNav
             aria-label="Side navigation"
             isFixedNav
-            expanded
+            expanded={isSideNavExpanded}
             isPersistent
           >
             <SideNavItems>
@@ -178,7 +187,7 @@ export default function RootLayout() {
           </SideNav>
         </aside>
 
-        <main className="os-layout__content">
+        <main className={`os-layout__content ${!isSideNavExpanded ? "is-expanded" : ""}`}>
           <Outlet />
         </main>
       </div>

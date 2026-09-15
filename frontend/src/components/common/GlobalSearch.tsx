@@ -30,6 +30,7 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
   const [open, setOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounced = useDebounced(query, 300);
   const { data, isFetching, isError } = useGlobalSearch(debounced);
@@ -46,14 +47,26 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
   const activeIndex = highlightedIndex >= 0 ? highlightedIndex : 0;
 
   useEffect(() => {
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(true);
+        inputRef.current?.focus();
+      }
+    };
+
     const onClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
         onClose?.();
       }
     };
+    window.addEventListener("keydown", handleGlobalKeyDown);
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+      document.removeEventListener("mousedown", onClickOutside);
+    };
   }, [onClose]);
 
   const goTo = (item: FlatResult) => {
@@ -84,11 +97,12 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
 
   return (
     <div ref={containerRef} style={{ position: "relative", width: "20rem", margin: "0 1rem", alignSelf: "center" }}>
-      <div className="os-search" style={{ maxWidth: "100%" }}>
+      <div className="os-search" style={{ maxWidth: "100%", display: "flex", alignItems: "center" }}>
         <Search size={16} className="os-search__icon" />
         <input
+          ref={inputRef}
           className="os-search__input"
-          placeholder="Search students, teachers, guardians, staff…"
+          placeholder="Search students, teachers, staff…"
           value={query}
           autoFocus={autoFocus}
           onChange={(e) => {
@@ -98,6 +112,23 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
         />
+        <kbd
+          style={{
+            position: "absolute",
+            right: "0.5rem",
+            fontSize: "0.6875rem",
+            fontWeight: 600,
+            padding: "0.15rem 0.35rem",
+            borderRadius: "4px",
+            background: "rgba(255, 255, 255, 0.2)",
+            color: "rgba(255, 255, 255, 0.9)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          ⌘K
+        </kbd>
       </div>
 
       {showPanel && (
