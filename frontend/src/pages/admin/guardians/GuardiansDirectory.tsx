@@ -48,7 +48,7 @@ export default function GuardiansDirectory() {
               persistent
               placeholder="Search guardians by name, phone, or email…"
               value={search}
-              onChange={(e: any) => setSearch(e.target?.value ?? "")}
+              onChange={(e) => setSearch(typeof e === "string" ? e : e.target.value)}
             />
           </div>
           <Checkbox

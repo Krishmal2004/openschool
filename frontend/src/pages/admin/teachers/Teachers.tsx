@@ -86,7 +86,7 @@ export default function Teachers() {
               persistent
               placeholder="Search by name or employee number…"
               value={query}
-              onChange={(e: any) => setQuery(e.target?.value ?? "")}
+              onChange={(e) => setQuery(typeof e === "string" ? e : e.target.value)}
             />
           </div>
           <div style={{ minWidth: "10rem" }}>

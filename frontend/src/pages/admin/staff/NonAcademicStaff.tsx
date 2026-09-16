@@ -50,7 +50,7 @@ export default function NonAcademicStaff() {
               persistent
               placeholder="Search staff by name or employee number…"
               value={search}
-              onChange={(e: any) => setSearch(e.target?.value ?? "")}
+              onChange={(e) => setSearch(typeof e === "string" ? e : e.target.value)}
             />
           </div>
           <div style={{ minWidth: "14rem" }}>

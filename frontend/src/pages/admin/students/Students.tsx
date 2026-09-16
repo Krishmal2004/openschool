@@ -131,7 +131,7 @@ export default function Students() {
               persistent
               placeholder="Search by name or index number…"
               value={query}
-              onChange={(e: any) => setQuery(e.target?.value ?? "")}
+              onChange={(e) => setQuery(typeof e === "string" ? e : e.target.value)}
             />
           </div>
           <div style={{ minWidth: "9rem" }}>

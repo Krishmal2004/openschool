@@ -127,7 +127,7 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
             userSelect: "none",
           }}
         >
-          ⌘K
+          {typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl+K"}
         </kbd>
       </div>
 

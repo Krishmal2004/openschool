@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { HeaderName, HeaderGlobalBar, HeaderGlobalAction, OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { Password, User, Search } from "@carbon/icons-react";
@@ -23,6 +23,18 @@ export function AppHeaderBrand() {
 export function AppHeaderActions({ showSearch = false }: { showSearch?: boolean }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!showSearch) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchExpanded(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSearch]);
 
   return (
     <HeaderGlobalBar style={{ display: "flex", alignItems: "center" }}>
