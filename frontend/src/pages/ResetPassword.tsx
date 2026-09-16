@@ -24,12 +24,12 @@ export default function ResetPassword() {
   if (done) {
     return (
       <div className="os-signin-wrapper">
-        <div className="os-setup-card" style={{ textAlign: "center" }}>
-          <div className="os-setup-success-icon">
+        <div className="os-auth-card os-auth-card--center">
+          <div className="os-auth-card__success-icon">
             <CheckmarkFilled size={28} />
           </div>
-          <h1 className="os-setup-card__title">Password updated</h1>
-          <p className="os-setup-card__subtitle">You can now sign in with your new password.</p>
+          <h1 className="os-auth-card__title">Password updated</h1>
+          <p className="os-auth-card__subtitle">You can now sign in with your new password.</p>
           <Button href="/signin" className="os-full-width-btn">
             Go to Sign In
           </Button>
@@ -40,9 +40,19 @@ export default function ResetPassword() {
 
   return (
     <div className="os-signin-wrapper">
-      <div className="os-setup-card">
-        <h1 className="os-setup-card__title">Reset password</h1>
-        <p className="os-setup-card__subtitle">Choose a new password for your account.</p>
+      <div className="os-auth-card">
+        <div className="os-auth-card__brand">
+          <img
+            src="/favicon.webp"
+            alt="OpenSchool"
+            width={36}
+            height={36}
+            className="os-auth-card__logo"
+          />
+          <span className="os-auth-card__brand-name">OpenSchool</span>
+        </div>
+        <h1 className="os-auth-card__title">Reset password</h1>
+        <p className="os-auth-card__subtitle">Choose a new password for your account.</p>
 
         {!token && (
           <InlineNotification
@@ -51,7 +61,7 @@ export default function ResetPassword() {
             subtitle="This link is missing its reset token. Request a new one below."
             lowContrast
             hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
+            style={{ marginBottom: "1.25rem", maxWidth: "100%" }}
           />
         )}
         {resetPassword.isError && (
@@ -61,10 +71,10 @@ export default function ResetPassword() {
             subtitle={getErrorMessage(resetPassword.error, "The reset link is invalid, already used, or has expired.")}
             lowContrast
             hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
+            style={{ marginBottom: "1.25rem", maxWidth: "100%" }}
           />
         )}
-        <div style={{ display: "grid", gap: "1rem" }}>
+        <div className="os-auth-card__form">
           <PasswordInput
             id="reset-password-new"
             labelText="New Password"
@@ -82,18 +92,19 @@ export default function ResetPassword() {
             invalidText="Passwords do not match."
           />
         </div>
-        <Button
-          className="os-full-width-btn"
-          style={{ marginTop: "1.5rem" }}
-          onClick={handleReset}
-          disabled={!canReset || resetPassword.isPending}
-        >
-          {resetPassword.isPending ? "Saving…" : "Set new password"}
-        </Button>
+        <div className="os-auth-card__actions">
+          <Button
+            className="os-full-width-btn"
+            onClick={handleReset}
+            disabled={!canReset || resetPassword.isPending}
+          >
+            {resetPassword.isPending ? "Saving…" : "Set new password"}
+          </Button>
+        </div>
 
-        <p style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.875rem" }}>
+        <div className="os-auth-card__footer">
           <Link to="/forgot-password">Request a new link</Link> · <Link to="/signin">Back to sign in</Link>
-        </p>
+        </div>
       </div>
     </div>
   );

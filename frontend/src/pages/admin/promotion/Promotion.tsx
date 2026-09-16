@@ -99,7 +99,7 @@ export default function Promotion() {
         <div className="os-page__header-left">
           <h1 className="os-page__title">Academic Year Promotion</h1>
           <p className="os-page__subtitle">
-            Promote students to their next grade and assign them to classes in a new academic year — nothing is
+            Promote students to their next grade and assign them to classes in a new academic year - nothing is
             visible to the rest of the app until that year is set as current.
           </p>
         </div>
@@ -229,7 +229,7 @@ export default function Promotion() {
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem 0" }}>
           {unassignedCount > 0 && (
             <span style={{ fontSize: "0.8125rem", color: "#7d5a00" }}>
-              {unassignedCount} student{unassignedCount !== 1 ? "s" : ""} without a target class — they'll be
+              {unassignedCount} student{unassignedCount !== 1 ? "s" : ""} without a target class - they'll be
               skipped until assigned.
             </span>
           )}

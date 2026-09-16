@@ -8,7 +8,7 @@ import SectionHeader from "../../../../components/common/SectionHeader";
 import ListRowSkeleton from "../../../../components/common/ListRowSkeleton";
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   // Built from the parsed Y/M/D as a local date, not `new Date(iso)` — the latter parses a date-only string as UTC midnight, which shifts to the previous day in negative-UTC timezones.
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-LK", {
@@ -66,7 +66,7 @@ export default function YearsList({
                   {y.label}
                 </p>
                 <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--os-text-secondary)" }}>
-                  {formatDate(y.start_date)} — {formatDate(y.end_date)}
+                  {formatDate(y.start_date)} - {formatDate(y.end_date)}
                 </p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>

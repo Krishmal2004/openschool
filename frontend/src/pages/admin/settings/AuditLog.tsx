@@ -24,7 +24,7 @@ export default function AuditLog() {
           </h2>
           <p className="os-page__subtitle" style={{ marginTop: "0.25rem" }}>
             Manual house re-assignments and admin edits made to attendance
-            after its 24-hour lock — most recent first.
+            after its 24-hour lock - most recent first.
           </p>
         </div>
       </div>
@@ -79,7 +79,7 @@ export default function AuditLog() {
                 </div>
                 <p style={{ margin: "0.375rem 0 0", fontSize: "0.8125rem", color: "#525252" }}>
                   By {entry.actor_name ?? "unknown"}
-                  {entry.reason ? ` — "${entry.reason}"` : ""}
+                  {entry.reason ? ` - "${entry.reason}"` : ""}
                 </p>
               </div>
             ))}

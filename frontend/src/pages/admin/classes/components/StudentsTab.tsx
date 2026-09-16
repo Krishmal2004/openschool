@@ -81,7 +81,7 @@ export default function StudentsTab({
                 </td>
                 <td className="os-table__mono">{s.index_number}</td>
                 <td className="os-table__muted">
-                  {s.gender ? s.gender[0].toUpperCase() + s.gender.slice(1) : "—"}
+                  {s.gender ? s.gender[0].toUpperCase() + s.gender.slice(1) : "-"}
                 </td>
                 <td style={{ textAlign: "right" }}>
                   <Button kind="danger--ghost" size="sm" onClick={() => onRequestUnenroll(s)}>

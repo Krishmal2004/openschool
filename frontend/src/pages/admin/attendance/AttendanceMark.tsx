@@ -177,7 +177,7 @@ export default function AttendanceMark() {
           <InlineNotification
             kind="info"
             title="Editing a locked session"
-            subtitle="This session is more than 24 hours old. As an administrator you can still edit it — please note a reason below; the change will be recorded in the audit log."
+            subtitle="This session is more than 24 hours old. As an administrator you can still edit it - please note a reason below; the change will be recorded in the audit log."
             lowContrast
             hideCloseButton
             style={{ maxWidth: "100%", marginBottom: "1.5rem" }}
@@ -306,7 +306,7 @@ export default function AttendanceMark() {
               <div style={{ flex: 1 }} />
               {saved && (
                 <span style={{ fontSize: "0.8125rem", color: "var(--os-success)", display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                  <CheckmarkFilled size={16} style={{ fill: "var(--os-success)" }} /> Saved — redirecting…
+                  <CheckmarkFilled size={16} style={{ fill: "var(--os-success)" }} /> Saved - redirecting…
                 </span>
               )}
               <Button kind="secondary" size="md" as={Link} to={backPath}>

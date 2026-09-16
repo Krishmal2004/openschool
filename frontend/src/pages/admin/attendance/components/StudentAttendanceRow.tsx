@@ -67,7 +67,7 @@ export default function StudentAttendanceRow({
       </td>
       <td>
         {readOnly ? (
-          <span style={{ fontSize: "0.75rem", color: note ? "var(--os-text-secondary)" : "var(--os-text-disabled)" }}>{note || "—"}</span>
+          <span style={{ fontSize: "0.75rem", color: note ? "var(--os-text-secondary)" : "var(--os-text-disabled)" }}>{note || "-"}</span>
         ) : status === "absent" || status === "late" || status === "excused" ? (
           <input
             className="os-note-input"
@@ -77,7 +77,7 @@ export default function StudentAttendanceRow({
             onChange={(e) => onNoteChange(e.target.value)}
           />
         ) : (
-          <span style={{ color: "var(--os-text-disabled)", fontSize: "0.75rem" }}>—</span>
+          <span style={{ color: "var(--os-text-disabled)", fontSize: "0.75rem" }}>-</span>
         )}
       </td>
     </tr>

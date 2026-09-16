@@ -48,7 +48,7 @@ export default function ProvisionLoginModal({
   return (
     <FormModal
       open
-      title={`Set up portal login — ${guardian.full_name}`}
+      title={`Set up portal login - ${guardian.full_name}`}
       onClose={onClose}
       onSubmit={handleSubmit}
       isPending={provision.isPending}
@@ -101,7 +101,7 @@ export default function ProvisionLoginModal({
         <TextInput
           id="guardian-login-username"
           labelText="Username"
-          helperText="What this guardian signs in with — separate from their email."
+          helperText="What this guardian signs in with - separate from their email."
           value={form.username}
           onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
           onBlur={() => setTouched((t) => ({ ...t, username: true }))}

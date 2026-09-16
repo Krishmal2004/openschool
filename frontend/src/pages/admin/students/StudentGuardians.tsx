@@ -109,7 +109,7 @@ export default function StudentGuardians({ studentId }: { studentId: string }) {
         description={
           <>
             Remove <strong>{toUnlink?.full_name}</strong> from this student? Their guardian
-            record isn't deleted — this only unlinks them from this student.
+            record isn't deleted - this only unlinks them from this student.
           </>
         }
         isPending={unlinkGuardian.isPending}

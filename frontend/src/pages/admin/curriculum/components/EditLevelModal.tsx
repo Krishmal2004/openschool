@@ -44,7 +44,7 @@ export default function EditLevelModal({
       errorFallback="Failed to update level"
     >
       <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)", marginBottom: "1rem" }}>
-        Renaming a level leaves its selection groups and student choices untouched — only the label, grade link,
+        Renaming a level leaves its selection groups and student choices untouched - only the label, grade link,
         and ordering change.
       </p>
       <div style={{ display: "grid", gap: "1.25rem" }}>

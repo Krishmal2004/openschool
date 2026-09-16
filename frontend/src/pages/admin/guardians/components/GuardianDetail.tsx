@@ -75,7 +75,7 @@ export default function GuardianDetail({ guardian, onDeleted }: { guardian: Guar
           </div>
           <div>
             <p style={{ margin: "0 0 0.15rem", fontSize: "0.75rem", color: "var(--os-text-tertiary)" }}>Email</p>
-            <p style={{ margin: 0, fontSize: "0.875rem" }}>{guardian.email || "—"}</p>
+            <p style={{ margin: 0, fontSize: "0.875rem" }}>{guardian.email || "-"}</p>
           </div>
         </div>
 

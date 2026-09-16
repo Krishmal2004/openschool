@@ -125,7 +125,7 @@ export default function Houses() {
           </h2>
           <p className="os-page__subtitle" style={{ marginTop: "0.25rem" }}>
             New students and staff are assigned automatically to whichever
-            house currently has the fewest members, with random tie-breaks —
+            house currently has the fewest members, with random tie-breaks -
             no manual configuration needed as houses are added.
           </p>
         </div>
@@ -295,7 +295,7 @@ export default function Houses() {
               : "Re-assign staff without a house"}
           </Button>
           <span style={{ fontSize: "0.75rem", color: "#8d8d8d" }}>
-            Useful after setting up houses — people added earlier get one too.
+            Useful after setting up houses - people added earlier get one too.
           </span>
         </div>
       )}

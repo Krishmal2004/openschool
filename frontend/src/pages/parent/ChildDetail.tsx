@@ -65,8 +65,8 @@ function TimetableTab({ studentId }: { studentId: string }) {
                 {entries.map((e) => (
                   <tr key={e.id}>
                     <td>P{e.period_number}</td>
-                    <td>{e.subject_name ?? "—"}</td>
-                    <td>{e.teacher_name ?? "—"}</td>
+                    <td>{e.subject_name ?? "-"}</td>
+                    <td>{e.teacher_name ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -108,7 +108,7 @@ function AttendanceTab({ studentId }: { studentId: string }) {
                 {r.status[0].toUpperCase() + r.status.slice(1)}
               </Tag>
             </td>
-            <td className="os-table__muted">{r.note || "—"}</td>
+            <td className="os-table__muted">{r.note || "-"}</td>
           </tr>
         ))}
       </tbody>
@@ -157,7 +157,7 @@ function MarksTab({ studentId }: { studentId: string }) {
                   {m.subject_name}{" "}
                   <span className="os-table__muted">({m.subject_code})</span>
                 </td>
-                <td className="os-table__muted">{m.teacher_name || "—"}</td>
+                <td className="os-table__muted">{m.teacher_name || "-"}</td>
                 <td style={{ textAlign: "right", fontWeight: 600 }}>
                   {m.is_absent ? "AB" : `${m.marks} / ${m.max_marks}`}
                 </td>
@@ -223,10 +223,10 @@ function ProgressReportsTab({ studentId }: { studentId: string }) {
       <tbody>
         {reports.map((r) => (
           <tr key={r.id}>
-            <td style={{ fontWeight: 500 }}>{r.term_name || "—"}</td>
+            <td style={{ fontWeight: 500 }}>{r.term_name || "-"}</td>
             <td style={{ whiteSpace: "pre-wrap" }}>{r.narrative}</td>
             <td className="os-table__mono" style={{ fontSize: "0.75rem" }}>
-              {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+              {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
             </td>
           </tr>
         ))}
@@ -274,7 +274,7 @@ function PortfolioTab({ studentId }: { studentId: string }) {
               <tr key={s.id}>
                 <td style={{ fontWeight: 500 }}>{s.society_name}</td>
                 <td>{s.role ? s.role[0].toUpperCase() + s.role.slice(1) : "Member"}</td>
-                <td className="os-table__mono">{s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}</td>
+                <td className="os-table__mono">{s.created_at ? new Date(s.created_at).toLocaleDateString() : "-"}</td>
               </tr>
             ))}
           </tbody>
@@ -290,9 +290,9 @@ function PortfolioTab({ studentId }: { studentId: string }) {
             {activities?.map((a) => (
               <tr key={a.id}>
                 <td style={{ fontWeight: 500 }}>{a.name}</td>
-                <td>{a.category ? a.category[0].toUpperCase() + a.category.slice(1) : "—"}</td>
+                <td>{a.category ? a.category[0].toUpperCase() + a.category.slice(1) : "-"}</td>
                 <td>{a.role || "Participant"}</td>
-                <td>{a.achievement || "—"}</td>
+                <td>{a.achievement || "-"}</td>
               </tr>
             ))}
           </tbody>
@@ -314,7 +314,7 @@ function PortfolioTab({ studentId }: { studentId: string }) {
                 <tr key={l.id}>
                   <td style={{ fontWeight: 500 }}>{l.title}</td>
                   <td>{l.scope || "School"}</td>
-                  <td className="os-table__mono">{l.created_at ? new Date(l.created_at).toLocaleDateString() : "—"}</td>
+                  <td className="os-table__mono">{l.created_at ? new Date(l.created_at).toLocaleDateString() : "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -329,8 +329,8 @@ function PortfolioTab({ studentId }: { studentId: string }) {
               {awards.map((aw) => (
                 <tr key={aw.id}>
                   <td style={{ fontWeight: 500 }}>{aw.title}</td>
-                  <td>{aw.category || "—"}</td>
-                  <td className="os-table__mono">{aw.awarded_date ? new Date(aw.awarded_date).toLocaleDateString() : "—"}</td>
+                  <td>{aw.category || "-"}</td>
+                  <td className="os-table__mono">{aw.awarded_date ? new Date(aw.awarded_date).toLocaleDateString() : "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -346,14 +346,14 @@ function PortfolioTab({ studentId }: { studentId: string }) {
           <tbody>
             {discipline?.map((d) => (
               <tr key={d.id}>
-                <td className="os-table__mono">{d.incident_date ? new Date(d.incident_date).toLocaleDateString() : "—"}</td>
+                <td className="os-table__mono">{d.incident_date ? new Date(d.incident_date).toLocaleDateString() : "-"}</td>
                 <td style={{ fontWeight: 500 }}>{d.description}</td>
                 <td>
                   <Tag type={SEVERITY_TAG[d.severity] ?? "cool-gray"} size="sm">
                     {d.severity ? d.severity[0].toUpperCase() + d.severity.slice(1) : "Minor"}
                   </Tag>
                 </td>
-                <td>{d.action_taken || "—"}</td>
+                <td>{d.action_taken || "-"}</td>
               </tr>
             ))}
           </tbody>
@@ -386,7 +386,7 @@ function GuardiansTab({ studentId }: { studentId: string }) {
           <tr key={g.id}>
             <td style={{ fontWeight: 500 }}>{g.full_name}</td>
             <td>{g.relationship ? g.relationship[0].toUpperCase() + g.relationship.slice(1) : "Guardian"}</td>
-            <td className="os-table__mono">{g.phone || "—"}</td>
+            <td className="os-table__mono">{g.phone || "-"}</td>
             <td>
               {g.is_primary_contact ? (
                 <span style={{ color: "var(--os-success)", fontWeight: 600 }}>Yes</span>

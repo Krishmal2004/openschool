@@ -151,7 +151,7 @@ function GradeGroup({
       title={title}
       open={open}
       onHeadingClick={onToggleOpen}
-      aria-label={`${grade.name} — ${classes.length} classes`}
+      aria-label={`${grade.name} - ${classes.length} classes`}
     >
       <div
         style={{
@@ -228,7 +228,7 @@ function GradeGroup({
                     </Tag>
                   )}
                 </td>
-                <td className="os-table__muted" style={{ textAlign: "center" }}>{c.home_classroom_name ?? "—"}</td>
+                <td className="os-table__muted" style={{ textAlign: "center" }}>{c.home_classroom_name ?? "-"}</td>
                 <td style={{ textAlign: "right" }}>
                   <IconButton label="Delete" kind="ghost" size="sm" onClick={() => onDeleteClass(c)}>
                     <TrashCan />

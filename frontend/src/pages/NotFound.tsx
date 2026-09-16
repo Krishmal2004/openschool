@@ -1,18 +1,27 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@carbon/react";
-import { Compass } from "@carbon/icons-react";
+import { Compass, ArrowLeft, Home } from "@carbon/icons-react";
 import StatusView from "../components/common/StatusView";
 
 export default function NotFound() {
+  const navigate = useNavigate();
+
   return (
     <StatusView
       icon={Compass}
-      title="Page not found"
-      subtitle="The page you're looking for doesn't exist, or may have been moved."
+      code="404"
+      badge="Page Not Found"
+      title="Lost in space?"
+      subtitle="The page you are looking for doesn't exist, has been removed, or is temporarily unavailable."
       actions={
-        <Button as={Link} to="/">
-          Back to Dashboard
-        </Button>
+        <>
+          <Button kind="secondary" renderIcon={ArrowLeft} onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+          <Button as={Link} to="/" renderIcon={Home} kind="primary">
+            Back to Dashboard
+          </Button>
+        </>
       }
     />
   );

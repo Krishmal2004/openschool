@@ -276,7 +276,7 @@ export default function SettingsPage() {
             {[
               "Teachers can mark students Present, Late, or Absent.",
               "Guardians are notified automatically when a student is marked absent.",
-              "Sessions become read-only 24 hours after being taken — a System Administrator can still edit past that point, and every such edit is recorded in the audit log.",
+              "Sessions become read-only 24 hours after being taken - a System Administrator can still edit past that point, and every such edit is recorded in the audit log.",
             ].map((text) => (
               <p key={text} style={{ margin: 0, fontSize: "0.8125rem", color: "#525252" }}>
                 {text}

@@ -30,12 +30,12 @@ export default function ForgotPassword() {
   if (forgotPassword.isSuccess) {
     return (
       <div className="os-signin-wrapper">
-        <div className="os-setup-card" style={{ textAlign: "center" }}>
-          <div className="os-setup-success-icon">
+        <div className="os-auth-card os-auth-card--center">
+          <div className="os-auth-card__success-icon">
             <CheckmarkFilled size={28} />
           </div>
-          <h1 className="os-setup-card__title">Check your email</h1>
-          <p className="os-setup-card__subtitle">
+          <h1 className="os-auth-card__title">Check your email</h1>
+          <p className="os-auth-card__subtitle">
             If those details match an account, a password reset link has been sent to the email on file.
             The link expires in 15 minutes.
           </p>
@@ -49,9 +49,19 @@ export default function ForgotPassword() {
 
   return (
     <div className="os-signin-wrapper">
-      <div className="os-setup-card">
-        <h1 className="os-setup-card__title">Forgot password</h1>
-        <p className="os-setup-card__subtitle">
+      <div className="os-auth-card">
+        <div className="os-auth-card__brand">
+          <img
+            src="/favicon.webp"
+            alt="OpenSchool"
+            width={36}
+            height={36}
+            className="os-auth-card__logo"
+          />
+          <span className="os-auth-card__brand-name">OpenSchool</span>
+        </div>
+        <h1 className="os-auth-card__title">Forgot password</h1>
+        <p className="os-auth-card__subtitle">
           Verify your identity to receive a password reset link by email. Admin accounts should contact
           another administrator instead.
         </p>
@@ -63,10 +73,11 @@ export default function ForgotPassword() {
             subtitle={getErrorMessage(forgotPassword.error, "Please check your details and try again.")}
             lowContrast
             hideCloseButton
-            style={{ marginBottom: "1rem", maxWidth: "100%" }}
+            style={{ marginBottom: "1.25rem", maxWidth: "100%" }}
           />
         )}
-        <div style={{ display: "grid", gap: "1rem" }}>
+
+        <div className="os-auth-card__form">
           <Select
             id="forgot-password-role"
             labelText="I am a"
@@ -80,6 +91,7 @@ export default function ForgotPassword() {
           <TextInput
             id="forgot-password-identifier"
             labelText="Email Address"
+            placeholder="e.g. user@school.edu"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
           />
@@ -87,22 +99,25 @@ export default function ForgotPassword() {
             id="forgot-password-secret"
             labelText={roleInfo.secretLabel}
             helperText={roleInfo.secretHelp}
+            placeholder={`Enter your ${roleInfo.secretLabel}`}
             value={secret}
             onChange={(e) => setSecret(e.target.value)}
           />
         </div>
-        <Button
-          className="os-full-width-btn"
-          style={{ marginTop: "1.5rem" }}
-          onClick={handleVerify}
-          disabled={!canVerify || forgotPassword.isPending}
-        >
-          {forgotPassword.isPending ? "Sending…" : "Send reset link"}
-        </Button>
 
-        <p style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.875rem" }}>
+        <div className="os-auth-card__actions">
+          <Button
+            className="os-full-width-btn"
+            onClick={handleVerify}
+            disabled={!canVerify || forgotPassword.isPending}
+          >
+            {forgotPassword.isPending ? "Sending…" : "Send reset link"}
+          </Button>
+        </div>
+
+        <div className="os-auth-card__footer">
           <Link to="/signin">Back to sign in</Link>
-        </p>
+        </div>
       </div>
     </div>
   );

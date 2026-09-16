@@ -25,7 +25,7 @@ export default function OrphanedAccounts() {
             Orphaned Accounts
           </h2>
           <p className="os-page__subtitle" style={{ marginTop: "0.25rem" }}>
-            ThunderID accounts with no matching local user record — left behind when a signup failed partway
+            ThunderID accounts with no matching local user record - left behind when a signup failed partway
             through. Safe to review and delete.
           </p>
         </div>

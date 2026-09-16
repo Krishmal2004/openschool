@@ -13,34 +13,37 @@ export default function SignIn() {
 
   return (
     <div className="os-signin-wrapper">
-      <div className="os-signin-card">
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <div className="os-auth-card">
+        <div className="os-auth-card__brand">
           <img
             src="/favicon.webp"
             alt="OpenSchool"
-            width={48}
-            height={48}
-            className="os-signin-card__logo"
+            width={36}
+            height={36}
+            className="os-auth-card__logo"
           />
-          <h1 className="os-signin-card__title">OpenSchool</h1>
+          <span className="os-auth-card__brand-name">OpenSchool</span>
         </div>
-        <p className="os-signin-card__subtitle">
+        <h1 className="os-auth-card__title">Sign In</h1>
+        <p className="os-auth-card__subtitle">
           Sign in to continue to your dashboard.
         </p>
-        <SignInButton>
-          {({ signIn, isLoading }) => (
-            <Button
-              onClick={() => signIn()}
-              disabled={isLoading}
-              className="os-full-width-btn"
-            >
-              {isLoading ? "Signing in…" : "Sign In"}
-            </Button>
-          )}
-        </SignInButton>
-        <p style={{ marginTop: "1rem", textAlign: "center", fontSize: "0.875rem" }}>
+        <div className="os-auth-card__actions">
+          <SignInButton>
+            {({ signIn, isLoading }) => (
+              <Button
+                onClick={() => signIn()}
+                disabled={isLoading}
+                className="os-full-width-btn"
+              >
+                {isLoading ? "Signing in…" : "Sign In"}
+              </Button>
+            )}
+          </SignInButton>
+        </div>
+        <div className="os-auth-card__footer">
           <Link to="/forgot-password">Forgot password?</Link>
-        </p>
+        </div>
       </div>
     </div>
   );

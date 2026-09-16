@@ -240,7 +240,7 @@ export default function TeacherProfileSections({
           <Select
             id="teacher-house"
             labelText="Assigned house"
-            helperText="Assigned automatically to keep houses balanced. Only a System Administrator can change it — every change is recorded in the audit log."
+            helperText="Assigned automatically to keep houses balanced. Only a System Administrator can change it - every change is recorded in the audit log."
             value={teacher.house_id ?? ""}
             disabled={updateHouse.isPending}
             onChange={(e) => updateHouse.mutate({ id: teacher.id, houseId: e.target.value })}

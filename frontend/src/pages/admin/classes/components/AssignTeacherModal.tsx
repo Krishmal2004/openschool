@@ -42,7 +42,7 @@ export default function AssignTeacherModal({
         selectedId={teacherChoice}
         onSelect={onTeacherChoiceChange}
         getId={(t) => t.id}
-        itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
+        itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
         placeholder="Search teachers by name or employee number…"
       />
     </FormModal>

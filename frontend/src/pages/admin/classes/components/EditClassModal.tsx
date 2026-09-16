@@ -57,7 +57,7 @@ export default function EditClassModal({
       <Select
         id="class-medium-edit"
         labelText="Medium (optional)"
-        helperText="Set this only if the section is reserved for one language of instruction — medium-designated classes carry students straight over at promotion instead of being reshuffled."
+        helperText="Set this only if the section is reserved for one language of instruction - medium-designated classes carry students straight over at promotion instead of being reshuffled."
         value={mediumEdit}
         onChange={(e) => onMediumEditChange(e.target.value)}
       >

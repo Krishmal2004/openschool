@@ -166,7 +166,7 @@ export default function RecipientPicker({
           selectedId={selectedId}
           onSelect={setSelectedId}
           getId={(s) => s.id}
-          itemToString={(s) => `${s.full_name} — ${s.index_number}`}
+          itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students…"
         />
       )}
@@ -178,7 +178,7 @@ export default function RecipientPicker({
           selectedId={selectedId}
           onSelect={setSelectedId}
           getId={(g) => g.id}
-          itemToString={(g) => `${g.full_name} — ${g.phone}`}
+          itemToString={(g) => `${g.full_name} - ${g.phone}`}
           placeholder="Search guardians…"
         />
       )}
@@ -190,7 +190,7 @@ export default function RecipientPicker({
           selectedId={selectedId}
           onSelect={setSelectedId}
           getId={(t) => t.id}
-          itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
+          itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
           placeholder="Search teachers…"
         />
       )}

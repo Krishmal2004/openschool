@@ -74,7 +74,7 @@ export default function NotificationComposer() {
           <p className="os-page__subtitle">
             Send in-app announcements to any combination of grades, classes, subjects, or individuals.
             {role === "teacher" && myPosition && myPosition.rank_label !== "Teacher" && (
-              <> Sending as <strong>{myPosition.rank_label}</strong>{canBroadcastEveryone ? " — whole-school reach." : "."}</>
+              <> Sending as <strong>{myPosition.rank_label}</strong>{canBroadcastEveryone ? " - whole-school reach." : "."}</>
             )}
           </p>
         </div>

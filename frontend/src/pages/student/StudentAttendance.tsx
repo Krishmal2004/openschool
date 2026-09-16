@@ -45,7 +45,7 @@ export default function StudentAttendance() {
                           {r.status[0].toUpperCase() + r.status.slice(1)}
                         </Tag>
                       </td>
-                      <td className="os-table__muted">{r.note || "—"}</td>
+                      <td className="os-table__muted">{r.note || "-"}</td>
                     </tr>
                   ))}
               </tbody>

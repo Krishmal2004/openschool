@@ -99,7 +99,7 @@ export default function Prefects() {
           <h1 className="os-page__title">School Prefects</h1>
           <p className="os-page__subtitle">
             {isArchive
-              ? `Read-only archive — past board for ${allYears?.find((y) => y.id === viewingYearId)?.label ?? "this year"}.`
+              ? `Read-only archive - past board for ${allYears?.find((y) => y.id === viewingYearId)?.label ?? "this year"}.`
               : `Junior, Senior, Deputy Head, Head Prefects and House Captains for ${currentYear?.label ?? "the current year"}.`}
           </p>
         </div>
@@ -213,7 +213,7 @@ export default function Prefects() {
               selectedId={studentChoice}
               onSelect={setStudentChoice}
               getId={(s) => s.id}
-              itemToString={(s) => `${s.full_name} — ${s.index_number}`}
+              itemToString={(s) => `${s.full_name} - ${s.index_number}`}
               placeholder="Search students by name or index number…"
             />
             <Select

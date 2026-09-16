@@ -99,7 +99,7 @@ export default function AddGuardianModal({
         {step === "search" && !created && (
           <>
             <p style={{ fontSize: "0.8125rem", color: "var(--os-text-secondary)", margin: "0 0 1rem" }}>
-              Search first — siblings often share a guardian already on file.
+              Search first - siblings often share a guardian already on file.
             </p>
             <div className="os-search" style={{ marginBottom: "1rem" }}>
               <Search size={16} className="os-search__icon" />

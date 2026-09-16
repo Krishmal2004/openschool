@@ -21,7 +21,7 @@ import RemoveIconButton from "../../../../components/common/RemoveIconButton";
 import { toYmd, isDateRangeInvalid } from "../../../../lib/date";
 
 function formatTermDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-LK", {
     month: "short",
     day: "numeric",
@@ -95,7 +95,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
         name: form.name.trim(),
         start_date: new Date(form.start_date).toISOString(),
         end_date: new Date(form.end_date).toISOString(),
-        // Max existing + 1, not length — a gap from a deleted term (e.g.
+        // Max existing + 1, not length - a gap from a deleted term (e.g.
         // orders [0, 2]) would otherwise hand out a colliding sort_order.
         sort_order: (terms ?? []).reduce((max, t) => Math.max(max, t.sort_order), -1) + 1,
       },
@@ -108,7 +108,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
   return (
     <>
       <ComposedModal open size="sm" onClose={onClose}>
-        <ModalHeader title={`Terms — ${year.label}`} />
+        <ModalHeader title={`Terms - ${year.label}`} />
         <ModalBody>
           <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} fallback="Failed to create term" />
           <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} fallback="Failed to update term" />
@@ -118,7 +118,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
 
           {!isLoading && terms?.length === 0 && (
             <p style={{ fontSize: "0.875rem", color: "var(--os-text-tertiary)", marginBottom: "1.25rem" }}>
-              No terms yet — a school year typically has three.
+              No terms yet - a school year typically has three.
             </p>
           )}
 
@@ -243,7 +243,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
           <>
             Delete <strong>{toDelete?.name}</strong>? Every examination mark
             recorded against this term is deleted with it. To correct a name or
-            date, use Edit instead — this cannot be undone.
+            date, use Edit instead - this cannot be undone.
           </>
         }
         isPending={deleteTerm.isPending}

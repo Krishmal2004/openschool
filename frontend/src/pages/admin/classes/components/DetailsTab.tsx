@@ -37,12 +37,12 @@ export default function DetailsTab({
         <div className="os-kv-grid">
           {[
             ["Class Name", cls.name],
-            ["Grade", gradeName ?? "—"],
+            ["Grade", gradeName ?? "-"],
             ["Stream", streamName ?? "None"],
             ["Sub-stream", streamGroupName ?? "None"],
             ["Medium", mediumName ?? "Not designated"],
             ["Home Classroom", homeClassroomName ?? "Not assigned"],
-            ["Academic Year", academicYearLabel ?? "—"],
+            ["Academic Year", academicYearLabel ?? "-"],
             ["Girl Monitor", girlMonitor?.full_name ?? "Unassigned"],
             ["Boy Monitor", boyMonitor?.full_name ?? "Unassigned"],
           ].map(([label, value]) => (

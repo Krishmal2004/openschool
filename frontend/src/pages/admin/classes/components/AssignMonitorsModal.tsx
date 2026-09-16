@@ -47,7 +47,7 @@ export default function AssignMonitorsModal({
           selectedId={girlMonitorChoice}
           onSelect={onGirlMonitorChoiceChange}
           getId={(s) => s.id}
-          itemToString={(s) => `${s.full_name} — ${s.index_number}`}
+          itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students by name or index number…"
         />
         <EntityCombobox
@@ -57,7 +57,7 @@ export default function AssignMonitorsModal({
           selectedId={boyMonitorChoice}
           onSelect={onBoyMonitorChoiceChange}
           getId={(s) => s.id}
-          itemToString={(s) => `${s.full_name} — ${s.index_number}`}
+          itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students by name or index number…"
         />
       </div>

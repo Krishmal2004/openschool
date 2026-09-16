@@ -23,11 +23,11 @@ export default function PresetConfirmModal({ open, runPreset, onClose, onLoad }:
       errorFallback="Failed to load the curriculum preset"
     >
       <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)", marginBottom: "0.75rem" }}>
-        This creates the standard Grade 1–13 curriculum — compulsory subjects for primary and junior secondary,
-        O/L baskets, and A/L streams — as subjects, levels, and selection groups.
+        This creates the standard Grade 1-13 curriculum - compulsory subjects for primary and junior secondary,
+        O/L baskets, and A/L streams - as subjects, levels, and selection groups.
       </p>
       <p style={{ fontSize: "0.875rem", color: "var(--os-text-secondary)" }}>
-        It only fills in what's missing for the grades your school actually has — safe to run more than once, and
+        It only fills in what's missing for the grades your school actually has - safe to run more than once, and
         it won't touch anything you've already set up by hand.
       </p>
     </FormModal>

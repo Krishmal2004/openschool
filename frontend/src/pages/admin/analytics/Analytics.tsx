@@ -28,7 +28,7 @@ export default function Analytics({ scope = "admin" }: { scope?: "admin" | "lead
           <h1 className="os-page__title">Analytics</h1>
           <p className="os-page__subtitle">
             School-wide reporting across students, academics, staff and
-            operations — marks by subject, attendance, house distribution and
+            operations - marks by subject, attendance, house distribution and
             growth trends.
           </p>
         </div>

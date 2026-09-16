@@ -179,7 +179,7 @@ export default function StudentProfileTab({
           <Select
             id="student-house"
             labelText="Assigned house"
-            helperText="Assigned automatically to keep houses balanced. Only a System Administrator can change it — every change is recorded in the audit log."
+            helperText="Assigned automatically to keep houses balanced. Only a System Administrator can change it - every change is recorded in the audit log."
             value={student.house_id ?? ""}
             disabled={updateHouse.isPending}
             onChange={(e) => updateHouse.mutate({ id: student.id, houseId: e.target.value })}

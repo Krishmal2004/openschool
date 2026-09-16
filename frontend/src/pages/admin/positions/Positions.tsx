@@ -86,7 +86,7 @@ export default function Positions() {
         <div className="os-page__header-left">
           <h1 className="os-page__title">Leadership Positions</h1>
           <p className="os-page__subtitle">
-            Principal and Vice Principals — permanent appointments that control notification reach, held until
+            Principal and Vice Principals - permanent appointments that control notification reach, held until
             resignation or promotion.
           </p>
         </div>

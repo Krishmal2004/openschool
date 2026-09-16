@@ -162,7 +162,7 @@ export default function PromotionGroup({
                     type="purple"
                     size="sm"
                     style={{ marginLeft: "0.5rem" }}
-                    title="Medium-designated class — carries over to the same medium and is left out of distribution"
+                    title="Medium-designated class - carries over to the same medium and is left out of distribution"
                   >
                     {r.current_medium_name ?? "Medium"}
                   </Tag>
@@ -175,7 +175,7 @@ export default function PromotionGroup({
                       {r.total_marks} / {r.total_max_marks}
                     </Tag>
                   ) : (
-                    <span style={{ color: "#c6c6c6" }}>—</span>
+                    <span style={{ color: "#c6c6c6" }}>-</span>
                   )}
                 </td>
               )}

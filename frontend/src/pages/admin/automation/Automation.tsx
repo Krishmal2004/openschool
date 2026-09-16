@@ -48,7 +48,7 @@ export default function Automation() {
           <h1 className="os-page__title">Automation</h1>
           <p className="os-page__subtitle">
             Five scheduled background agents that support the system's
-            operation — none of the app's other features depend on them, so
+            operation - none of the app's other features depend on them, so
             any of these can be turned off safely, except System Health
             (backup).
           </p>

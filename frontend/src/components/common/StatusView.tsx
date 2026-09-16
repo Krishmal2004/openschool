@@ -5,19 +5,23 @@ interface StatusViewProps {
   title: string;
   subtitle: string;
   actions?: ReactNode;
+  badge?: string;
+  code?: string;
   /** "page" sits inline within a layout's content area (404, coming soon).
    *  "fullscreen" takes over the viewport in a card, like sign-in/setup —
    *  for states reached before/outside any layout (access restricted). */
   variant?: "page" | "fullscreen";
 }
 
-function StatusBody({ icon: Icon, title, subtitle, actions }: Omit<StatusViewProps, "variant">) {
+function StatusBody({ icon: Icon, title, subtitle, actions, badge, code }: Omit<StatusViewProps, "variant">) {
   return (
     <>
+      {code && <div className="os-status__code">{code}</div>}
+      {badge && <div className="os-status__badge">{badge}</div>}
       <div className="os-status__icon">
-        <Icon size={28} />
+        <Icon size={32} />
       </div>
-      <h2 className="os-status__title">{title}</h2>
+      <h1 className="os-status__title">{title}</h1>
       <p className="os-status__subtitle">{subtitle}</p>
       {actions && <div className="os-status__actions">{actions}</div>}
     </>

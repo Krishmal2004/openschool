@@ -161,7 +161,7 @@ export default function CurriculumPanel() {
           title="Curriculum preset loaded"
           subtitle={`Created ${runPreset.data.subjects_created} subjects, ${runPreset.data.levels_created} levels, ${runPreset.data.groups_created} selection groups, and ${runPreset.data.links_created} subject links.${
             runPreset.data.grades_skipped?.length
-              ? ` Skipped grade(s) ${runPreset.data.grades_skipped.join(", ")} — no matching grade in this school.`
+              ? ` Skipped grade(s) ${runPreset.data.grades_skipped.join(", ")} - no matching grade in this school.`
               : ""
           }`}
           lowContrast

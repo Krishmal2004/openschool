@@ -238,7 +238,7 @@ export default function Streams() {
                       selectedId={head?.teacher_id ?? ""}
                       onSelect={(id) => handleAssign(row.gradeId, row.streamId, id)}
                       getId={(t) => t.id}
-                      itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
+                      itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
                       placeholder="Search teachers…"
                     />
                   </div>

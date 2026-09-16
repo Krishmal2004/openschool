@@ -49,7 +49,7 @@ export default function EnrolStudentModal({
           selectedId={studentChoice}
           onSelect={onStudentChoiceChange}
           getId={(s) => s.id}
-          itemToString={(s) => `${s.full_name} — ${s.index_number}`}
+          itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students by name or index number…"
         />
       )}

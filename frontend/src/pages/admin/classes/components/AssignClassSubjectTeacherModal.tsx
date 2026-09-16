@@ -75,7 +75,7 @@ export default function AssignClassSubjectTeacherModal({
             selectedId={teacherId}
             onSelect={setTeacherId}
             getId={(t) => t.id}
-            itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
+            itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
             placeholder={subjectId ? "Search qualified teachers…" : "Choose a subject first…"}
             disabled={!subjectId}
           />
@@ -89,7 +89,7 @@ export default function AssignClassSubjectTeacherModal({
           <InlineNotification
             kind="warning"
             title="No qualified teachers"
-            subtitle="No teacher holds this subject as a qualification yet — assign it on the Teacher Subjects page first."
+            subtitle="No teacher holds this subject as a qualification yet - assign it on the Teacher Subjects page first."
             lowContrast
             hideCloseButton
             style={{ maxWidth: "100%" }}

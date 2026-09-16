@@ -136,7 +136,7 @@ export default function Attendance() {
             {!sessions || sessions.length === 0 ? (
               <EmptyState
                 title="No sessions for this date"
-                description="Sessions are created from a class's Attendance tab — go to a class to start one."
+                description="Sessions are created from a class's Attendance tab - go to a class to start one."
                 action={
                   <Button kind="primary" as={Link} to="/classes">
                     Go to Classes

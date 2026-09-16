@@ -50,7 +50,7 @@ export default function StudentRecordsRollup({ studentId }: { studentId: string 
                     <td>{r.session_date}</td>
                     <td>{r.class_name}</td>
                     <td><Tag size="sm" type={ATTENDANCE_TAG[r.status] ?? "gray"}>{r.status}</Tag></td>
-                    <td style={{ color: r.note ? undefined : "var(--os-text-disabled)" }}>{r.note || "—"}</td>
+                    <td style={{ color: r.note ? undefined : "var(--os-text-disabled)" }}>{r.note || "-"}</td>
                   </tr>
                 ))}
               </tbody>

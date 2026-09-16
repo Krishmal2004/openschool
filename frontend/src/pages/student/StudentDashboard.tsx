@@ -57,15 +57,15 @@ export default function StudentDashboard() {
             </div>
             <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Class</p>
-              <p className="os-kv-item__value">{profile.class_name || "—"}</p>
+              <p className="os-kv-item__value">{profile.class_name || "-"}</p>
             </div>
             <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">Grade</p>
-              <p className="os-kv-item__value">{profile.grade_name || "—"}</p>
+              <p className="os-kv-item__value">{profile.grade_name || "-"}</p>
             </div>
             <div className="os-kv-item" style={kvItemStyle}>
               <p className="os-kv-item__label">House</p>
-              <p className="os-kv-item__value">{profile.house_name || "—"}</p>
+              <p className="os-kv-item__value">{profile.house_name || "-"}</p>
             </div>
           </div>
         </div>
