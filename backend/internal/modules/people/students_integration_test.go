@@ -65,7 +65,7 @@ func TestStudentProvisioningAPIWithPostgres(t *testing.T) {
 		c.Set("userID", actorID.String())
 		c.Next()
 	})
-	RegisterStudentRoutes(group, group, service, store, service)
+	RegisterStudentRoutes(group, group, service, store, service, nil)
 
 	request := CreateStudentRequest{
 		Email: "student@example.test", GivenName: "Test", FamilyName: "Student",

@@ -21,10 +21,14 @@ SELECT * FROM non_academic_staff
 WHERE id = $1;
 
 -- name: ListNonAcademicStaff :many
-SELECT * FROM non_academic_staff
+-- Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+-- The caller-supplied search term is escaped by the service layer
+-- (httpx.EscapeLikeTerm) before it reaches here.
+SELECT *, COUNT(*) OVER () AS total FROM non_academic_staff
 WHERE (sqlc.narg(search)::text IS NULL OR full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR employee_number ILIKE '%' || sqlc.narg(search)::text || '%')
   AND (sqlc.narg(designation)::text IS NULL OR designation = sqlc.narg(designation)::text)
-ORDER BY full_name ASC;
+ORDER BY full_name ASC
+LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
 
 -- name: UpdateNonAcademicStaff :one
 UPDATE non_academic_staff

@@ -39,7 +39,7 @@ func registerAttendanceAndReports(
 		attendanceLeadership{positions: leadership},
 	)
 	attendancemodule.RegisterRoutes(groups.TeacherOrAdmin, attendanceService)
-	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService))
+	reportsmodule.RegisterRoutes(groups.Admin, reportsmodule.NewService(reportsmodule.NewRepository(pool), attendanceService), audit)
 	staffService := attendancemodule.NewStaffService(attendancemodule.NewRepository(pool))
 	attendancemodule.RegisterStaffRoutes(groups.Admin, groups.Teacher, staffService, teacherProfiles)
 }

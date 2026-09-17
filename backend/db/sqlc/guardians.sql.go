@@ -289,7 +289,7 @@ func (q *Queries) ListGuardianUserIDsByStudentIDs(ctx context.Context, studentId
 }
 
 const listGuardians = `-- name: ListGuardians :many
-SELECT g.id, g.user_id, g.full_name, g.relationship, g.phone, g.email, g.created_at, g.nic_number FROM guardians g
+SELECT g.id, g.user_id, g.full_name, g.relationship, g.phone, g.email, g.created_at, g.nic_number, COUNT(*) OVER () AS total FROM guardians g
 WHERE (
     $1::text IS NULL
     OR g.full_name ILIKE '%' || $1 || '%'
@@ -301,27 +301,42 @@ WHERE (
     OR NOT EXISTS (SELECT 1 FROM student_guardians sg WHERE sg.guardian_id = g.id)
   )
 ORDER BY g.full_name ASC
+LIMIT $3::int OFFSET $4::int
 `
 
 type ListGuardiansParams struct {
 	Search      pgtype.Text `json:"search"`
 	OrphansOnly pgtype.Bool `json:"orphans_only"`
+	PageLimit   int32       `json:"page_limit"`
+	PageOffset  int32       `json:"page_offset"`
 }
 
-// Every guardian on file, optionally filtered by a search term matched
-// against name/phone/email and/or restricted to "orphans" (linked to no
-// student — e.g. their last child left the school). Used both by the
-// guardian directory and the "link an existing guardian to this student
-// too" search picker (siblings sharing a guardian).
-func (q *Queries) ListGuardians(ctx context.Context, arg ListGuardiansParams) ([]Guardian, error) {
-	rows, err := q.db.Query(ctx, listGuardians, arg.Search, arg.OrphansOnly)
+type ListGuardiansRow struct {
+	ID           uuid.UUID          `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	FullName     string             `json:"full_name"`
+	Relationship string             `json:"relationship"`
+	Phone        string             `json:"phone"`
+	Email        pgtype.Text        `json:"email"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	NicNumber    string             `json:"nic_number"`
+	// Hand-edited: excluded from JSON — read once for the page envelope's total.
+	Total int64 `json:"-"`
+}
+
+// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4):
+// serves both the guardian directory (no search term, paged) and the "link
+// an existing guardian to this student too" search picker (siblings
+// sharing a guardian; always passes a search term).
+func (q *Queries) ListGuardians(ctx context.Context, arg ListGuardiansParams) ([]ListGuardiansRow, error) {
+	rows, err := q.db.Query(ctx, listGuardians, arg.Search, arg.OrphansOnly, arg.PageLimit, arg.PageOffset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Guardian{}
+	items := []ListGuardiansRow{}
 	for rows.Next() {
-		var i Guardian
+		var i ListGuardiansRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -331,6 +346,7 @@ func (q *Queries) ListGuardians(ctx context.Context, arg ListGuardiansParams) ([
 			&i.Email,
 			&i.CreatedAt,
 			&i.NicNumber,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}

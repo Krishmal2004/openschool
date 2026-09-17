@@ -14,10 +14,8 @@ interface Props {
 }
 
 export default function AppointPrefectModal({ academicYearId, assignedStudentIds, onClose }: Props) {
-  // /students is server-paginated; this picker only sees the first 100
-  // until EntityCombobox gets a server-backed onSearch (see the
-  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
-  const { data: studentPage } = useStudents({ limit: 100 });
+  const [search, setSearch] = useState("");
+  const { data: studentPage } = useStudents({ limit: 25, search });
   const assign = useAssignPrefect();
   const [studentId, setStudentId] = useState("");
   const [rank, setRank] = useState<PrefectRank>("junior");
@@ -37,7 +35,7 @@ export default function AppointPrefectModal({ academicYearId, assignedStudentIds
       errorFallback="Failed to appoint prefect"
     >
       <div className="os-grid os-gap-4">
-        <EntityCombobox id="prefect-student" labelText="Student" items={available} selectedId={studentId} onSelect={setStudentId} getId={(s) => s.id} itemToString={(s) => `${s.full_name} - ${s.index_number}`} placeholder="Search students by name or index number…" />
+        <EntityCombobox id="prefect-student" labelText="Student" items={available} selectedId={studentId} onSelect={setStudentId} onSearch={setSearch} getId={(s) => s.id} itemToString={(s) => `${s.full_name} - ${s.index_number}`} placeholder="Search students by name or index number…" />
         <Select id="prefect-rank" labelText="Rank" value={rank} onChange={(e) => setRank(e.target.value as PrefectRank)}>
           {PREFECT_RANKS.map((r) => <SelectItem key={r.value} value={r.value} text={r.label.replace(/s$/, "")} />)}
         </Select>

@@ -1,11 +1,20 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { teacherApi } from "@/features/teachers/api/teacher";
-import type { CreateTeacherRequest, UpdateTeacherRequest, TeacherEmploymentStatus } from "@/features/teachers/api/teacher";
+import type { CreateTeacherRequest, UpdateTeacherRequest, TeacherEmploymentStatus, TeacherListParams } from "@/features/teachers/api/teacher";
 import { teacherKeys } from "@/features/teachers/keys";
 import { useCurrentClasses } from "@/features/academics/queries/useClasses";
 import { useInvalidate } from "@/shared/api/useInvalidate";
 
-export const useTeachers = () => useQuery({ queryKey: teacherKeys.list(), queryFn: teacherApi.list });
+// Exposed as options so callers outside this feature — e.g. the sidebar's
+// prefetch-on-hover — can use it without importing this feature's api/
+// module directly (the layer rule: never api/ across a feature boundary).
+export const teachersPageOptions = (params: TeacherListParams = {}) =>
+  queryOptions({ queryKey: teacherKeys.list(params), queryFn: () => teacherApi.list(params) });
+
+// /teachers is server-paginated; the response is a Page<Teacher>, not a bare
+// array (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+export const useTeachers = (params: TeacherListParams = {}) =>
+  useQuery({ ...teachersPageOptions(params), placeholderData: keepPreviousData });
 
 export const useTeacher = (id: string) =>
   useQuery({ queryKey: teacherKeys.detail(id), queryFn: () => teacherApi.get(id), enabled: !!id });

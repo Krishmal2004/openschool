@@ -5,7 +5,7 @@ import (
 	"github.com/openschool-org/openschool/internal/modules/notifications"
 )
 
-// BuildAll constructs and wires up all five registered agents — the single place that lists every agent that exists.
+// BuildAll constructs and wires up all six registered agents — the single place that lists every agent that exists.
 func BuildAll(pool *pgxpool.Pool) []Job {
 	checks := NewRepository(pool)
 
@@ -17,5 +17,6 @@ func BuildAll(pool *pgxpool.Pool) []Job {
 		NewPeopleComplianceAgent(checks, notifSvc),
 		NewAcademicDeliveryAgent(checks, notifSvc),
 		NewSecurityAuditAgent(checks, notifSvc),
+		NewDataRetentionAgent(checks, notifSvc),
 	}
 }

@@ -177,6 +177,7 @@ const listMyDraftNotifications = `-- name: ListMyDraftNotifications :many
 SELECT id, title, message, category, priority, status, recipient_rules, created_by, sent_at, created_at, updated_at FROM notifications
 WHERE status = 'draft' AND created_by = $1
 ORDER BY updated_at DESC
+LIMIT 100
 `
 
 func (q *Queries) ListMyDraftNotifications(ctx context.Context, createdBy uuid.UUID) ([]Notification, error) {

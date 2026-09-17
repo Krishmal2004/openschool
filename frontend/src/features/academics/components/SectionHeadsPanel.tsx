@@ -40,7 +40,12 @@ function useSectionHeadRows() {
 
 export default function SectionHeadsPanel() {
   const { data: currentYear } = useCurrentAcademicYear();
-  const { data: teachers } = useTeachers();
+  // One search box's worth of state shared by every row's combobox below —
+  // each row assigns a different grade/stream, but they all pick from the
+  // same searched teacher list, so typing in one narrows all of them.
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const { data: teacherPage } = useTeachers({ limit: 25, search: teacherSearch });
+  const teachers = teacherPage?.items;
   const { data: sectionHeads } = useSectionHeads(currentYear?.id ?? "");
   const assign = useAssignSectionHead();
   const remove = useRemoveSectionHead();
@@ -76,6 +81,7 @@ export default function SectionHeadsPanel() {
                   items={teachers ?? []}
                   selectedId={head?.teacher_id ?? ""}
                   onSelect={(teacher_id) => teacher_id && assign.mutate({ academic_year_id: currentYear.id, grade_id: row.gradeId, stream_id: row.streamId, teacher_id })}
+                  onSearch={setTeacherSearch}
                   getId={(t) => t.id}
                   itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
                   placeholder="Search teachers…"

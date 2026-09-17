@@ -365,6 +365,8 @@ type StudentProfile struct {
 	Gender           pgtype.Text        `json:"gender"`
 	HouseID          pgtype.UUID        `json:"house_id"`
 	EnrollmentStatus string             `json:"enrollment_status"`
+	LeftAt           pgtype.Timestamptz `json:"left_at"`
+	ErasedAt         pgtype.Timestamptz `json:"erased_at"`
 }
 
 type StudentProgressReport struct {

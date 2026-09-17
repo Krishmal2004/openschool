@@ -12,6 +12,20 @@ import (
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
+type auditRecorderStub struct {
+	entityType string
+	entityID   uuid.UUID
+	action     string
+	actorID    uuid.UUID
+	calls      int
+}
+
+func (s *auditRecorderStub) Record(_ context.Context, entityType string, entityID uuid.UUID, action string, actorID uuid.UUID, _, _ any, _ string) error {
+	s.entityType, s.entityID, s.action, s.actorID = entityType, entityID, action, actorID
+	s.calls++
+	return nil
+}
+
 type studentListReaderStub struct {
 	gotParams StudentListParams
 }
@@ -29,7 +43,7 @@ func TestListStudentsRouteParsesPageParamsAndFilters(t *testing.T) {
 	router := gin.New()
 	group := router.Group("")
 	reader := &studentListReaderStub{}
-	RegisterStudentRoutes(group, group, nil, reader, nil)
+	RegisterStudentRoutes(group, group, nil, reader, nil, nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/students?limit=10&offset=20&search=perera&grade=Grade+5&gender=female", nil)
 	response := httptest.NewRecorder()
@@ -49,5 +63,30 @@ func TestListStudentsRouteParsesPageParamsAndFilters(t *testing.T) {
 	}
 	if body.Total != 1 || body.Limit != 10 || body.Offset != 20 || len(body.Items) != 1 {
 		t.Fatalf("unexpected page envelope: %+v", body)
+	}
+}
+
+func TestGetStudentAuditsTheRead(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	actorID := uuid.New()
+	studentUUID := uuid.New()
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("userID", actorID.String())
+		c.Next()
+	})
+	group := router.Group("")
+	audit := &auditRecorderStub{}
+	RegisterStudentRoutes(group, group, nil, &studentListReaderStub{}, nil, audit)
+
+	request := httptest.NewRequest(http.MethodGet, "/students/"+studentUUID.String(), nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	if audit.calls != 1 || audit.entityType != "student_profile" || audit.entityID != studentUUID || audit.action != "viewed" || audit.actorID != actorID {
+		t.Fatalf("unexpected audit record: %+v", audit)
 	}
 }

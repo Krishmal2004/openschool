@@ -39,6 +39,11 @@ type studentStore interface {
 	Delete(context.Context, uuid.UUID) error
 	CreateStudentUser(context.Context, studentUserCreate) error
 	DeleteUser(context.Context, uuid.UUID) error
+	// AnonymizeProfile and EraseUser back Erase (S11's "erase person" flow):
+	// the profile row survives (historical marks/attendance stay
+	// attributable) but its personal data doesn't.
+	AnonymizeProfile(context.Context, uuid.UUID) error
+	EraseUser(context.Context, uuid.UUID) error
 }
 
 type schoolTypeReader interface {
@@ -181,6 +186,38 @@ func (s *StudentService) Delete(ctx context.Context, id, actor uuid.UUID) error 
 	}
 	if err = s.idp.DeleteUser(ctx, student.UserID.String()); err != nil {
 		return fmt.Errorf("student profile deleted locally but failed to delete identity provider user (account is now orphaned and must be removed manually): %w", err)
+	}
+	return nil
+}
+
+// Erase anonymises a student's personal data in place (S11's "erase person"
+// flow) — unlike Delete, the profile row survives so historical
+// marks/attendance stay attributable in aggregate, but the identity
+// provider account is removed entirely rather than merely locked. A
+// logging or IDP failure here is reported but doesn't roll back the
+// anonymisation already committed, since leaving PII in place because a
+// secondary step failed would defeat the point of calling this at all.
+func (s *StudentService) Erase(ctx context.Context, id, actor uuid.UUID, reason string) error {
+	student, err := s.store.GetStudentRecord(ctx, id)
+	if err != nil {
+		return fmt.Errorf("student not found")
+	}
+
+	if err := s.store.AnonymizeProfile(ctx, id); err != nil {
+		return fmt.Errorf("failed to anonymise student profile: %w", err)
+	}
+
+	if student.UserID != uuid.Nil {
+		if err := s.store.EraseUser(ctx, student.UserID); err != nil {
+			log.Printf("Erase: profile %s anonymised but failed to scrub local user record %s: %v", id, student.UserID, err)
+		}
+		if err := s.idp.DeleteUser(ctx, student.UserID.String()); err != nil {
+			log.Printf("Erase: profile %s anonymised but failed to delete identity provider user %s: %v", id, student.UserID, err)
+		}
+	}
+
+	if s.audit != nil {
+		_ = s.audit.Record(ctx, "student_profile", id, "erased", actor, student, nil, reason)
 	}
 	return nil
 }

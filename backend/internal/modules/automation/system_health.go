@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -15,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"filippo.io/age"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/openschool-org/openschool/db/migrations"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
@@ -35,8 +38,9 @@ const backupSizeAnomalyRatio = 0.5
 // migrationVersionRe extracts the leading numeric version from a migration filename.
 var migrationVersionRe = regexp.MustCompile(`^(\d+)_`)
 
-// backupFileRe matches this agent's own backup filename pattern, so a stray unrelated file is never pruned or counted.
-var backupFileRe = regexp.MustCompile(`^openschool_\d{8}_\d{6}\.dump$`)
+// backupFileRe matches this agent's own backup filename pattern (plaintext
+// or age-encrypted), so a stray unrelated file is never pruned or counted.
+var backupFileRe = regexp.MustCompile(`^openschool_\d{8}_\d{6}\.dump(\.age)?$`)
 
 // SystemHealthAgent runs the nightly backup, migration-drift check, backup retention pruning, and dump-size anomaly detection.
 type SystemHealthAgent struct {
@@ -142,7 +146,94 @@ func (a *SystemHealthAgent) runBackup(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("pg_dump failed (is the postgresql-client package installed on this host?): %w: %s", err, strings.TrimSpace(string(output)))
 	}
-	return outPath, nil
+
+	finalPath := outPath
+	// S11: a dump contains the full DB — password hashes, NIC numbers, phone
+	// numbers, addresses. Encrypted at rest with an asymmetric age recipient
+	// key, so the key that can decrypt a backup never has to live on the
+	// same host that writes it.
+	if recipient := os.Getenv("BACKUP_AGE_RECIPIENT"); recipient != "" {
+		encPath, err := encryptBackupFile(outPath, recipient)
+		if err != nil {
+			return "", fmt.Errorf("could not encrypt backup: %w", err)
+		}
+		if err := os.Remove(outPath); err != nil {
+			log.Printf("system-health: encrypted backup written to %s but failed to remove plaintext %s: %v", encPath, outPath, err)
+		}
+		finalPath = encPath
+	} else {
+		log.Printf("system-health: BACKUP_AGE_RECIPIENT is not set — nightly backup %s is stored unencrypted", outPath)
+	}
+
+	// S11: a copy of the backup must survive the loss of this host.
+	if offsiteDir := os.Getenv("BACKUP_OFFSITE_DIR"); offsiteDir != "" {
+		if err := copyBackupFile(finalPath, offsiteDir); err != nil {
+			return finalPath, fmt.Errorf("backup written locally but failed to copy to BACKUP_OFFSITE_DIR: %w", err)
+		}
+	} else {
+		log.Printf("system-health: BACKUP_OFFSITE_DIR is not set — %s exists only on this host", finalPath)
+	}
+
+	return finalPath, nil
+}
+
+// encryptBackupFile encrypts plainPath in place (writing plainPath+".age")
+// to the given age X25519 recipient (a public key, e.g. "age1...") and
+// returns the encrypted file's path. The caller removes the plaintext.
+func encryptBackupFile(plainPath, recipientStr string) (string, error) {
+	recipient, err := age.ParseX25519Recipient(recipientStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid BACKUP_AGE_RECIPIENT: %w", err)
+	}
+
+	in, err := os.Open(plainPath)
+	if err != nil {
+		return "", err
+	}
+	defer in.Close()
+
+	encPath := plainPath + ".age"
+	// 0600: same reasoning as the backup directory itself — this file holds the full DB.
+	out, err := os.OpenFile(encPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	w, err := age.Encrypt(out, recipient)
+	if err != nil {
+		return "", fmt.Errorf("could not open age stream: %w", err)
+	}
+	if _, err := io.Copy(w, in); err != nil {
+		return "", fmt.Errorf("could not write encrypted backup: %w", err)
+	}
+	return encPath, w.Close()
+}
+
+// copyBackupFile copies src into destDir, preserving its filename, so a
+// second location survives the loss of the host that wrote it.
+func copyBackupFile(src, destDir string) error {
+	if err := os.MkdirAll(destDir, 0o700); err != nil {
+		return fmt.Errorf("could not create offsite backup directory %q: %w", destDir, err)
+	}
+
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	dest := filepath.Join(destDir, filepath.Base(src))
+	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return out.Close()
 }
 
 // writeTempPgPassFile writes a mode-0600 temp PGPASSFILE so pg_dump's password never appears as a process argument.

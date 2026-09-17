@@ -13,13 +13,16 @@ import (
 type fakeStore struct {
 	command createCommand
 	rows    []row
+	total   int64
 }
 
 func (f *fakeStore) create(_ context.Context, command createCommand) error {
 	f.command = command
 	return nil
 }
-func (f *fakeStore) list(context.Context, string, *uuid.UUID) ([]row, error) { return f.rows, nil }
+func (f *fakeStore) list(context.Context, string, *uuid.UUID, int32, int32) ([]row, int64, error) {
+	return f.rows, f.total, nil
+}
 
 func TestRecordSerializesStateAndOptionalFields(t *testing.T) {
 	store := &fakeStore{}
@@ -58,10 +61,13 @@ func TestRecordTreatsSystemActorAsNullable(t *testing.T) {
 func TestListMapsNullableActorAndReason(t *testing.T) {
 	actorID := uuid.New()
 	created := time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
-	store := &fakeStore{rows: []row{{ID: uuid.New(), EntityType: "attendance_record", EntityID: uuid.New(), Action: "edited_after_lock", ActorID: pgtype.UUID{Bytes: actorID, Valid: true}, ActorName: pgtype.Text{String: "Admin User", Valid: true}, Reason: pgtype.Text{String: "correction", Valid: true}, CreatedAt: pgtype.Timestamptz{Time: created, Valid: true}}}}
-	logs, err := NewService(store).List(context.Background(), "", nil)
+	store := &fakeStore{rows: []row{{ID: uuid.New(), EntityType: "attendance_record", EntityID: uuid.New(), Action: "edited_after_lock", ActorID: pgtype.UUID{Bytes: actorID, Valid: true}, ActorName: pgtype.Text{String: "Admin User", Valid: true}, Reason: pgtype.Text{String: "correction", Valid: true}, CreatedAt: pgtype.Timestamptz{Time: created, Valid: true}}}, total: 1}
+	logs, total, err := NewService(store).List(context.Background(), "", nil, 25, 0)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if total != 1 {
+		t.Fatalf("total = %d, want 1", total)
 	}
 	if len(logs) != 1 || logs[0].ActorID == nil || *logs[0].ActorID != actorID || logs[0].ActorName == nil || *logs[0].ActorName != "Admin User" || logs[0].Reason == nil || *logs[0].Reason != "correction" {
 		t.Fatalf("unexpected response: %#v", logs)

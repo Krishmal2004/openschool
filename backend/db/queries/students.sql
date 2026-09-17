@@ -19,9 +19,13 @@ SELECT * FROM student_profiles
 WHERE id = $1;
 
 -- name: UpdateStudentEnrollmentStatus :one
+-- left_at is set the moment status becomes 'left' and cleared on any other
+-- status, so a re-enrolled student's retention clock (S11) starts fresh
+-- rather than counting from a stale prior departure.
 UPDATE student_profiles
 SET
     enrollment_status = $2,
+    left_at           = CASE WHEN $2 = 'left' THEN NOW() ELSE NULL END,
     updated_at        = NOW()
 WHERE id = $1
 RETURNING *;
@@ -121,6 +125,36 @@ ORDER BY sp.full_name ASC;
 
 -- name: DeleteStudentProfile :exec
 DELETE FROM student_profiles
+WHERE id = $1;
+
+-- name: ListStudentsPastRetention :many
+-- Left students whose retention window (S11) has elapsed and who haven't
+-- already been anonymised — the nightly retention agent's purge candidates.
+SELECT id, user_id, full_name, left_at
+FROM student_profiles
+WHERE enrollment_status = 'left'
+  AND erased_at IS NULL
+  AND left_at IS NOT NULL
+  AND left_at < NOW() - make_interval(years => sqlc.arg(retention_years)::int)
+ORDER BY left_at;
+
+-- name: AnonymizeStudentProfile :exec
+-- Scrubs personal data from a profile without deleting the row, so
+-- historical marks/attendance stay attributable in aggregate without
+-- retaining the identifying details (S11's "erase person" flow and the
+-- nightly retention purge both call this). index_number is kept: it's
+-- already printed on physical records the school retains regardless, and
+-- removing it would break the FK-based historical reports it anchors.
+UPDATE student_profiles
+SET
+    full_name       = 'Erased Student',
+    address         = NULL,
+    phone           = NULL,
+    whatsapp        = NULL,
+    special_remarks = NULL,
+    gender          = NULL,
+    erased_at       = NOW(),
+    updated_at      = NOW()
 WHERE id = $1;
 
 -- name: DeleteUser :exec

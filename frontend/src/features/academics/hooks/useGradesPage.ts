@@ -11,7 +11,12 @@ export function useGradesPage() {
   const grades = useGrades();
   const classes = useCurrentClasses();
   const { data: streams } = useStreams();
-  const { data: teachers } = useTeachers();
+  // Used below only as a name-lookup-by-id (teacherName), not a picker, so
+  // it needs the whole set rather than a search-scoped one; /teachers is
+  // still capped at 100 server-side (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+  // section 4).
+  const { data: teacherPage } = useTeachers({ limit: 100 });
+  const teachers = teacherPage?.items;
   const { data: school } = useSchool();
 
   const createGrade = useCreateGrade();

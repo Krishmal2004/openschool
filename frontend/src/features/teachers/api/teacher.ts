@@ -1,4 +1,5 @@
 import api from "@/shared/api/client";
+import type { Page } from "@/shared/api/page";
 
 export type TeacherTitle = "Mr" | "Miss" | "Mrs" | "Ms" | "Dr" | "Von" | "Prof";
 export type TeacherEmploymentStatus = "active" | "resigned" | "transferred";
@@ -65,8 +66,18 @@ export interface UpdateTeacherRequest {
   gender?: "male" | "female";
 }
 
+// /teachers is server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+// section 4). limit is capped at 100 server-side regardless of what's asked for.
+export interface TeacherListParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: TeacherEmploymentStatus | "";
+}
+
 export const teacherApi = {
-  list: () => api.get<Teacher[]>("/teachers").then((r) => r.data),
+  list: (params: TeacherListParams = {}) =>
+    api.get<Page<Teacher>>("/teachers", { params }).then((r) => r.data),
 
   get: (id: string) => api.get<Teacher>(`/teachers/${id}`).then((r) => r.data),
 

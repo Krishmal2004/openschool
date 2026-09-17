@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Header, HeaderMenuButton, SideNav, SideNavItems, SideNavLink, SideNavDivider } from "@carbon/react";
 import { AppHeaderBrand, AppHeaderActions } from "@/layouts/AppHeaderChrome";
 import RouteErrorBoundary from "@/shared/ui/RouteErrorBoundary";
+import { prefetchForPath } from "@/layouts/prefetchOnHover";
 import type { NavGroup } from "@/layouts/nav/types";
 
 interface Props {
@@ -18,6 +20,7 @@ function isActivePath(pathname: string, path: string, exact?: boolean) {
 // Header, sidebar and content area shared by every portal.
 export default function PortalShell({ navGroups, showSearch = false, collapsible = false }: Props) {
   const { pathname } = useLocation();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(true);
   const collapsed = collapsible && !expanded;
 
@@ -51,6 +54,7 @@ export default function PortalShell({ navGroups, showSearch = false, collapsible
                       to={path}
                       renderIcon={Icon}
                       isActive={isActivePath(pathname, path, exact)}
+                      onMouseEnter={() => prefetchForPath(queryClient, path)}
                     >
                       {label}
                     </SideNavLink>

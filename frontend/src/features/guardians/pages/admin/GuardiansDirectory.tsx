@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Close } from "@carbon/icons-react";
 import { Checkbox, Pagination, Tile, Tag, TableToolbarSearch, ClickableTile, Button } from "@carbon/react";
-import { useGuardians, useSearchGuardians } from "@/features/guardians/queries/useGuardians";
-import { usePagination } from "@/shared/hooks/usePagination";
+import { useGuardians } from "@/features/guardians/queries/useGuardians";
+import { useDebounced } from "@/shared/hooks/useDebounced";
 import EmptyState from "@/shared/ui/EmptyState";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import Avatar from "@/shared/ui/Avatar";
@@ -10,25 +10,33 @@ import ListRowSkeleton from "@/shared/ui/ListRowSkeleton";
 import { relationshipLabel } from "@/features/guardians/constants";
 import GuardianDetail from "@/features/guardians/components/GuardianDetail";
 
+// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4):
+// search/orphansOnly/page/pageSize all live in the query key, so the server
+// does the filtering and sorting instead of downloading every guardian.
 export default function GuardiansDirectory() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 300);
   const [orphansOnly, setOrphansOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const allGuardians = useGuardians(orphansOnly);
-  const searchResults = useSearchGuardians(search, orphansOnly);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const isSearching = search.trim().length > 0;
 
-  const { data: guardians, isLoading, isError, refetch } = isSearching ? searchResults : allGuardians;
-
-  const ordered = useMemo(() => {
-    if (!guardians) return [];
-    return [...guardians].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  }, [guardians]);
+  const { data, isLoading, isError, refetch } = useGuardians({
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    search: debouncedSearch,
+    orphansOnly,
+  });
+  const ordered = data?.items ?? [];
+  const totalItems = data?.total ?? 0;
 
   const selected = ordered.find((g) => g.id === selectedId) ?? null;
 
-  const { page, pageSize, pageItems, totalItems, onChange } = usePagination(ordered, 10);
+  const onChange = ({ page: p, pageSize: ps }: { page: number; pageSize: number }) => {
+    setPage(p);
+    setPageSize(ps);
+  };
 
   return (
     <div className="os-page">
@@ -48,23 +56,23 @@ export default function GuardiansDirectory() {
               persistent
               placeholder="Search guardians by name, phone, or email…"
               value={search}
-              onChange={(e) => setSearch(typeof e === "string" ? e : e.target.value)}
+              onChange={(e) => { setSearch(typeof e === "string" ? e : e.target.value); setPage(1); }}
             />
           </div>
           <Checkbox
             id="orphans-only"
             labelText="Unlinked Guardians Only (Orphans)"
             checked={orphansOnly}
-            onChange={(_e, { checked }) => setOrphansOnly(checked)}
+            onChange={(_e, { checked }) => { setOrphansOnly(checked); setPage(1); }}
           />
         </div>
 
         {(search || orphansOnly) && (
           <div className="os-flex os-items-center os-gap-2 os-wrap os-mt-3">
             <span className="os-text-xs os-fw-600 os-c-tertiary">Active Filters:</span>
-            {orphansOnly && <Tag type="magenta" filter onClose={() => setOrphansOnly(false)}>Filter: Unlinked Only</Tag>}
-            {search && <Tag type="blue" filter onClose={() => setSearch("")}>Search: "{search}"</Tag>}
-            <Button kind="ghost" size="sm" renderIcon={Close} onClick={() => { setSearch(""); setOrphansOnly(false); }}>
+            {orphansOnly && <Tag type="magenta" filter onClose={() => { setOrphansOnly(false); setPage(1); }}>Filter: Unlinked Only</Tag>}
+            {search && <Tag type="blue" filter onClose={() => { setSearch(""); setPage(1); }}>Search: "{search}"</Tag>}
+            <Button kind="ghost" size="sm" renderIcon={Close} onClick={() => { setSearch(""); setOrphansOnly(false); setPage(1); }}>
               Clear All
             </Button>
           </div>
@@ -97,7 +105,7 @@ export default function GuardiansDirectory() {
           )}
 
           {!isLoading &&
-            pageItems.map((g) => {
+            ordered.map((g) => {
               const isSelected = selected?.id === g.id;
               return (
                 <ClickableTile

@@ -37,10 +37,8 @@ interface Props {
 // Roster editor shared by the admin Societies page and the teacher My Society page; the backend enforces who may mutate.
 export default function SocietyRoster({ societyId, readOnly }: Props) {
   const { data: members, isLoading, isError, refetch } = useSocietyMembers(societyId);
-  // /students is server-paginated; this picker only sees the first 100
-  // until EntityCombobox gets a server-backed onSearch (see the
-  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
-  const { data: studentPage } = useStudents({ limit: 100 });
+  const [studentSearch, setStudentSearch] = useState("");
+  const { data: studentPage } = useStudents({ limit: 25, search: studentSearch });
   const assignMember = useAssignSocietyMember(societyId);
   const removeMember = useRemoveSocietyMember(societyId);
 
@@ -147,6 +145,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
               items={availableStudents}
               selectedId={studentChoice}
               onSelect={setStudentChoice}
+              onSearch={setStudentSearch}
               getId={(s) => s.id}
               itemToString={(s) => `${s.full_name} — ${s.index_number}`}
               placeholder="Search students by name or index number…"

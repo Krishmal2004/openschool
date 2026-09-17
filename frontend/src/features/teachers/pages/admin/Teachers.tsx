@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Add, Edit, TrashCan } from "@carbon/icons-react";
 import { Button, IconButton, Select, SelectItem, Tag } from "@carbon/react";
 import { useTeachers, useDeleteTeacher } from "@/features/teachers/queries/useTeachers";
-import type { Teacher } from "@/features/teachers/api/teacher";
+import type { Teacher, TeacherEmploymentStatus } from "@/features/teachers/api/teacher";
 import { EMPLOYMENT_STATUSES } from "@/shared/lib/constants/people";
 import DataGrid, { type GridColumn } from "@/shared/ui/DataGrid";
 import FilterBar from "@/shared/ui/FilterBar";
@@ -20,17 +20,24 @@ const FILTER_LABELS: Record<string, string> = { query: "Search", status: "Status
 
 export default function Teachers() {
   const navigate = useNavigate();
-  const { data: teachers, isLoading, isError, refetch } = useTeachers();
   const deleteTeacher = useDeleteTeacher();
   const [toDelete, setToDelete] = useState<Teacher | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({ query: "", status: "" });
 
-  const filtered = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
-    return (teachers ?? []).filter(
-      (t) => (!q || t.full_name.toLowerCase().includes(q) || t.employee_number.toLowerCase().includes(q)) && (!filters.status || t.employment_status === filters.status),
-    );
-  }, [teachers, debouncedSearch, filters.status]);
+  const setFilter = <K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) => {
+    setPage(1);
+    set(key, value);
+  };
+
+  const { data, isLoading, isError, refetch } = useTeachers({
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    search: debouncedSearch,
+    status: filters.status as TeacherEmploymentStatus | "",
+  });
+  const teachers = data?.items ?? [];
 
   const columns: GridColumn<Teacher>[] = [
     { key: "employee_number", header: "Employee No.", render: (t) => <span className="os-table__mono">{t.employee_number}</span> },
@@ -68,24 +75,30 @@ export default function Teachers() {
       <AgentFindingsBanner titles={["Inactive teachers still assigned to classes", "Teacher accounts stuck in first-login setup"]} />
 
       <div className="os-section">
-        <FilterBar search={{ value: filters.query, onChange: (v) => set("query", v), placeholder: "Search by name or employee number…" }}>
-          <Select id="filter-teacher-status" labelText="" size="md" value={filters.status} onChange={(e) => set("status", e.target.value)}>
+        <FilterBar search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or employee number…" }}>
+          <Select id="filter-teacher-status" labelText="" size="md" value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
             <SelectItem value="" text="All Statuses" />
             {EMPLOYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value} text={s.label} />)}
           </Select>
         </FilterBar>
-        <ActiveFilterTags filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))} onClear={(k) => clear(k as keyof typeof filters)} onClearAll={() => clear()} />
+        <ActiveFilterTags filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))} onClear={(k) => { clear(k as keyof typeof filters); setPage(1); }} onClearAll={() => { clear(); setPage(1); }} />
         <MutationErrorNotification isError={deleteTeacher.isError} error={deleteTeacher.error} title="Could not delete teacher" fallback="The teacher may be assigned to a class or have attendance records." onClose={() => deleteTeacher.reset()} className="os-section__notice" />
         <ListState
           isLoading={isLoading}
           isError={isError}
-          isEmpty={filtered.length === 0}
+          isEmpty={teachers.length === 0}
           errorMessage="Failed to load teachers"
           onRetry={refetch}
           skeleton={<TableSkeleton headers={columns.map((c) => c.header)} />}
           empty={{ title: "No teachers found", description: "Add your first teacher or adjust your search filter to get started." }}
         >
-          <DataGrid rows={filtered} columns={columns} getRowId={(t) => t.id} countLabel={(shown, total) => `Showing ${shown} of ${total} teachers`} />
+          <DataGrid
+            rows={teachers}
+            columns={columns}
+            getRowId={(t) => t.id}
+            countLabel={(shown, total) => `Showing ${shown} of ${total} teachers`}
+            server={{ page, pageSize, totalItems: data?.total ?? 0, onChange: ({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); } }}
+          />
         </ListState>
       </div>
 

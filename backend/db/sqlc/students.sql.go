@@ -12,6 +12,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const anonymizeStudentProfile = `-- name: AnonymizeStudentProfile :exec
+UPDATE student_profiles
+SET
+    full_name       = 'Erased Student',
+    address         = NULL,
+    phone           = NULL,
+    whatsapp        = NULL,
+    special_remarks = NULL,
+    gender          = NULL,
+    erased_at       = NOW(),
+    updated_at      = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) AnonymizeStudentProfile(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, anonymizeStudentProfile, id)
+	return err
+}
+
 const createStudentProfile = `-- name: CreateStudentProfile :one
 INSERT INTO student_profiles (
     user_id,
@@ -459,6 +478,7 @@ const updateStudentEnrollmentStatus = `-- name: UpdateStudentEnrollmentStatus :o
 UPDATE student_profiles
 SET
     enrollment_status = $2,
+    left_at           = CASE WHEN $2 = 'left' THEN NOW() ELSE NULL END,
     updated_at        = NOW()
 WHERE id = $1
 RETURNING id, user_id, full_name, index_number, address, phone, whatsapp, special_remarks, created_at, updated_at, gender, house_id, enrollment_status
@@ -541,4 +561,41 @@ func (q *Queries) UpdateStudentProfile(ctx context.Context, arg UpdateStudentPro
 		&i.EnrollmentStatus,
 	)
 	return i, err
+}
+
+const listStudentsPastRetention = `-- name: ListStudentsPastRetention :many
+SELECT id, user_id, full_name, left_at
+FROM student_profiles
+WHERE enrollment_status = 'left'
+  AND erased_at IS NULL
+  AND left_at IS NOT NULL
+  AND left_at < NOW() - make_interval(years => $1::int)
+ORDER BY left_at
+`
+
+type ListStudentsPastRetentionRow struct {
+	ID       uuid.UUID          `json:"id"`
+	UserID   pgtype.UUID        `json:"user_id"`
+	FullName string             `json:"full_name"`
+	LeftAt   pgtype.Timestamptz `json:"left_at"`
+}
+
+func (q *Queries) ListStudentsPastRetention(ctx context.Context, retentionYears int32) ([]ListStudentsPastRetentionRow, error) {
+	rows, err := q.db.Query(ctx, listStudentsPastRetention, retentionYears)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListStudentsPastRetentionRow{}
+	for rows.Next() {
+		var i ListStudentsPastRetentionRow
+		if err := rows.Scan(&i.ID, &i.UserID, &i.FullName, &i.LeftAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

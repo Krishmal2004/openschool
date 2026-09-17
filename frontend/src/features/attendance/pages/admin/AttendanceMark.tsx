@@ -29,7 +29,12 @@ export default function AttendanceMark() {
   const { data: cls } = useClass(session?.class_id ?? "");
   const { data: students, isLoading: studentsLoading } = useStudentsByClass(session?.class_id ?? "");
   const { data: grades } = useGrades();
-  const { data: teachers } = useTeachers();
+  // Used below only as a name-lookup-by-id (teacherName: who took this
+  // session), not a picker, so it needs the whole set rather than a
+  // search-scoped one; /teachers is still capped at 100 server-side
+  // (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+  const { data: teacherPage } = useTeachers({ limit: 100 });
+  const teachers = teacherPage?.items;
   const markAttendance = useMarkAttendance(id);
   const marking = useAttendanceMarking(id, records, students);
 

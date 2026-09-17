@@ -2,6 +2,7 @@ package automation
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +35,51 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) ListAdminUserIDs(ctx context.Context) ([]uuid.UUID, error) {
 	return r.queries.ListAdminUserIDs(ctx)
+}
+
+// retentionCandidate is a left student whose retention window has elapsed
+// and who hasn't already been anonymised (S11).
+type retentionCandidate struct {
+	ID       uuid.UUID
+	UserID   uuid.UUID
+	HasUser  bool
+	FullName string
+}
+
+func (r *Repository) ListStudentsPastRetention(ctx context.Context, retentionYears int) ([]retentionCandidate, error) {
+	rows, err := r.queries.ListStudentsPastRetention(ctx, int32(retentionYears))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]retentionCandidate, len(rows))
+	for i, row := range rows {
+		result[i] = retentionCandidate{ID: row.ID, FullName: row.FullName}
+		if row.UserID.Valid {
+			result[i].UserID = uuid.UUID(row.UserID.Bytes)
+			result[i].HasUser = true
+		}
+	}
+	return result, nil
+}
+
+// AnonymizeStudentProfile scrubs a profile's personal data in place, keeping
+// the row so historical marks/attendance stay attributable (S11).
+func (r *Repository) AnonymizeStudentProfile(ctx context.Context, id uuid.UUID) error {
+	return r.queries.AnonymizeStudentProfile(ctx, id)
+}
+
+// EraseStudentUser scrubs the local user row's PII and deactivates it, the
+// same operation people.studentRepository.EraseUser performs for the manual
+// "erase person" flow — duplicated rather than shared because db/sqlc may
+// only be imported from a module's own repository.go.
+func (r *Repository) EraseStudentUser(ctx context.Context, id uuid.UUID) error {
+	if _, err := r.queries.UpdateUser(ctx, db.UpdateUserParams{
+		ID: id, FullName: "Erased Student", Email: fmt.Sprintf("erased-%s@erased.invalid", id),
+	}); err != nil {
+		return err
+	}
+	_, err := r.queries.DeactivateUser(ctx, id)
+	return err
 }
 
 func (r *Repository) ListCurrentAcademicYears(ctx context.Context) ([]academicYear, error) {

@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/openschool-org/openschool/internal/app"
 	"github.com/openschool-org/openschool/internal/config"
 	"github.com/openschool-org/openschool/internal/database"
 	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	_ "github.com/openschool-org/openschool/docs"
 	swaggerFiles "github.com/swaggo/files"
@@ -110,6 +112,7 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestID())
 	r.Use(middleware.StructuredLogger())
+	r.Use(middleware.Metrics())
 	r.Use(middleware.RequestTimeout(15 * time.Second))
 
 	// Trusted proxies must be explicit: behind Nginx, ClientIP() otherwise
@@ -125,6 +128,8 @@ func main() {
 
 	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.BodySizeLimit())
+	// JSON list responses shrink 5-10x over gzip (section 5's delivery checklist).
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     corsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -135,6 +140,25 @@ func main() {
 	}))
 	// Generous per-IP rate limit prevents throttling users behind shared school networks.
 	r.Use(middleware.RateLimit(envFloat("API_RATE_LIMIT_RPS", 30), envInt("API_RATE_LIMIT_BURST", 60)))
+
+	// Root-level, unauthenticated and outside /api/v1 so a container
+	// orchestrator's health check (Docker HEALTHCHECK, k8s probe) or the
+	// reverse proxy can reach it without a token (section 5's Docker
+	// checklist). Verifies the DB pool, not just that the process is alive.
+	r.GET("/healthz", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		if err := db.Ping(ctx); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unavailable"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// Not on /api/v1 and carries no auth of its own — the proxy must not
+	// expose it publicly (section 5: "/metrics for Prometheus, protected by
+	// the proxy"). See deploy/nginx.conf.example for a reference restriction.
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	scheduler := app.Setup(r, db)
 	scheduler.Start()

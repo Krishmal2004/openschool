@@ -26,7 +26,10 @@ export default function Dashboard() {
   const { data: studentPage, isLoading: studentsLoading } = useStudents({ limit: 100 });
   const students = studentPage?.items;
   const studentCount = studentPage?.total ?? 0;
-  const { data: teachers, isLoading: teachersLoading } = useTeachers();
+  // Same recent-slice-only caveat as students above.
+  const { data: teacherPage, isLoading: teachersLoading } = useTeachers({ limit: 100 });
+  const teachers = teacherPage?.items;
+  const teacherCount = teacherPage?.total ?? 0;
   const { data: classes, isLoading: classesLoading } = useCurrentClasses();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
   const { data: years } = useAcademicYears();
@@ -108,7 +111,7 @@ export default function Dashboard() {
 
       <div className="os-stat-grid">
         <StatCard label="Total Students" value={studentCount} loading={studentsLoading} Icon={UserMultiple} path="/students" />
-        <StatCard label="Teachers" value={teachers?.length ?? 0} loading={teachersLoading} Icon={Education} path="/teachers" />
+        <StatCard label="Teachers" value={teacherCount} loading={teachersLoading} Icon={Education} path="/teachers" />
         <StatCard label="Classes" value={classes?.length ?? 0} loading={classesLoading} Icon={Building} path="/classes" />
         <StatCard label="Subjects" value={subjects?.length ?? 0} loading={subjectsLoading} Icon={Book} path="/subjects" />
       </div>

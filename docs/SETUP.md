@@ -83,6 +83,17 @@ set the file mode to `600` if it must be a plain file. Never commit a real
 `.env`, and never log its contents. Rotate the SMTP and DB passwords
 periodically and after any suspected exposure (S16).
 
+**Production note - Postgres tuning and backups:** the defaults in
+`docker-compose.yml` are fine for local development, not for a real
+deployment. Set `shared_buffers` to ~25% of the host's RAM, tune `work_mem`
+for the sort-heavy report/dashboard queries, confirm autovacuum is on (the
+default), and `REINDEX` the `pg_trgm` indexes from migration `000041`
+weekly, since trigram GIN indexes fragment faster than btree under regular
+writes. For backups, set `BACKUP_AGE_RECIPIENT` and `BACKUP_OFFSITE_DIR`
+(see `backend/.env.example`, S11) and run a **restore drill quarterly**:
+restore the latest encrypted dump into a scratch database and confirm the
+app can start against it — an untested backup is not a backup.
+
 ## 2. Register the first admin (one time only)
 
 On a brand-new instance there's no admin account yet, so the app sends you

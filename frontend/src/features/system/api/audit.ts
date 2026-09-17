@@ -1,4 +1,5 @@
 import api from "@/shared/api/client";
+import type { Page } from "@/shared/api/page";
 
 export interface AuditLogEntry {
   id: string;
@@ -13,12 +14,16 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
+// /audit-logs is server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+// section 4) — an append-only log grows without bound.
 export interface AuditLogFilters {
   entity_type?: string;
   entity_id?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export const auditApi = {
   list: (params?: AuditLogFilters) =>
-    api.get<AuditLogEntry[]>("/audit-logs", { params }).then((r) => r.data),
+    api.get<Page<AuditLogEntry>>("/audit-logs", { params }).then((r) => r.data),
 };

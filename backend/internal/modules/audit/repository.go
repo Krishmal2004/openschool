@@ -18,18 +18,20 @@ func (r *Repository) create(ctx context.Context, command createCommand) error {
 	return err
 }
 
-func (r *Repository) list(ctx context.Context, entityType string, entityID *uuid.UUID) ([]row, error) {
-	params := db.ListAuditLogsParams{EntityType: pgtype.Text{String: entityType, Valid: entityType != ""}}
+func (r *Repository) list(ctx context.Context, entityType string, entityID *uuid.UUID, limit, offset int32) ([]row, int64, error) {
+	params := db.ListAuditLogsParams{EntityType: pgtype.Text{String: entityType, Valid: entityType != ""}, PageLimit: limit, PageOffset: offset}
 	if entityID != nil {
 		params.EntityID = pgtype.UUID{Bytes: *entityID, Valid: true}
 	}
 	rows, err := r.queries.ListAuditLogs(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	result := make([]row, len(rows))
+	var total int64
 	for i, value := range rows {
 		result[i] = row{ID: value.ID, EntityType: value.EntityType, EntityID: value.EntityID, Action: value.Action, ActorID: value.ActorID, Before: value.Before, After: value.After, Reason: value.Reason, CreatedAt: value.CreatedAt, ActorName: value.ActorName}
+		total = value.Total
 	}
-	return result, nil
+	return result, total, nil
 }

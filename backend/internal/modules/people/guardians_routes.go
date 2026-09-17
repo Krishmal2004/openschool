@@ -12,9 +12,16 @@ import (
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
+// GuardianListParams is the guardians-specific pagination request: the
+// shared limit/offset/search contract plus the orphans-only filter.
+type GuardianListParams struct {
+	httpx.PageParams
+	OrphansOnly bool
+}
+
 type GuardianReader interface {
 	Get(context.Context, uuid.UUID) (any, error)
-	List(context.Context, string, bool) (any, error)
+	ListPage(context.Context, GuardianListParams) (any, error)
 	Students(context.Context, uuid.UUID) (any, error)
 	ByStudent(context.Context, uuid.UUID) (any, error)
 }
@@ -182,7 +189,8 @@ func guardianActor(c *gin.Context) (uuid.UUID, bool) {
 
 func RegisterGuardianReadRoutes(teacherOrAdmin, studentAccess *gin.RouterGroup, reader GuardianReader) {
 	teacherOrAdmin.GET("/guardians", func(c *gin.Context) {
-		value, err := reader.List(c, c.Query("search"), c.Query("orphans") == "true")
+		params := GuardianListParams{PageParams: httpx.ParsePage(c), OrphansOnly: c.Query("orphans") == "true"}
+		value, err := reader.ListPage(c, params)
 		readGuardians(c, value, err)
 	})
 	teacherOrAdmin.GET("/guardians/:id", func(c *gin.Context) {

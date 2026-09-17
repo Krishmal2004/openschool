@@ -17,6 +17,7 @@ type Querier interface {
 	ConsumePasswordResetToken(ctx context.Context, tokenHash string) (PasswordResetToken, error)
 	// ── group subjects ──────────────────────────────────────────────────────────
 	AddGroupSubject(ctx context.Context, arg AddGroupSubjectParams) (GroupSubject, error)
+	AnonymizeStudentProfile(ctx context.Context, id uuid.UUID) error
 	ApproveTimetable(ctx context.Context, arg ApproveTimetableParams) (Timetable, error)
 	ArchivePublishedForClass(ctx context.Context, arg ArchivePublishedForClassParams) error
 	ArchiveTimetable(ctx context.Context, id uuid.UUID) (Timetable, error)
@@ -435,7 +436,7 @@ type Querier interface {
 	// student — e.g. their last child left the school). Used both by the
 	// guardian directory and the "link an existing guardian to this student
 	// too" search picker (siblings sharing a guardian).
-	ListGuardians(ctx context.Context, arg ListGuardiansParams) ([]Guardian, error)
+	ListGuardians(ctx context.Context, arg ListGuardiansParams) ([]ListGuardiansRow, error)
 	ListGuardiansByStudent(ctx context.Context, studentID uuid.UUID) ([]ListGuardiansByStudentRow, error)
 	ListHouses(ctx context.Context) ([]House, error)
 	// ── Employment-status consistency checker ───────────────────────────────────
@@ -456,7 +457,7 @@ type Querier interface {
 	// filtering happens client-side, matching this app's existing convention
 	// for list pages (see e.g. Subjects, Streams)
 	ListMyNotifications(ctx context.Context, userID uuid.UUID) ([]ListMyNotificationsRow, error)
-	ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicStaffParams) ([]NonAcademicStaff, error)
+	ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicStaffParams) ([]ListNonAcademicStaffRow, error)
 	ListNonAcademicStaffAttendanceByDate(ctx context.Context, date pgtype.Date) ([]ListNonAcademicStaffAttendanceByDateRow, error)
 	ListNonAcademicStaffAttendanceHistory(ctx context.Context, arg ListNonAcademicStaffAttendanceHistoryParams) ([]StaffAttendanceRecord, error)
 	// Actors with audit-logged changes in the trailing 24 hours between
@@ -564,6 +565,7 @@ type Querier interface {
 	ListStudentsEnrolledInCurrentClass(ctx context.Context, arg ListStudentsEnrolledInCurrentClassParams) ([]uuid.UUID, error)
 	ListStudentsMissingHouse(ctx context.Context) ([]StudentProfile, error)
 	ListStudentsPage(ctx context.Context, arg ListStudentsPageParams) ([]ListStudentsPageRow, error)
+	ListStudentsPastRetention(ctx context.Context, retentionYears int32) ([]ListStudentsPastRetentionRow, error)
 	ListSubjectPeriodRequirementsByGrade(ctx context.Context, arg ListSubjectPeriodRequirementsByGradeParams) ([]ListSubjectPeriodRequirementsByGradeRow, error)
 	ListSubjectTeachersByClass(ctx context.Context, classID uuid.UUID) ([]ListSubjectTeachersByClassRow, error)
 	ListSubjects(ctx context.Context) ([]Subject, error)
@@ -581,6 +583,7 @@ type Querier interface {
 	// every class+subject a teacher is assigned to teach, across academic years
 	ListTeacherWorkload(ctx context.Context, teacherID uuid.UUID) ([]ListTeacherWorkloadRow, error)
 	ListTeachers(ctx context.Context) ([]TeacherProfile, error)
+	ListTeachersPage(ctx context.Context, arg ListTeachersPageParams) ([]ListTeachersPageRow, error)
 	// batched form of GetTeacherByID for resolving several teacher_profile IDs
 	// (e.g. to their user_id, for a notification recipient list) in one query
 	// instead of one per teacher.

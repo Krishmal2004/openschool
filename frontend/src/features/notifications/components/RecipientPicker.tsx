@@ -35,13 +35,15 @@ export default function RecipientPicker({
   const { data: classes } = useCurrentClasses();
   const { data: gradeSections } = useGradeSections(currentYear?.id ?? "");
   const { data: subjects } = useSubjects();
-  // /students is server-paginated; this picker only sees the first 100
-  // until EntityCombobox gets a server-backed onSearch (see the
-  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
-  const { data: studentPage } = useStudents({ limit: 100 });
+  const [studentSearch, setStudentSearch] = useState("");
+  const { data: studentPage } = useStudents({ limit: 25, search: studentSearch });
   const students = studentPage?.items;
-  const { data: guardians } = useGuardians();
-  const { data: teachers } = useTeachers();
+  const [guardianSearch, setGuardianSearch] = useState("");
+  const { data: guardianPage } = useGuardians({ limit: 25, search: guardianSearch });
+  const guardians = guardianPage?.items;
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const { data: teacherPage } = useTeachers({ limit: 25, search: teacherSearch });
+  const teachers = teacherPage?.items;
 
   const [ruleType, setRuleType] = useState<RecipientRuleType>("grade");
   const [selectedId, setSelectedId] = useState("");
@@ -169,6 +171,7 @@ export default function RecipientPicker({
           items={students ?? []}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          onSearch={setStudentSearch}
           getId={(s) => s.id}
           itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students…"
@@ -181,6 +184,7 @@ export default function RecipientPicker({
           items={guardians ?? []}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          onSearch={setGuardianSearch}
           getId={(g) => g.id}
           itemToString={(g) => `${g.full_name} - ${g.phone}`}
           placeholder="Search guardians…"
@@ -193,6 +197,7 @@ export default function RecipientPicker({
           items={teachers ?? []}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          onSearch={setTeacherSearch}
           getId={(t) => t.id}
           itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
           placeholder="Search teachers…"

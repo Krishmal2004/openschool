@@ -96,7 +96,11 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
 }
 
 export default function TeacherSubjects() {
-  const { data: teachers, isLoading: loadingTeachers, isError: teachersError, refetch: refetchTeachers } = useTeachers();
+  // /teachers is server-paginated; this page only sees the first 100 until
+  // it's rewired to server pagination + search
+  // (SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.4).
+  const { data: teacherPage, isLoading: loadingTeachers, isError: teachersError, refetch: refetchTeachers } = useTeachers({ limit: 100 });
+  const teachers = teacherPage?.items;
   const { data: subjects, isLoading: loadingSubjects, isError: subjectsError, refetch: refetchSubjects } = useSubjects();
   const [searchQuery, setSearchQuery] = useState("");
 

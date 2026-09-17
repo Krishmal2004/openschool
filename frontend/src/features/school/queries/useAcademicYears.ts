@@ -3,8 +3,10 @@ import { academicYearApi } from "@/features/school/api/academicYear";
 import type { CreateAcademicYearRequest } from "@/features/school/api/academicYear";
 import { academicYearKeys } from "@/features/school/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
+import { REFERENCE_DATA_STALE_TIME_MS } from "@/shared/api/staleTime";
 
-export const useAcademicYears = () => useQuery({ queryKey: academicYearKeys.list(), queryFn: academicYearApi.list });
+export const useAcademicYears = () =>
+  useQuery({ queryKey: academicYearKeys.list(), queryFn: academicYearApi.list, staleTime: REFERENCE_DATA_STALE_TIME_MS });
 
 export const useCurrentAcademicYear = () => useQuery({ queryKey: academicYearKeys.current(), queryFn: academicYearApi.getCurrent });
 

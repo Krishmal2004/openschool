@@ -2,6 +2,7 @@ package people
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -117,6 +118,22 @@ func (r *studentRepository) Delete(c context.Context, id uuid.UUID) error {
 }
 func (r *studentRepository) DeleteUser(c context.Context, id uuid.UUID) error {
 	return r.queries.DeleteUser(c, id)
+}
+func (r *studentRepository) AnonymizeProfile(c context.Context, id uuid.UUID) error {
+	return r.queries.AnonymizeStudentProfile(c, id)
+}
+
+// EraseUser scrubs the local user row's PII and deactivates it. The email is
+// replaced with a unique erased-marker (still unique-constrained) rather
+// than a fixed value, since a second erasure would otherwise collide.
+func (r *studentRepository) EraseUser(c context.Context, id uuid.UUID) error {
+	if _, err := r.queries.UpdateUser(c, db.UpdateUserParams{
+		ID: id, FullName: "Erased Student", Email: fmt.Sprintf("erased-%s@erased.invalid", id),
+	}); err != nil {
+		return err
+	}
+	_, err := r.queries.DeactivateUser(c, id)
+	return err
 }
 
 func (r *studentRepository) NextEmployee(c context.Context) (string, error) {
@@ -260,8 +277,19 @@ func (r *nonAcademicStaffRepository) staffRecord(c context.Context, id uuid.UUID
 	}
 	return staffRecord{HouseID: house}, err
 }
-func (r *nonAcademicStaffRepository) listStaff(c context.Context, search, designation string) (any, error) {
-	return r.queries.ListNonAcademicStaff(c, db.ListNonAcademicStaffParams{Search: pgtype.Text{String: search, Valid: search != ""}, Designation: pgtype.Text{String: designation, Valid: designation != ""}})
+func (r *nonAcademicStaffRepository) listStaffPage(c context.Context, p StaffListParams) (any, error) {
+	rows, err := r.queries.ListNonAcademicStaff(c, db.ListNonAcademicStaffParams{
+		Search: nullableText(p.Search), Designation: nullableText(p.Designation),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+	return httpx.Page[db.ListNonAcademicStaffRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
 }
 func (r *nonAcademicStaffRepository) updateStaff(c context.Context, id uuid.UUID, p staffUpdate) (any, error) {
 	return r.queries.UpdateNonAcademicStaff(c, db.UpdateNonAcademicStaffParams{ID: id, FullName: p.FullName, Designation: p.Designation, Phone: pgtype.Text{String: p.Phone, Valid: p.Phone != ""}, Gender: pgtype.Text{String: p.Gender, Valid: p.Gender != ""}})
@@ -334,8 +362,19 @@ func NewGuardianReader(pool *pgxpool.Pool) GuardianReader {
 func (r *guardianReader) Get(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetGuardianByID(c, id)
 }
-func (r *guardianReader) List(c context.Context, search string, orphans bool) (any, error) {
-	return r.queries.ListGuardians(c, db.ListGuardiansParams{Search: pgtype.Text{String: search, Valid: search != ""}, OrphansOnly: pgtype.Bool{Bool: orphans, Valid: orphans}})
+func (r *guardianReader) ListPage(c context.Context, p GuardianListParams) (any, error) {
+	rows, err := r.queries.ListGuardians(c, db.ListGuardiansParams{
+		Search: nullableText(p.Search), OrphansOnly: pgtype.Bool{Bool: p.OrphansOnly, Valid: p.OrphansOnly},
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+	return httpx.Page[db.ListGuardiansRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
 }
 func (r *guardianReader) Students(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListStudentsByGuardianID(c, id)
@@ -394,7 +433,20 @@ func NewTeacherReader(pool *pgxpool.Pool) TeacherReader { return &teacherReader{
 func (r *teacherReader) Get(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetTeacherByID(c, id)
 }
-func (r *teacherReader) List(c context.Context) (any, error) { return r.queries.ListTeachers(c) }
+func (r *teacherReader) ListPage(c context.Context, p TeacherListParams) (any, error) {
+	rows, err := r.queries.ListTeachersPage(c, db.ListTeachersPageParams{
+		Search: nullableText(p.Search), Status: nullableText(p.Status),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+	return httpx.Page[db.ListTeachersPageRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
+}
 func (r *teacherReader) Subjects(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListSubjectsByTeacher(c, id)
 }

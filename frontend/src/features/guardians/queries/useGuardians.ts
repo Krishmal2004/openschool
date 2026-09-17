@@ -1,20 +1,27 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { guardianApi } from "@/features/guardians/api/guardian";
-import type { CreateGuardianRequest, UpdateGuardianRequest, ProvisionGuardianLoginRequest } from "@/features/guardians/api/guardian";
+import type { CreateGuardianRequest, UpdateGuardianRequest, ProvisionGuardianLoginRequest, GuardianListParams } from "@/features/guardians/api/guardian";
 import { guardianKeys } from "@/features/guardians/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
 
 export const useGuardiansByStudent = (studentId: string) =>
   useQuery({ queryKey: guardianKeys.byStudent(studentId), queryFn: () => guardianApi.listByStudent(studentId), enabled: !!studentId });
 
-// Full directory; orphansOnly lists guardians linked to no student.
-export const useGuardians = (orphansOnly = false) =>
-  useQuery({ queryKey: guardianKeys.list(orphansOnly), queryFn: () => guardianApi.list(undefined, orphansOnly) });
+// Exposed as options so callers outside this feature — e.g. the sidebar's
+// prefetch-on-hover — can use it without importing this feature's api/
+// module directly (the layer rule: never api/ across a feature boundary).
+export const guardiansPageOptions = (params: GuardianListParams = {}) =>
+  queryOptions({ queryKey: guardianKeys.list(params), queryFn: () => guardianApi.list(params) });
+
+// The directory; orphansOnly lists guardians linked to no student. Server-
+// paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+export const useGuardians = (params: GuardianListParams = {}) =>
+  useQuery({ ...guardiansPageOptions(params), placeholderData: keepPreviousData });
 
 export const useSearchGuardians = (search: string, orphansOnly = false) =>
   useQuery({
     queryKey: guardianKeys.search(search, orphansOnly),
-    queryFn: () => guardianApi.list(search, orphansOnly),
+    queryFn: () => guardianApi.list({ search, orphansOnly }),
     enabled: search.trim().length > 0,
   });
 

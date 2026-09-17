@@ -102,26 +102,45 @@ func (q *Queries) GetNonAcademicStaffByID(ctx context.Context, id uuid.UUID) (No
 }
 
 const listNonAcademicStaff = `-- name: ListNonAcademicStaff :many
-SELECT id, full_name, employee_number, designation, phone, joined_date, gender, house_id, employment_status, created_at, updated_at FROM non_academic_staff
+SELECT id, full_name, employee_number, designation, phone, joined_date, gender, house_id, employment_status, created_at, updated_at, COUNT(*) OVER () AS total FROM non_academic_staff
 WHERE ($1::text IS NULL OR full_name ILIKE '%' || $1::text || '%' OR employee_number ILIKE '%' || $1::text || '%')
   AND ($2::text IS NULL OR designation = $2::text)
 ORDER BY full_name ASC
+LIMIT $3::int OFFSET $4::int
 `
 
 type ListNonAcademicStaffParams struct {
 	Search      pgtype.Text `json:"search"`
 	Designation pgtype.Text `json:"designation"`
+	PageLimit   int32       `json:"page_limit"`
+	PageOffset  int32       `json:"page_offset"`
 }
 
-func (q *Queries) ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicStaffParams) ([]NonAcademicStaff, error) {
-	rows, err := q.db.Query(ctx, listNonAcademicStaff, arg.Search, arg.Designation)
+type ListNonAcademicStaffRow struct {
+	ID               uuid.UUID          `json:"id"`
+	FullName         string             `json:"full_name"`
+	EmployeeNumber   string             `json:"employee_number"`
+	Designation      string             `json:"designation"`
+	Phone            pgtype.Text        `json:"phone"`
+	JoinedDate       pgtype.Date        `json:"joined_date"`
+	Gender           pgtype.Text        `json:"gender"`
+	HouseID          pgtype.UUID        `json:"house_id"`
+	EmploymentStatus string             `json:"employment_status"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	// Hand-edited: excluded from JSON — read once for the page envelope's total.
+	Total int64 `json:"-"`
+}
+
+func (q *Queries) ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicStaffParams) ([]ListNonAcademicStaffRow, error) {
+	rows, err := q.db.Query(ctx, listNonAcademicStaff, arg.Search, arg.Designation, arg.PageLimit, arg.PageOffset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []NonAcademicStaff{}
+	items := []ListNonAcademicStaffRow{}
 	for rows.Next() {
-		var i NonAcademicStaff
+		var i ListNonAcademicStaffRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FullName,
@@ -134,6 +153,7 @@ func (q *Queries) ListNonAcademicStaff(ctx context.Context, arg ListNonAcademicS
 			&i.EmploymentStatus,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}

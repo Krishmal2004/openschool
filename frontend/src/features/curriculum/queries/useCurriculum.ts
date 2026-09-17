@@ -8,8 +8,10 @@ import type {
 } from "@/features/curriculum/api/curriculum";
 import { curriculumKeys } from "@/features/curriculum/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
+import { REFERENCE_DATA_STALE_TIME_MS } from "@/shared/api/staleTime";
 
-export const useMediums = () => useQuery({ queryKey: curriculumKeys.mediums(), queryFn: mediumApi.list });
+export const useMediums = () =>
+  useQuery({ queryKey: curriculumKeys.mediums(), queryFn: mediumApi.list, staleTime: REFERENCE_DATA_STALE_TIME_MS });
 
 export const useCreateMedium = () => {
   const invalidate = useInvalidate();

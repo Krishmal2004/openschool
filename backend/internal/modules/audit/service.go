@@ -34,7 +34,7 @@ type row struct {
 
 type store interface {
 	create(context.Context, createCommand) error
-	list(context.Context, string, *uuid.UUID) ([]row, error)
+	list(context.Context, string, *uuid.UUID, int32, int32) ([]row, int64, error)
 }
 
 type Service struct{ store store }
@@ -65,10 +65,10 @@ func (s *Service) Record(ctx context.Context, entityType string, entityID uuid.U
 	})
 }
 
-func (s *Service) List(ctx context.Context, entityType string, entityID *uuid.UUID) ([]AuditLogResponse, error) {
-	rows, err := s.store.list(ctx, entityType, entityID)
+func (s *Service) List(ctx context.Context, entityType string, entityID *uuid.UUID, limit, offset int32) ([]AuditLogResponse, int64, error) {
+	rows, total, err := s.store.list(ctx, entityType, entityID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	result := make([]AuditLogResponse, len(rows))
 	for i, value := range rows {
@@ -86,5 +86,5 @@ func (s *Service) List(ctx context.Context, entityType string, entityID *uuid.UU
 			result[i].Reason = &reason
 		}
 	}
-	return result, nil
+	return result, total, nil
 }
