@@ -1,0 +1,166 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useNavigate } from "react-router";
+import { Search } from "@carbon/icons-react";
+import { useDebounced } from "@/shared/hooks/useDebounced";
+import { useGlobalSearch } from "@/features/system/queries/useGlobalSearch";
+import type { SearchResultItem } from "@/features/system/api/search";
+
+type GroupKey = "students" | "teachers" | "guardians" | "non_academic_staff";
+
+interface FlatResult extends SearchResultItem {
+  group: string;
+  route: string;
+}
+
+const GROUPS: { key: GroupKey; label: string; route: (id: string) => string }[] = [
+  { key: "students", label: "Students", route: (id) => `/students/${id}` },
+  { key: "teachers", label: "Teachers", route: (id) => `/teachers/${id}` },
+  { key: "guardians", label: "Guardians", route: () => "/guardians" },
+  { key: "non_academic_staff", label: "Non-Academic Staff", route: () => "/non-academic-staff" },
+];
+
+interface Props {
+  autoFocus?: boolean;
+  onClose?: () => void;
+}
+
+export default function GlobalSearch({ autoFocus, onClose }: Props) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const debounced = useDebounced(query, 300);
+  const { data, isFetching, isError } = useGlobalSearch(debounced);
+
+  const flat: FlatResult[] = useMemo(
+    () =>
+      GROUPS.flatMap((g) =>
+        (data?.[g.key] ?? []).map((item) => ({ ...item, group: g.label, route: g.route(item.id) }))
+      ),
+    [data]
+  );
+
+  const highlightedIndex = highlightedId ? flat.findIndex((f) => f.id === highlightedId) : -1;
+  const activeIndex = highlightedIndex >= 0 ? highlightedIndex : 0;
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(true);
+        inputRef.current?.focus();
+      }
+    };
+
+    const onClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        onClose?.();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    document.addEventListener("mousedown", onClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+      document.removeEventListener("mousedown", onClickOutside);
+    };
+  }, [onClose]);
+
+  const goTo = (item: FlatResult) => {
+    navigate(item.route);
+    setQuery("");
+    setOpen(false);
+    onClose?.();
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!open || flat.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedId(flat[(activeIndex + 1) % flat.length].id);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedId(flat[(activeIndex - 1 + flat.length) % flat.length].id);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      goTo(flat[activeIndex]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      onClose?.();
+    }
+  };
+
+  const showPanel = open && debounced.trim().length >= 2;
+
+  return (
+    <div ref={containerRef} className="os-relative os-w-20 os-mx-4 os-self-center">
+      <div className="os-search os-max-w-full os-flex os-items-center">
+        <Search size={16} className="os-search__icon" />
+        <input
+          ref={inputRef}
+          className="os-search__input"
+          placeholder="Search students, teachers, staff…"
+          value={query}
+          autoFocus={autoFocus}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+        />
+        <kbd className="os-search-kbd os-absolute os-right-2 os-text-2xs os-fw-600 os-py-h os-px-1h os-rounded-md os-pointer-events-none os-select-none"
+        >
+          {typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl+K"}
+        </kbd>
+      </div>
+
+      {showPanel && (
+        <div className="os-search-popover os-absolute os-inset-x-0 os-bg-layer os-border os-rounded-sm os-shadow-md os-overflow-y-auto os-z-popover"
+        >
+          {isFetching && flat.length === 0 && (
+            <div className="os-py-3 os-px-4 os-text-sm os-c-tertiary">Searching…</div>
+          )}
+          {!isFetching && isError && (
+            <div className="os-py-3 os-px-4 os-text-sm os-c-danger">
+              Search failed — please try again.
+            </div>
+          )}
+          {!isFetching && !isError && flat.length === 0 && (
+            <div className="os-py-3 os-px-4 os-text-sm os-c-tertiary">
+              No matches for &quot;{debounced}&quot;
+            </div>
+          )}
+          {GROUPS.map((g) => {
+            const items = data?.[g.key] ?? [];
+            if (items.length === 0) return null;
+            return (
+              <div key={g.key}>
+                <div className="os-pt-2 os-px-4 os-pb-1 os-text-2xs os-fw-600 os-tracking os-uppercase os-c-tertiary"
+                >
+                  {g.label}
+                </div>
+                {items.map((item) => {
+                  const isHighlighted = item.id === flat[activeIndex]?.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onMouseEnter={() => setHighlightedId(item.id)}
+                      onClick={() => goTo({ ...item, group: g.label, route: g.route(item.id) })} className={`os-block os-w-full os-text-left os-py-2 os-px-4 os-border-none ${isHighlighted ? "os-bg-accent-light" : "os-bg-transparent"} os-pointer`}
+                    >
+                      <div className="os-fw-600 os-text-md os-c-primary">{item.name}</div>
+                      <div className="os-text-xs os-c-tertiary">{item.subtitle}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

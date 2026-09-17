@@ -43,12 +43,12 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Unit tests
+        run: pnpm test
+
       - name: Build
         run: pnpm build
 
       - name: Dependency audit
-        # Informational only for now: two known advisories (react-router,
-        # dompurify, the latter transitive via @thunderid/react) are not
-        # yet patched — see audit.md. Flip to blocking once resolved.
+        # Blocking. dompurify is pinned via pnpm-workspace.yaml overrides until @thunderid/react updates.
         run: pnpm audit --prod
-        continue-on-error: true

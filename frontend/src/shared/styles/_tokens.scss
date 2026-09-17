@@ -1,0 +1,87 @@
+// Design Tokens
+// Harmonized Ocean Teal Palette (built around #007D9C)
+$os-accent:        #007D9C;
+$os-accent-dark:   #005F77;
+$os-accent-deeper: #004B5E;
+$os-accent-mid:    #1CB3D6;
+$os-accent-light:  #E6F7FA;
+$os-accent-border: #9DE5F3;
+$os-brand-orange:  #00A3C4;
+$os-sidebar-w:     15rem;
+
+$os-chart-purple:  #6941C6;
+$os-chart-blue:    #0F62FE;
+$os-chart-pink:    #D02670;
+$os-chart-teal:    #009D9A;
+$os-chart-orange:  #FF832B;
+$os-chart-yellow:  #F1C21B;
+$os-chart-magenta: #8A3FFC;
+$os-accent-muted:  #406AAF;
+
+$os-text-primary:   #002731;
+$os-text-secondary: #334D57;
+$os-text-tertiary:  #617B85;
+$os-text-disabled:  #94A8B0;
+
+$os-border-subtle:  #E1EFF3;
+$os-border-strong:  #C4DCE3;
+$os-layer-hover:    #F0F8FA;
+
+$os-danger:       #D92D20;
+$os-success:      #079455;
+$os-warning:      #DC6803;
+$os-warning-text: #B54708;
+
+$os-status-present-bg:     #ECFDF3;
+$os-status-present-border: $os-success;
+$os-status-present-text:   #027A48;
+$os-status-absent-bg:      #FEF3F2;
+$os-status-absent-border:  $os-danger;
+$os-status-absent-text:    #B42318;
+$os-status-late-bg:        #FEF0C7;
+$os-status-late-border:    $os-warning;
+$os-status-late-text:      #B54708;
+$os-status-excused-bg:     #F4F3FF;
+$os-status-excused-border: $os-chart-purple;
+$os-status-excused-text:   #53389E;
+
+:root {
+  --os-accent: #{$os-accent};
+  --os-accent-dark: #{$os-accent-dark};
+  --os-accent-light: #{$os-accent-light};
+  --os-accent-border: #{$os-accent-border};
+  --os-chart-purple: #{$os-chart-purple};
+  --os-chart-blue: #{$os-chart-blue};
+  --os-chart-pink: #{$os-chart-pink};
+  --os-chart-teal: #{$os-chart-teal};
+  --os-chart-orange: #{$os-chart-orange};
+  --os-chart-yellow: #{$os-chart-yellow};
+  --os-chart-magenta: #{$os-chart-magenta};
+  --os-accent-muted: #{$os-accent-muted};
+  --os-accent-deeper: #{$os-accent-deeper};
+  --os-text-primary: #{$os-text-primary};
+  --os-text-secondary: #{$os-text-secondary};
+  --os-text-tertiary: #{$os-text-tertiary};
+  --os-text-disabled: #{$os-text-disabled};
+  --os-border-subtle: #{$os-border-subtle};
+  --os-border-strong: #{$os-border-strong};
+  --os-layer: #ffffff;
+  --os-layer-hover: #{$os-layer-hover};
+  --os-danger: #{$os-danger};
+  --os-success: #{$os-success};
+  --os-warning: #{$os-warning};
+  --os-warning-text: #{$os-warning-text};
+
+  --os-status-present-bg: #{$os-status-present-bg};
+  --os-status-present-border: #{$os-status-present-border};
+  --os-status-present-text: #{$os-status-present-text};
+  --os-status-absent-bg: #{$os-status-absent-bg};
+  --os-status-absent-border: #{$os-status-absent-border};
+  --os-status-absent-text: #{$os-status-absent-text};
+  --os-status-late-bg: #{$os-status-late-bg};
+  --os-status-late-border: #{$os-status-late-border};
+  --os-status-late-text: #{$os-status-late-text};
+  --os-status-excused-bg: #{$os-status-excused-bg};
+  --os-status-excused-border: #{$os-status-excused-border};
+  --os-status-excused-text: #{$os-status-excused-text};
+}

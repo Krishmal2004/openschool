@@ -1,0 +1,52 @@
+import { useMemo } from "react";
+import { useClass, useStreams, useStreamGroups } from "@/features/academics/queries/useClasses";
+import { useGrades } from "@/features/academics/queries/useGrades";
+import { useClassSessions } from "@/features/attendance/queries/useAttendance";
+import { useMediums } from "@/features/curriculum/queries/useCurriculum";
+import { useClassrooms } from "@/features/timetable/queries/useClassrooms";
+import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { useAcademicYears } from "@/features/school/queries/useAcademicYears";
+import { useStudents, useStudentsByClass } from "@/features/students/queries/useStudents";
+
+// Everything the class detail page reads, with ids resolved to display names.
+export function useClassDetail(id: string) {
+  const cls = useClass(id);
+  const roster = useStudentsByClass(id);
+  const sessions = useClassSessions(id);
+  const { data: grades } = useGrades();
+  const { data: streams } = useStreams();
+  const { data: streamGroups } = useStreamGroups(cls.data?.stream_id ?? "");
+  const { data: mediums } = useMediums();
+  const { data: classrooms } = useClassrooms();
+  const { data: teachers } = useTeachers();
+  const { data: years } = useAcademicYears();
+  const { data: allStudents } = useStudents();
+
+  const students = useMemo(() => roster.data ?? [], [roster.data]);
+  const c = cls.data;
+  const enrolledIds = useMemo(() => new Set(students.map((s) => s.id)), [students]);
+  const enrolCandidates = useMemo(() => (allStudents ?? []).filter((s) => !enrolledIds.has(s.id)), [allStudents, enrolledIds]);
+
+  return {
+    cls,
+    roster,
+    sessions,
+    mediums,
+    classrooms,
+    teachers,
+    names: {
+      grade: grades?.find((g) => g.id === c?.grade_id)?.name,
+      stream: streams?.find((s) => s.id === c?.stream_id)?.name,
+      streamGroup: streamGroups?.find((g) => g.id === c?.stream_group_id)?.name,
+      medium: mediums?.find((m) => m.id === c?.medium_id)?.name,
+      homeClassroom: classrooms?.find((r) => r.id === c?.home_classroom_id)?.name,
+      academicYear: years?.find((y) => y.id === c?.academic_year_id)?.label,
+    },
+    formTeacher: teachers?.find((t) => t.id === c?.form_teacher_id),
+    girlMonitor: students.find((s) => s.id === c?.girl_monitor_id),
+    boyMonitor: students.find((s) => s.id === c?.boy_monitor_id),
+    girlMonitorCandidates: students.filter((s) => s.gender !== "male"),
+    boyMonitorCandidates: students.filter((s) => s.gender !== "female"),
+    enrolCandidates,
+  };
+}

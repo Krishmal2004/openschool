@@ -17,15 +17,11 @@ The frontend uses:
 ### Frontend structure
 
 ```text
-src/pages/       Route-level pages grouped by portal and feature
-src/components/  Shared UI components
-src/layouts/     Admin, teacher, student, and parent layouts
-src/services/    Thin API clients matching backend modules
-src/queries/     TanStack Query hooks and cache keys
-src/hooks/       Shared React hooks
-src/lib/         Small utilities and shared helpers
-src/main.tsx     Application providers and entry point
-src/App.tsx      Role-based routing and application routes
+src/app/         Entry point, providers, query client, one route module per portal
+src/shared/      Code with no feature owner: api client, useInvalidate, auth,
+                 shared UI (DataGrid, FilterBar, modals), hooks, lib, styles
+src/layouts/     PortalShell plus one nav config per role
+src/features/    One folder per domain: api/, queries/, keys.ts, components/, pages/
 ```
 
 ### Local setup
@@ -40,6 +36,8 @@ pnpm dev
 ```
 
 The development server starts at `http://localhost:5173`.
+
+Checks: `pnpm lint`, `pnpm test`, `pnpm build`. Imports use the `@/` alias.
 The backend should be running at the URL configured by `VITE_API_URL`.
 
 ThunderID settings are also required for sign-in. Update the `VITE_THUNDERID_*`

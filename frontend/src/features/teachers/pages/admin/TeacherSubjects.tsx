@@ -1,0 +1,167 @@
+import { useState } from "react";
+import { Search, Tag, SkeletonText } from "@carbon/react";
+import { useTeachers, useTeacherSubjects, useAssignTeacherSubject, useRemoveTeacherSubject } from "@/features/teachers/queries/useTeachers";
+import { useSubjects } from "@/features/curriculum/queries/useSubjects";
+import EntityCombobox from "@/shared/ui/EntityCombobox";
+import type { Teacher, TeacherSubject } from "@/features/teachers/api/teacher";
+import type { Subject } from "@/features/curriculum/api/subject";
+import LoadingSpinner from "@/shared/ui/LoadingSpinner";
+import ErrorMessage from "@/shared/ui/ErrorMessage";
+import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
+
+function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubjects: Subject[] }) {
+  const { data: assignedSubjects, isLoading, isError } = useTeacherSubjects(teacher.id);
+  const assignMutation = useAssignTeacherSubject(teacher.id);
+  const removeMutation = useRemoveTeacherSubject(teacher.id);
+  const [subjectToRemove, setSubjectToRemove] = useState<TeacherSubject | null>(null);
+
+  const handleAssign = (subjectId: string) => {
+    if (!subjectId) return;
+    assignMutation.mutate(subjectId);
+  };
+
+  const confirmRemove = () => {
+    if (!subjectToRemove) return;
+    removeMutation.mutate(subjectToRemove.id, { onSettled: () => setSubjectToRemove(null) });
+  };
+
+  const assignedIds = new Set(assignedSubjects?.map((s) => s.id) ?? []);
+  const assignableSubjects = allSubjects.filter((s) => !assignedIds.has(s.id));
+
+  return (
+    <tr>
+      <td className="os-fw-500">{teacher.full_name}</td>
+      <td className="os-table__mono">{teacher.employee_number}</td>
+      <td>
+        {isLoading ? (
+          <SkeletonText width="6rem" />
+        ) : isError ? (
+          <span className="os-c-danger os-text-md">Error loading subjects</span>
+        ) : !assignedSubjects || assignedSubjects.length === 0 ? (
+          <span className="os-text-md os-c-tertiary">No subjects assigned</span>
+        ) : (
+          <div className="os-flex os-wrap os-gap-1">
+            {assignedSubjects.map((s) => (
+              <Tag
+                key={s.id}
+                type="blue"
+                size="sm"
+                title="Click to remove"
+                onClick={() => setSubjectToRemove(s)} className="os-pointer"
+              >
+                {s.name} &times;
+              </Tag>
+            ))}
+          </div>
+        )}
+      </td>
+      <td className="os-min-w-12">
+        <EntityCombobox
+          id={`assign-subject-${teacher.id}`}
+          items={assignableSubjects}
+          selectedId=""
+          onSelect={handleAssign}
+          getId={(s) => s.id}
+          itemToString={(s) => `${s.name} (${s.code})`}
+          labelText=""
+          placeholder="Assign subject…"
+        />
+        {assignMutation.isError && (
+          <div className="os-c-danger os-text-xs os-mt-1">
+            Failed to assign
+          </div>
+        )}
+        {removeMutation.isError && (
+          <div className="os-c-danger os-text-xs os-mt-1">
+            Failed to remove
+          </div>
+        )}
+      </td>
+      <ConfirmDeleteModal
+        open={!!subjectToRemove}
+        title="Remove subject"
+        description={
+          <>
+            Remove <strong>{subjectToRemove?.name}</strong> from {teacher.full_name}&apos;s assigned subjects?
+          </>
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        isPending={removeMutation.isPending}
+        onClose={() => setSubjectToRemove(null)}
+        onConfirm={confirmRemove}
+      />
+    </tr>
+  );
+}
+
+export default function TeacherSubjects() {
+  const { data: teachers, isLoading: loadingTeachers, isError: teachersError, refetch: refetchTeachers } = useTeachers();
+  const { data: subjects, isLoading: loadingSubjects, isError: subjectsError, refetch: refetchSubjects } = useSubjects();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  if (loadingTeachers || loadingSubjects) {
+    return <LoadingSpinner />;
+  }
+
+  if (teachersError) {
+    return <ErrorMessage message="Could not load teachers." onRetry={refetchTeachers} />;
+  }
+
+  if (subjectsError) {
+    return <ErrorMessage message="Could not load subjects." onRetry={refetchSubjects} />;
+  }
+
+  const filteredTeachers = (teachers ?? []).filter((t) =>
+    t.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.employee_number.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="os-page">
+      <div className="os-page__header">
+        <div className="os-page__header-left">
+          <h1 className="os-page__title">Teacher Subjects</h1>
+          <p className="os-page__subtitle">
+            Assign subjects to teachers globally. These assignments designate which subjects a teacher is qualified to teach.
+          </p>
+        </div>
+      </div>
+
+      <div className="os-mb-5 os-max-w-24">
+        <Search
+          id="teacher-search"
+          placeholder="Search teachers by name or employee number…"
+          labelText="Search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="os-section">
+        <table className="os-table">
+          <thead>
+            <tr>
+              <th>Teacher</th>
+              <th>Employee #</th>
+              <th>Assigned Subjects (Click to remove)</th>
+              <th>Assign Subject</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTeachers.map((t) => (
+              <TeacherSubjectRow key={t.id} teacher={t} allSubjects={subjects ?? []} />
+            ))}
+            {filteredTeachers.length === 0 && (
+              <tr>
+                <td colSpan={4} className="os-text-center os-c-tertiary os-p-8">
+                  No teachers found matching your search.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
