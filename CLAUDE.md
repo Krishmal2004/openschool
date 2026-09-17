@@ -15,6 +15,9 @@ For anything beyond a quick fix, read further before making changes:
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - component layout, full data model, external interfaces
 - [`docs/adr/`](docs/adr/) - *why* behind non-obvious decisions (e.g. why positions aren't ThunderID roles, why the current-academic-year invariant exists) - check here before "fixing" something that looks wrong but is deliberate
 - [`audit.md`](audit.md) - known bugs/code-quality findings with severity; check it isn't already tracking whatever you just found before re-reporting it
+- [`docs/FRONTEND_REFACTOR_PLAYBOOK.md`](docs/FRONTEND_REFACTOR_PLAYBOOK.md) - frontend structure, layer contract and per-page standard (phases 0 to 3 done)
+- [`docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md`](docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md) - threat model, security findings, pagination contract and optimisation checklist for both workspaces (draft, awaiting approval)
+- [`docs/UX_REVIEW_PLAYBOOK.md`](docs/UX_REVIEW_PLAYBOOK.md) - UX findings, prioritised backlog and copy rules (draft, awaiting approval)
 
 ## Backend
 
@@ -100,24 +103,30 @@ pnpm dev   # starts Vite dev server at http://localhost:5173
 cd frontend
 pnpm build    # tsc + vite build
 pnpm lint     # eslint
+pnpm test     # vitest
 pnpm preview  # preview production build
 ```
 
-CI (`.github/workflows/frontend-ci.yml`) also runs `pnpm audit --prod`
-informationally (not yet blocking - two known advisories are still open,
-see `audit.md`).
+CI (`.github/workflows/frontend-ci.yml`) runs lint, unit tests, build and a
+blocking `pnpm audit --prod`; `dompurify` is pinned via `pnpm-workspace.yaml`
+overrides until `@thunderid/react` updates.
 
 ### Architecture
 
 Authentication is handled by **ThunderID** (`@thunderid/react`). The provider is configured in `main.tsx` via `VITE_THUNDERID_CLIENT_ID`, `VITE_THUNDERID_BASE_URL`, and `VITE_THUNDERID_SCOPES` (see `frontend/.env.example`). Auth state and the access token come from the `useThunderID()` hook (`isSignedIn`/`isLoading`/`getAccessToken`/`signOut`). All routes except `/signin` are wrapped in `ProtectedRoute`, which redirects unauthenticated users to `/signin`. Role (`admin`/`teacher`/`student`/`parent`) is read from the `roles` claim of the access token via the `useRole` hook.
 
-- `main.tsx` - root: `ThunderIDProvider` → `QueryClientProvider` → `BrowserRouter` → `App`
-- `App.tsx` - resolves role from the JWT and renders one of four route trees (admin/teacher/student/parent), each behind its own layout and `ProtectedRoute`; there's no separate URL per role, routing is decided by claim
-- `src/layouts/` - `RootLayout.tsx` (admin), `TeacherLayout.tsx`, `StudentLayout.tsx`, `ParentLayout.tsx` - each a Carbon `Header` with nav + `<Outlet>` for page content
-- `src/pages/` - route-level page components, one directory per portal (`admin/`, `teacher/`, `student/`, `parent/`, `notifications/` shared across portals); admin pages are further split by module
-- `src/queries/` - TanStack Query hooks, one typed query-key builder per entity; mutations invalidate the keys they affect
-- `src/services/` - one file per backend module, thin `axios` wrappers matching the owning backend module's API contracts
-- `src/components/common/` - shared CRUD building blocks (`ConfirmDeleteModal`, `EntityCombobox`, `EmptyState`, etc.) that almost every admin page composes from - deviating from the list+modal-form+confirm-delete template is a signal something's off, not a style choice
+- `src/app/main.tsx` - root: `ThunderIDProvider` → `QueryClientProvider` → `BrowserRouter` → `App`
+- `src/app/App.tsx` - mounts `ApiAuthBridge` (wires the ThunderID token into the axios client), resolves role from the JWT and renders one of four route trees (admin/teacher/student/parent), each behind its own layout and `ProtectedRoute`; there's no separate URL per role, routing is decided by claim
+- `src/shared/` - code with no feature owner: `api/` (axios client, `keys.ts` query-key factory, error helpers), `auth/` (`useRole`, `ProtectedRoute`, idle logout, password policy), `ui/` (shared components: `DataGrid`, `FilterBar`, `ActiveFilterTags`, `ListState`, `FormModal`, `ConfirmDeleteModal`, ...), `hooks/`, `lib/` (date, name, phone, constants), `styles/` (SCSS partials; `_tokens.scss` is the only place colours are defined)
+- `src/layouts/` - `PortalShell.tsx` renders header + sidebar + `<Outlet>` inside a `RouteErrorBoundary`; the four role layouts only pick a nav config from `layouts/nav/`
+- `src/features/<name>/` - one folder per domain (students, teachers, guardians, staff, academics, curriculum, attendance, marks, timetable, notifications, portfolio, positions, school, reports, system, parent, auth). Each holds `api/` (axios wrappers with their types), `queries/` (TanStack hooks), `keys.ts` (query-key factory), `components/` and `pages/` (route targets, split by portal: `admin/`, `self/`, `teacher/`, `student/`). A bug in a domain is fixed inside that one folder
+- `src/app/routes/*.routes.tsx` - one lazy route table per portal; `App.tsx` only picks the table for the JWT role
+- Layer rules are enforced by ESLint: `api/` files import no React or hooks; nothing outside `api/` touches axios; a feature may use another feature's queries, keys and components but never its pages or api values (types are fine)
+- Imports use the `@/` alias (`@/shared/ui/DataGrid`); ESLint rejects `../` parent imports and warns on files over 250 lines
+- List pages compose `FilterBar` + `ActiveFilterTags` + `useListFilters` + `ListState` + `DataGrid` (see `features/students/pages/admin/Students.tsx` as the reference) - deviating from that template is a signal something's off, not a style choice. Grids whose rows hold form controls (marks entry, attendance marking, period editor) stay as plain `<table className="os-table">`
+- No inline `style={{}}` except for runtime values, and no hex colours outside `_tokens.scss`. Layout and text use the `os-*` utility classes in `shared/styles/_utilities.scss`; state-driven looks use toggle classes such as `is-active`
+- Files stay under 250 lines (ESLint error). A page that grows past it moves logic into `features/<name>/hooks/` and markup into `components/`
+- `docs/FRONTEND_REFACTOR_PLAYBOOK.md` records the refactor phases, the layer contract and the per-page standard; Phase 4 (performance verification against a 7,000-row backend) is next
 
 UI uses **IBM Carbon Design System** (`@carbon/react`, `@carbon/icons-react`). Data fetching uses **TanStack Query** (`@tanstack/react-query`). Styles are SCSS (`index.scss`).
 

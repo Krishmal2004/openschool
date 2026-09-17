@@ -1,0 +1,102 @@
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { Add, Edit, TrashCan } from "@carbon/icons-react";
+import { Button, IconButton, Select, SelectItem, Tag } from "@carbon/react";
+import { useTeachers, useDeleteTeacher } from "@/features/teachers/queries/useTeachers";
+import type { Teacher } from "@/features/teachers/api/teacher";
+import { EMPLOYMENT_STATUSES } from "@/shared/lib/constants/people";
+import DataGrid, { type GridColumn } from "@/shared/ui/DataGrid";
+import FilterBar from "@/shared/ui/FilterBar";
+import ActiveFilterTags from "@/shared/ui/ActiveFilterTags";
+import ListState from "@/shared/ui/ListState";
+import TableSkeleton from "@/shared/ui/TableSkeleton";
+import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
+import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
+import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
+import { useListFilters } from "@/shared/hooks/useListFilters";
+
+const STATUS_TAG: Record<string, "green" | "red" | "magenta"> = { active: "green", resigned: "red", transferred: "magenta" };
+const FILTER_LABELS: Record<string, string> = { query: "Search", status: "Status" };
+
+export default function Teachers() {
+  const navigate = useNavigate();
+  const { data: teachers, isLoading, isError, refetch } = useTeachers();
+  const deleteTeacher = useDeleteTeacher();
+  const [toDelete, setToDelete] = useState<Teacher | null>(null);
+  const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({ query: "", status: "" });
+
+  const filtered = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    return (teachers ?? []).filter(
+      (t) => (!q || t.full_name.toLowerCase().includes(q) || t.employee_number.toLowerCase().includes(q)) && (!filters.status || t.employment_status === filters.status),
+    );
+  }, [teachers, debouncedSearch, filters.status]);
+
+  const columns: GridColumn<Teacher>[] = [
+    { key: "employee_number", header: "Employee No.", render: (t) => <span className="os-table__mono">{t.employee_number}</span> },
+    { key: "full_name", header: "Full Name", render: (t) => <Link to={`/teachers/${t.id}`} className="os-table__link">{t.full_name}</Link> },
+    { key: "phone", header: "Phone", render: (t) => <span className="os-table__muted">{t.phone ?? "-"}</span> },
+    { key: "joined_date", header: "Joined Date", render: (t) => <span className="os-table__muted">{t.joined_date ?? "-"}</span> },
+    {
+      key: "status",
+      header: "Status",
+      render: (t) => <Tag type={STATUS_TAG[t.employment_status] ?? "gray"} size="sm">{EMPLOYMENT_STATUSES.find((s) => s.value === t.employment_status)?.label ?? t.employment_status}</Tag>,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "end",
+      render: (t) => (
+        <div className="os-grid__actions">
+          <IconButton label="Edit" kind="ghost" size="sm" onClick={() => navigate(`/teachers/${t.id}`, { state: { edit: true } })}><Edit /></IconButton>
+          <IconButton label="Delete" kind="ghost" size="sm" onClick={() => { deleteTeacher.reset(); setToDelete(t); }}><TrashCan /></IconButton>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="os-page">
+      <div className="os-page__header">
+        <div className="os-page__header-left">
+          <h1 className="os-page__title">Teachers</h1>
+          <p className="os-page__subtitle">Manage teacher profiles</p>
+        </div>
+        <Button renderIcon={Add} kind="primary" size="md" as={Link} to="/teachers/new">Add Teacher</Button>
+      </div>
+
+      <AgentFindingsBanner titles={["Inactive teachers still assigned to classes", "Teacher accounts stuck in first-login setup"]} />
+
+      <div className="os-section">
+        <FilterBar search={{ value: filters.query, onChange: (v) => set("query", v), placeholder: "Search by name or employee number…" }}>
+          <Select id="filter-teacher-status" labelText="" size="md" value={filters.status} onChange={(e) => set("status", e.target.value)}>
+            <SelectItem value="" text="All Statuses" />
+            {EMPLOYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value} text={s.label} />)}
+          </Select>
+        </FilterBar>
+        <ActiveFilterTags filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))} onClear={(k) => clear(k as keyof typeof filters)} onClearAll={() => clear()} />
+        <MutationErrorNotification isError={deleteTeacher.isError} error={deleteTeacher.error} title="Could not delete teacher" fallback="The teacher may be assigned to a class or have attendance records." onClose={() => deleteTeacher.reset()} className="os-section__notice" />
+        <ListState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={filtered.length === 0}
+          errorMessage="Failed to load teachers"
+          onRetry={refetch}
+          skeleton={<TableSkeleton headers={columns.map((c) => c.header)} />}
+          empty={{ title: "No teachers found", description: "Add your first teacher or adjust your search filter to get started." }}
+        >
+          <DataGrid rows={filtered} columns={columns} getRowId={(t) => t.id} countLabel={(shown, total) => `Showing ${shown} of ${total} teachers`} />
+        </ListState>
+      </div>
+
+      <ConfirmDeleteModal
+        open={!!toDelete}
+        title="Delete teacher"
+        description={<>Delete <strong>{toDelete?.full_name}</strong>? This removes their account and cannot be undone.</>}
+        isPending={deleteTeacher.isPending}
+        onClose={() => setToDelete(null)}
+        onConfirm={() => toDelete && deleteTeacher.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+      />
+    </div>
+  );
+}

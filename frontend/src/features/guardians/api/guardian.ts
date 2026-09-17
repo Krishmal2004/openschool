@@ -1,0 +1,95 @@
+import api from "@/shared/api/client";
+import type { Student } from "@/features/students/api/student";
+import type { MyNotification } from "@/features/notifications/api/notification";
+
+export type GuardianRelationship = "father" | "mother" | "guardian" | "other";
+
+
+// Matches db.Guardian JSON shape returned by the backend
+export interface Guardian {
+  id: string;
+  user_id: string | null;
+  full_name: string;
+  relationship: GuardianRelationship;
+  phone: string;
+  email: string | null;
+  nic_number: string;
+  created_at: string | null;
+}
+
+export interface GuardianWithPrimary extends Guardian {
+  is_primary_contact: boolean;
+}
+
+export interface CreateGuardianRequest {
+  full_name: string;
+  relationship: GuardianRelationship;
+  phone: string;
+  email?: string;
+  nic_number: string;
+}
+
+export interface CreateGuardianResult {
+  guardian: Guardian;
+  possible_duplicates: Guardian[];
+}
+
+export type UpdateGuardianRequest = CreateGuardianRequest;
+
+// No password field, the guardian's NIC number (already on file) becomes
+// their initial one-time portal password server-side.
+export interface ProvisionGuardianLoginRequest {
+  username: string;
+  given_name: string;
+  family_name: string;
+}
+
+export const guardianApi = {
+  list: (search?: string, orphansOnly?: boolean) =>
+    api
+      .get<Guardian[]>("/guardians", {
+        params: {
+          ...(search ? { search } : {}),
+          ...(orphansOnly ? { orphans: "true" } : {}),
+        },
+      })
+      .then((r) => r.data),
+
+  listByStudent: (studentId: string) =>
+    api
+      .get<GuardianWithPrimary[]>(`/students/${studentId}/guardians`)
+      .then((r) => r.data),
+
+  listStudents: (guardianId: string) =>
+    api.get<Student[]>(`/guardians/${guardianId}/students`).then((r) => r.data),
+
+  listNotifications: (guardianId: string) =>
+    api.get<MyNotification[]>(`/guardians/${guardianId}/notifications`).then((r) => r.data),
+
+  create: (data: CreateGuardianRequest) =>
+    api.post<CreateGuardianResult>("/guardians", data).then((r) => r.data),
+
+  update: (id: string, data: UpdateGuardianRequest) =>
+    api.put<Guardian>(`/guardians/${id}`, data).then((r) => r.data),
+
+  remove: (id: string) => api.delete(`/guardians/${id}`).then((r) => r.data),
+
+  linkToStudent: (studentId: string, guardianId: string, isPrimaryContact: boolean) =>
+    api
+      .post(`/students/${studentId}/guardians`, {
+        guardian_id: guardianId,
+        is_primary_contact: isPrimaryContact,
+      })
+      .then((r) => r.data),
+
+  unlinkFromStudent: (studentId: string, guardianId: string) =>
+    api.delete(`/students/${studentId}/guardians/${guardianId}`).then((r) => r.data),
+
+  setPrimaryContact: (studentId: string, guardianId: string) =>
+    api
+      .put(`/students/${studentId}/guardians/${guardianId}/set-primary`)
+      .then((r) => r.data),
+
+  provisionLogin: (guardianId: string, data: ProvisionGuardianLoginRequest) =>
+    api.post<Guardian>(`/guardians/${guardianId}/provision-login`, data).then((r) => r.data),
+};

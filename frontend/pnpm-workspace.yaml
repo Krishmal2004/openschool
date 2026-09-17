@@ -23,5 +23,10 @@ allowBuilds:
   '@parcel/watcher': true
   core-js: true
 
+minimumReleaseAgeExclude:
+  - jsdom@30.1.0
+
 overrides:
+  # Transitive fix until @thunderid/react bumps its own dompurify dependency.
+  dompurify: '>=3.4.13'
   '@ibm/plex': npm:empty-npm-package@1.0.0

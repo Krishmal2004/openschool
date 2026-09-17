@@ -1,0 +1,256 @@
+@use "tokens" as *;
+
+// Page Chrome
+.os-page {
+  padding: 1.5rem 2rem;
+
+  &__header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--os-border-subtle);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__header-left { flex: 1; min-width: 0; }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: $os-text-primary;
+    margin: 0 0 0.2rem;
+  }
+
+  &__subtitle {
+    font-size: 0.8125rem;
+    color: $os-text-secondary;
+    margin: 0;
+  }
+
+  &__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: $os-text-secondary;
+    margin-bottom: 0.5rem;
+    a { color: $os-accent-dark; text-decoration: none; &:hover { text-decoration: underline; } }
+    span { color: $os-text-tertiary; }
+  }
+}
+
+// Stat Cards
+.os-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 640px)  { grid-template-columns: 1fr; }
+}
+
+.os-stat-card {
+  background: var(--os-layer);
+  border: 1px solid var(--os-border-subtle);
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--os-border-strong);
+  }
+
+  &__label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--os-text-secondary);
+    margin: 0 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  &__value {
+    font-size: 2.25rem;
+    font-weight: 300;
+    color: var(--os-text-primary);
+    line-height: 1;
+    margin: 0;
+  }
+
+  &__meta {
+    font-size: 0.75rem;
+    color: var(--os-text-tertiary);
+    margin: 0.375rem 0 0;
+  }
+}
+
+// Quick Action Cards
+.os-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 640px)  { grid-template-columns: 1fr; }
+}
+
+.os-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem;
+  border: 1px solid var(--os-border-subtle);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: var(--os-accent); }
+}
+
+// Section Card
+.os-section {
+  background: var(--os-layer);
+  border: 1px solid var(--os-border-subtle);
+  margin-bottom: 1.5rem;
+
+  &__header {
+    padding: 0.875rem 1.5rem;
+    border-bottom: 1px solid var(--os-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--os-text-primary);
+    margin: 0;
+  }
+
+  &__meta {
+    font-size: 0.75rem;
+    color: var(--os-text-tertiary);
+  }
+
+  &__body { padding: 1.5rem; }
+}
+
+.os-list-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--os-border-subtle);
+  transition: background-color 0.1s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: var(--os-accent-light); }
+  &.is-selected { background-color: var(--os-accent-light); }
+
+  &--compact { padding: 0.625rem 0; }
+
+  &--button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+// Profile / Detail
+.os-profile {
+  &__banner {
+    background: var(--os-layer);
+    border-bottom: 1px solid var(--os-border-subtle);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  &__avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background-color: var(--os-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+  }
+
+  &__name { font-size: 1.25rem; font-weight: 600; color: var(--os-text-primary); margin: 0 0 0.2rem; }
+  &__meta { font-size: 0.8125rem; color: var(--os-text-secondary); margin: 0; }
+  &__actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+}
+
+.os-kv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  &--three { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.os-kv-item {
+  padding: 0.875rem 1.5rem;
+  border-bottom: 1px solid var(--os-border-subtle);
+  border-right: 1px solid var(--os-border-subtle);
+  &__label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--os-text-tertiary); margin: 0 0 0.2rem; }
+  &__value  { font-size: 0.875rem; color: var(--os-text-primary); margin: 0; }
+}
+
+// Placeholder State
+.os-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 2rem;
+  color: var(--os-text-tertiary);
+  text-align: center;
+  svg { fill: var(--os-border-strong); margin-bottom: 1rem; }
+  p { margin: 0; font-size: 0.875rem; }
+}
+
+// Empty and error fallbacks
+.os-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+
+  &__icon { fill: var(--os-border-strong); margin-bottom: 1rem; }
+  &__title { margin: 0 0 0.375rem; font-weight: 600; font-size: 1rem; color: var(--os-text-primary); }
+  &__desc { margin: 0 0 1.5rem; font-size: 0.875rem; color: var(--os-text-secondary); max-width: 26rem; }
+}
+
+.os-error-fallback {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+
+  &--full { min-height: 100vh; }
+  &__inner { max-width: 26rem; }
+  &__icon { fill: var(--os-danger); margin-bottom: 1rem; }
+  &__title { margin: 0 0 0.5rem; font-size: 1.125rem; font-weight: 600; color: var(--os-text-primary); }
+  &__text { margin: 0 0 1.5rem; font-size: 0.875rem; color: var(--os-text-secondary); }
+}
