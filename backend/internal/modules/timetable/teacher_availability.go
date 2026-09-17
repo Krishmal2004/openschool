@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 type TeacherAvailability struct {
@@ -76,7 +77,7 @@ func (h *teacherAvailabilityHandler) listByTeacherYear(c *gin.Context) {
 	}
 	availability, err := h.service.availability.listAvailability(c.Request.Context(), teacherID, yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, availability)

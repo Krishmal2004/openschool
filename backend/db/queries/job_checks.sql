@@ -225,10 +225,17 @@ ORDER BY g.name, c.name;
 -- name: ListStaleMustChangePasswordUsersByRole :many
 -- provisioned but never completed first login, past the given age, scoped
 -- to one role — so the finding can be shown correctly on a role-specific
--- page (Teachers vs Students) instead of a mixed list.
+-- page (Teachers vs Students) instead of a mixed list. Also catches an
+-- account that clicked "keep this password" and is still on the default
+-- past its expiry window (S1) — kept_default_password alone doesn't force
+-- must_change_password back to TRUE in the database, only in the /me
+-- response, so this check has to test both.
 SELECT id, full_name, email, role, created_at
 FROM users
-WHERE must_change_password = TRUE
+WHERE (
+    must_change_password = TRUE
+    OR (kept_default_password = TRUE AND created_at < NOW() - INTERVAL '7 days')
+)
 AND role = sqlc.arg(role)
 AND created_at < NOW() - make_interval(days => sqlc.arg(older_than_days)::int)
 ORDER BY created_at;

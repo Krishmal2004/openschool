@@ -16,7 +16,16 @@ import RecentActivitySection, { type RecentActivityItem } from "@/features/repor
 
 export default function Dashboard() {
   const { data: school } = useSchool();
-  const { data: students, isLoading: studentsLoading } = useStudents();
+  // /students is server-paginated now; this dashboard only needs a recent
+  // slice for the activity feed plus the total count, not every row. A
+  // school with more than 100 students newer than the newest one in this
+  // page won't show up here — a real fix needs a server sort=created_at
+  // (tracked as a follow-up to the pagination playbook's Students rollout,
+  // not attempted here — see docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+  // section 5's "Dashboard analytics" item).
+  const { data: studentPage, isLoading: studentsLoading } = useStudents({ limit: 100 });
+  const students = studentPage?.items;
+  const studentCount = studentPage?.total ?? 0;
   const { data: teachers, isLoading: teachersLoading } = useTeachers();
   const { data: classes, isLoading: classesLoading } = useCurrentClasses();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
@@ -98,7 +107,7 @@ export default function Dashboard() {
       </div>
 
       <div className="os-stat-grid">
-        <StatCard label="Total Students" value={students?.length ?? 0} loading={studentsLoading} Icon={UserMultiple} path="/students" />
+        <StatCard label="Total Students" value={studentCount} loading={studentsLoading} Icon={UserMultiple} path="/students" />
         <StatCard label="Teachers" value={teachers?.length ?? 0} loading={teachersLoading} Icon={Education} path="/teachers" />
         <StatCard label="Classes" value={classes?.length ?? 0} loading={classesLoading} Icon={Building} path="/classes" />
         <StatCard label="Subjects" value={subjects?.length ?? 0} loading={subjectsLoading} Icon={Book} path="/subjects" />

@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/platform/httpx"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -52,7 +53,25 @@ func (r *studentRepository) Get(c context.Context, id uuid.UUID) (any, error) {
 func (r *studentRepository) GetWithClass(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetStudentWithClass(c, id)
 }
-func (r *studentRepository) List(c context.Context) (any, error) { return r.queries.ListStudents(c) }
+
+// ListPage is the paginated replacement for the old unbounded List — the
+// concrete row/page types stay here since this is the one file in the
+// module allowed to import db/sqlc (internal/architecture enforces this).
+func (r *studentRepository) ListPage(c context.Context, p StudentListParams) (any, error) {
+	rows, err := r.queries.ListStudentsPage(c, db.ListStudentsPageParams{
+		Search: nullableText(p.Search), Grade: nullableText(p.Grade), Class: nullableText(p.Class),
+		Gender: nullableText(p.Gender), House: nullableText(p.House),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+	return httpx.Page[db.ListStudentsPageRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
+}
 func (r *studentRepository) ListByClass(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListStudentsByClass(c, id)
 }

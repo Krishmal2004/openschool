@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -80,7 +81,7 @@ func (h *staffHandler) listByDate(c *gin.Context) {
 	}
 	teachers, staff, err := h.service.ListByDate(c, date)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"teachers": teachers, "non_academic_staff": staff})
@@ -93,7 +94,7 @@ func (h *staffHandler) monthlySummary(c *gin.Context) {
 	}
 	teachers, staff, err := h.service.MonthlySummary(c, from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"teachers": teachers, "non_academic_staff": staff})
@@ -111,7 +112,7 @@ func (h *staffHandler) teacherHistory(c *gin.Context) {
 	}
 	records, err := h.service.TeacherHistory(c, id, from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, records)
@@ -129,7 +130,7 @@ func (h *staffHandler) nonAcademicHistory(c *gin.Context) {
 	}
 	records, err := h.service.NonAcademicHistory(c, id, from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, records)
@@ -152,7 +153,7 @@ func (h *staffHandler) myTeacherHistory(c *gin.Context) {
 	}
 	records, err := h.service.TeacherHistory(c, teacherID, from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, records)

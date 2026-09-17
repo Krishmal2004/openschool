@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 func RegisterRoutes(admin *gin.RouterGroup, service *Service) {
@@ -21,7 +22,7 @@ func RegisterRoutes(admin *gin.RouterGroup, service *Service) {
 		}
 		logs, err := service.List(c, entityType, entityID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, logs)

@@ -37,7 +37,10 @@ interface Props {
 // Roster editor shared by the admin Societies page and the teacher My Society page; the backend enforces who may mutate.
 export default function SocietyRoster({ societyId, readOnly }: Props) {
   const { data: members, isLoading, isError, refetch } = useSocietyMembers(societyId);
-  const { data: students } = useStudents();
+  // /students is server-paginated; this picker only sees the first 100
+  // until EntityCombobox gets a server-backed onSearch (see the
+  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
+  const { data: studentPage } = useStudents({ limit: 100 });
   const assignMember = useAssignSocietyMember(societyId);
   const removeMember = useRemoveSocietyMember(societyId);
 
@@ -71,7 +74,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
   const memberStudentIds = new Set((members ?? []).map((m) => m.student_id));
-  const availableStudents = (students ?? []).filter((s) => !memberStudentIds.has(s.id));
+  const availableStudents = (studentPage?.items ?? []).filter((s) => !memberStudentIds.has(s.id));
 
   if (isError) {
     return <ErrorMessage message="Could not load the roster." onRetry={refetch} />;

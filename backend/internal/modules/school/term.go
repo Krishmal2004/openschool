@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -105,7 +106,7 @@ func (h *termHandler) list(c *gin.Context) {
 	}
 	values, err := h.service.terms.list(c.Request.Context(), yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, values)
@@ -127,7 +128,7 @@ func (h *termHandler) setCurrent(c *gin.Context) {
 		if errors.Is(err, errTermNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 		}
 		return
 	}

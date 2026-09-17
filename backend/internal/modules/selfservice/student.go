@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
@@ -49,7 +50,7 @@ func (h *StudentSelfHandler) Profile(c *gin.Context) {
 
 	profile, err := h.studentSelf.Profile(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -65,7 +66,7 @@ func (h *StudentSelfHandler) Attendance(c *gin.Context) {
 
 	records, err := h.attendance.ListByStudent(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -86,7 +87,7 @@ func (h *StudentSelfHandler) Marks(c *gin.Context) {
 
 	marks, err := h.marks.ListStudentMarks(c.Request.Context(), studentID, termID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -113,13 +114,13 @@ func (h *StudentSelfHandler) ListEnrollments(c *gin.Context) {
 
 	picks, err := h.enrollments.ListByStudentAndLevel(c.Request.Context(), studentID, levelID, academicYearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
 	locked, err := h.enrollments.IsLocked(c.Request.Context(), studentID, levelID, academicYearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 

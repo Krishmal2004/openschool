@@ -540,14 +540,15 @@ type TimetableStatusHistory struct {
 }
 
 type User struct {
-	ID                 uuid.UUID          `json:"id"`
-	Email              string             `json:"email"`
-	FullName           string             `json:"full_name"`
-	Role               string             `json:"role"`
-	IsActive           bool               `json:"is_active"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	MustChangePassword bool               `json:"must_change_password"`
+	ID                  uuid.UUID          `json:"id"`
+	Email               string             `json:"email"`
+	FullName            string             `json:"full_name"`
+	Role                string             `json:"role"`
+	IsActive            bool               `json:"is_active"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	MustChangePassword  bool               `json:"must_change_password"`
+	KeptDefaultPassword bool               `json:"kept_default_password"`
 }
 
 type VicePrincipalGradeScope struct {

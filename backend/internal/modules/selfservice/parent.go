@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	academicsmodule "github.com/openschool-org/openschool/internal/modules/academics"
 	attendancemodule "github.com/openschool-org/openschool/internal/modules/attendance"
@@ -38,7 +39,7 @@ func (h *ParentHandler) callerID(c *gin.Context) (uuid.UUID, bool) {
 func (h *ParentHandler) requireOwnChild(c *gin.Context, callerID, studentID uuid.UUID) bool {
 	ok, err := h.guardians.IsGuardianOfStudent(c.Request.Context(), callerID, studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return false
 	}
 	if !ok {
@@ -57,7 +58,7 @@ func (h *ParentHandler) ListChildren(c *gin.Context) {
 
 	children, err := h.guardians.ChildrenForUser(c.Request.Context(), callerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -81,7 +82,7 @@ func (h *ParentHandler) ChildAttendance(c *gin.Context) {
 
 	records, err := h.attendance.ListByStudent(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -110,7 +111,7 @@ func (h *ParentHandler) ChildMarks(c *gin.Context) {
 
 	marks, err := h.marks.ListStudentMarks(c.Request.Context(), studentID, termID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 

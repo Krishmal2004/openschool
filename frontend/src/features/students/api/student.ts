@@ -1,4 +1,5 @@
 import api from "@/shared/api/client";
+import type { Page } from "@/shared/api/page";
 
 export type StudentEnrollmentStatus = "active" | "left";
 
@@ -52,8 +53,21 @@ export interface UpdateStudentRequest {
   gender?: "male" | "female";
 }
 
+// /students is server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+// section 4). limit is capped at 100 server-side regardless of what's asked for.
+export interface StudentListParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  grade?: string;
+  class?: string;
+  gender?: string;
+  house?: string;
+}
+
 export const studentApi = {
-  list: () => api.get<Student[]>("/students").then((r) => r.data),
+  list: (params: StudentListParams = {}) =>
+    api.get<Page<Student>>("/students", { params }).then((r) => r.data),
 
   get: (id: string) => api.get<Student>(`/students/${id}`).then((r) => r.data),
 

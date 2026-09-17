@@ -1,10 +1,20 @@
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { studentApi } from "@/features/students/api/student";
-import type { CreateStudentRequest, UpdateStudentRequest, StudentEnrollmentStatus } from "@/features/students/api/student";
+import type { CreateStudentRequest, UpdateStudentRequest, StudentEnrollmentStatus, StudentListParams } from "@/features/students/api/student";
 import { studentKeys } from "@/features/students/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
 
-export const useStudents = () => useQuery({ queryKey: studentKeys.list(), queryFn: studentApi.list });
+// /students is server-paginated; the response is a Page<Student>, not a bare
+// array (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4). Callers that
+// only need a bounded set for a picker (not the paginated Students page
+// itself) pass a plain limit — see the file-level note on StudentListParams
+// for why that's a stopgap, not the final picker design.
+export const useStudents = (params: StudentListParams = {}) =>
+  useQuery({
+    queryKey: studentKeys.list(params),
+    queryFn: () => studentApi.list(params),
+    placeholderData: keepPreviousData,
+  });
 
 export const useStudentWithClass = (id: string) =>
   useQuery({ queryKey: studentKeys.withClass(id), queryFn: () => studentApi.getWithClass(id), enabled: !!id });

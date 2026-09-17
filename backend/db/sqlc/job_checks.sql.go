@@ -712,7 +712,10 @@ const listStaleMustChangePasswordUsersByRole = `-- name: ListStaleMustChangePass
 
 SELECT id, full_name, email, role, created_at
 FROM users
-WHERE must_change_password = TRUE
+WHERE (
+    must_change_password = TRUE
+    OR (kept_default_password = TRUE AND created_at < NOW() - INTERVAL '7 days')
+)
 AND role = $1
 AND created_at < NOW() - make_interval(days => $2::int)
 ORDER BY created_at

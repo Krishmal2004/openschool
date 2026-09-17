@@ -35,7 +35,11 @@ export default function RecipientPicker({
   const { data: classes } = useCurrentClasses();
   const { data: gradeSections } = useGradeSections(currentYear?.id ?? "");
   const { data: subjects } = useSubjects();
-  const { data: students } = useStudents();
+  // /students is server-paginated; this picker only sees the first 100
+  // until EntityCombobox gets a server-backed onSearch (see the
+  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
+  const { data: studentPage } = useStudents({ limit: 100 });
+  const students = studentPage?.items;
   const { data: guardians } = useGuardians();
   const { data: teachers } = useTeachers();
 

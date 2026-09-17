@@ -53,7 +53,7 @@ func friendlyBindError(err error) string {
 	case "Email":
 		return "Please enter a valid email address."
 	case "Password":
-		return "Password must be at least 8 characters."
+		return "Password must be at least 10 characters."
 	case "Username", "GivenName", "FamilyName":
 		return "Please fill in all required fields."
 	default:

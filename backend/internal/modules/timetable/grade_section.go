@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 var errGradeSectionNotFound = errors.New("grade section not found, or still has grades assigned")
@@ -374,7 +375,7 @@ func (h *gradeSectionHandler) listByYear(c *gin.Context) {
 	}
 	sections, err := h.service.listByYear(c.Request.Context(), yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, sections)
@@ -444,7 +445,7 @@ func (h *gradeSectionHandler) assignGrades(c *gin.Context) {
 	}
 	updated, err := h.service.get(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, updated)
@@ -471,7 +472,7 @@ func (h *gradeSectionHandler) getPeriods(c *gin.Context) {
 	}
 	periods, err := h.service.getPeriods(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, periods)

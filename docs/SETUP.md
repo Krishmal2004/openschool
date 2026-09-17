@@ -70,7 +70,18 @@ terminate TLS itself. Everything above is fine for local development, but a
 real deployment needs a reverse proxy or load balancer (nginx, Caddy,
 Traefik, a cloud provider's LB, etc.) terminating HTTPS in front of both the
 frontend and the backend. Without it, Bearer tokens are sniffable in
-transit - this isn't optional for anything beyond a local/dev instance.
+transit - this isn't optional for anything beyond a local/dev instance. See
+`deploy/nginx.conf.example` for a reference config (TLS, security headers,
+`X-Forwarded-For`, static asset caching) and set `TRUSTED_PROXIES` in the
+backend's `.env` to that proxy's address so `ClientIP()` reads the real
+client IP instead of the proxy's.
+
+**Production note - secrets:** `backend/.env` holds `DB_PASSWORD`,
+`SMTP_PASSWORD` and `THUNDERID_CLIENT_SECRET`. Don't leave it world-readable
+on the host - use Docker/systemd secrets or an equivalent secret store, and
+set the file mode to `600` if it must be a plain file. Never commit a real
+`.env`, and never log its contents. Rotate the SMTP and DB passwords
+periodically and after any suspected exposure (S16).
 
 ## 2. Register the first admin (one time only)
 
@@ -81,7 +92,7 @@ straight to `/setup` instead of the normal sign-in page. Fill in:
 - Email
 - Username (this is the login credential - separate from email)
 - Phone (optional)
-- Password (min. 8 characters)
+- Password (min. 10 characters)
 
 This can only be done **once**. The endpoint behind it (`POST
 /api/v1/setup/admin`) checks whether an admin already exists and refuses

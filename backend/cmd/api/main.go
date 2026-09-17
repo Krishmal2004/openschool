@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -43,6 +46,23 @@ func envInt(key string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+// splitEnvList parses a comma-separated environment variable into its
+// trimmed, non-empty entries, or nil if unset.
+func splitEnvList(key string) []string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return nil
+	}
+	parts := strings.Split(v, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // @title           OpenSchool API
@@ -83,9 +103,26 @@ func main() {
 		corsOrigins = []string{"http://localhost:5173"}
 	}
 
-	r := gin.Default()
-	// No reverse proxy is used, so trusting proxies could allow IP spoofing.
-	r.SetTrustedProxies(nil)
+	// gin.Default() logs every request line, including query strings — search
+	// terms, names and index numbers would end up in plain-text logs (S10).
+	// gin.New() plus an explicit Recovery and StructuredLogger replaces it.
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.RequestID())
+	r.Use(middleware.StructuredLogger())
+	r.Use(middleware.RequestTimeout(15 * time.Second))
+
+	// Trusted proxies must be explicit: behind Nginx, ClientIP() otherwise
+	// returns the proxy's own address for every request, making per-IP rate
+	// limits and audit IPs meaningless (S3). Empty means "no proxy in front",
+	// matching the previous SetTrustedProxies(nil) default.
+	trustedProxies := splitEnvList("TRUSTED_PROXIES")
+	if len(trustedProxies) == 0 {
+		r.SetTrustedProxies(nil)
+	} else if err := r.SetTrustedProxies(trustedProxies); err != nil {
+		log.Fatalf("invalid TRUSTED_PROXIES: %v", err)
+	}
+
 	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.BodySizeLimit())
 	r.Use(cors.New(cors.Config{
@@ -120,5 +157,24 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-	log.Fatal(srv.ListenAndServe())
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
+	log.Printf("listening on :%s", port)
+
+	// A deploy mid-request must not drop it: wait for SIGTERM/SIGINT, then
+	// stop accepting new connections and let in-flight ones finish (S13).
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	<-stop
+	log.Println("shutting down")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("graceful shutdown failed: %v", err)
+	}
 }

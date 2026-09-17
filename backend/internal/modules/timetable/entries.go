@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 var errTimetableEntriesDraftOnly = fmt.Errorf("timetable can only be edited while in draft status")
@@ -100,7 +101,7 @@ func (h *timetableEntryHandler) list(c *gin.Context) {
 	}
 	entries, err := h.service.list(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, entries)
@@ -121,7 +122,7 @@ func (h *timetableEntryHandler) save(c *gin.Context) {
 	}
 	entries, err := h.service.list(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, entries)

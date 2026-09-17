@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
@@ -20,10 +21,20 @@ type StudentStatusWriter interface {
 	UpdateStatus(context.Context, uuid.UUID, string) (any, error)
 }
 
+// StudentListParams is the students-specific pagination request: the shared
+// limit/offset/search contract (httpx.PageParams) plus the filters this
+// list supports. Doesn't reference db/sqlc types — only repository.go may
+// (internal/architecture enforces this) — so ListPage returns `any` and the
+// concrete page type stays an implementation detail of the repository.
+type StudentListParams struct {
+	httpx.PageParams
+	Grade, Class, Gender, House string
+}
+
 type StudentReader interface {
 	Get(context.Context, uuid.UUID) (any, error)
 	GetWithClass(context.Context, uuid.UUID) (any, error)
-	List(context.Context) (any, error)
+	ListPage(context.Context, StudentListParams) (any, error)
 	ListByClass(context.Context, uuid.UUID) (any, error)
 }
 
@@ -46,9 +57,13 @@ func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner Studen
 		c.JSON(201, v)
 	})
 	teacherOrAdmin.GET("/students", func(c *gin.Context) {
-		v, e := reader.List(c)
+		params := StudentListParams{
+			PageParams: httpx.ParsePage(c),
+			Grade:      c.Query("grade"), Class: c.Query("class"), Gender: c.Query("gender"), House: c.Query("house"),
+		}
+		v, e := reader.ListPage(c, params)
 		if e != nil {
-			c.JSON(500, gin.H{"error": e.Error()})
+			apierror.RespondInternal(c, e)
 			return
 		}
 		c.JSON(200, v)

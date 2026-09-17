@@ -60,11 +60,11 @@ func (s *authStoreStub) consumeResetToken(_ context.Context, hash string) (reset
 	return s.consumed, s.consumeErr
 }
 
-func (s *authStoreStub) setMustChangePassword(_ context.Context, user uuid.UUID, value bool) error {
+func (s *authStoreStub) clearMustChangePassword(_ context.Context, user uuid.UUID, keptDefault bool) error {
 	if s.events != nil {
 		*s.events = append(*s.events, "clear-flag")
 	}
-	s.setUser, s.setValue, s.setCalled = user, value, true
+	s.setUser, s.setValue, s.setCalled = user, keptDefault, true
 	return s.setErr
 }
 
@@ -101,7 +101,7 @@ func (s *mailerStub) Send(_ context.Context, to, subject, body string) error {
 func newTestService(store *authStoreStub, guardian guardianStub, provider *passwordUpdaterStub, mail *mailerStub) *Service {
 	service := NewService(store, guardian, provider, mail)
 	service.random = bytes.NewReader(bytes.Repeat([]byte{0x2a}, 32))
-	service.now = func() time.Time { return time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC) }
+	service.now = func() time.Time { return testServiceNow }
 	service.frontend = func() string { return "https://school.example" }
 	return service
 }
@@ -126,7 +126,7 @@ func TestForgotPasswordIssuesOnlyHashedShortLivedToken(t *testing.T) {
 	if want := service.now().Add(passwordResetTokenTTL); !store.createdExpiry.Equal(want) {
 		t.Fatalf("expiry = %s, want %s", store.createdExpiry, want)
 	}
-	if mail.to != "student@example.com" || !strings.Contains(mail.body, "https://school.example/reset-password?token="+rawToken) {
+	if mail.to != "student@example.com" || !strings.Contains(mail.body, "https://school.example/reset-password#token="+rawToken) {
 		t.Fatalf("reset email was not addressed or linked correctly: %+v", mail)
 	}
 }
@@ -197,14 +197,47 @@ func TestProviderFailureDoesNotClearFirstLoginFlag(t *testing.T) {
 	}
 }
 
+// testServiceNow is the fixed clock newTestService installs, so expiry tests
+// can compute CreatedAt relative to it.
+var testServiceNow = time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
+
 func TestKeepDefaultPasswordOnlyClearsFlag(t *testing.T) {
 	userID := uuid.New()
-	store := &authStoreStub{}
+	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow}}
 	provider := &passwordUpdaterStub{}
 	if err := newTestService(store, guardianStub{}, provider, &mailerStub{}).KeepDefaultPassword(context.Background(), userID); err != nil {
 		t.Fatal(err)
 	}
-	if !store.setCalled || store.setUser != userID || store.setValue || provider.userID != "" {
-		t.Fatal("keep-default-password did more than clear the local flag")
+	if !store.setCalled || store.setUser != userID || !store.setValue || provider.userID != "" {
+		t.Fatal("keep-default-password did not record kept_default_password=true")
+	}
+}
+
+func TestKeepDefaultPasswordRefusedOnceExpired(t *testing.T) {
+	userID := uuid.New()
+	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow.Add(-8 * 24 * time.Hour)}}
+	err := newTestService(store, guardianStub{}, &passwordUpdaterStub{}, &mailerStub{}).KeepDefaultPassword(context.Background(), userID)
+	if !errors.Is(err, ErrDefaultPasswordExpired) || store.setCalled {
+		t.Fatalf("KeepDefaultPassword() = %v; flag cleared = %v", err, store.setCalled)
+	}
+}
+
+func TestChangePasswordRejectsCommonPassword(t *testing.T) {
+	userID := uuid.New()
+	store := &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleTeacher}}
+	provider := &passwordUpdaterStub{}
+	err := newTestService(store, guardianStub{}, provider, &mailerStub{}).ChangePassword(context.Background(), userID, "Password123")
+	if !errors.Is(err, ErrWeakPassword) || provider.userID != "" || store.setCalled {
+		t.Fatalf("ChangePassword() = %v; provider called for %q, flag cleared = %v", err, provider.userID, store.setCalled)
+	}
+}
+
+func TestChangePasswordRejectsOwnIdentitySecret(t *testing.T) {
+	userID := uuid.New()
+	store := &authStoreStub{user: userAccount{ID: userID, Role: authz.RoleStudent}, studentMatch: true}
+	provider := &passwordUpdaterStub{}
+	err := newTestService(store, guardianStub{}, provider, &mailerStub{}).ChangePassword(context.Background(), userID, "200512345678")
+	if !errors.Is(err, ErrWeakPassword) || provider.userID != "" || store.setCalled {
+		t.Fatalf("ChangePassword() = %v; provider called for %q, flag cleared = %v", err, provider.userID, store.setCalled)
 	}
 }

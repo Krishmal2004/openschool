@@ -1,15 +1,20 @@
 import { useThunderID } from "@thunderid/react";
 import { Navigate, useLocation } from "react-router";
-import { useIdleLogout } from "@/shared/auth/useIdleLogout";
+import { IDLE_TIMEOUT_MS, useIdleLogout } from "@/shared/auth/useIdleLogout";
+import IdleWarningModal from "@/shared/auth/IdleWarningModal";
 
 export default function ProtectedRoute({
   children,
+  idleTimeoutMs = IDLE_TIMEOUT_MS,
 }: {
   children: React.ReactNode;
+  // Admin routes pass ADMIN_IDLE_TIMEOUT_MS; every other portal keeps the
+  // shorter default, since lab and staffroom PCs are shared (S12).
+  idleTimeoutMs?: number;
 }) {
   const { isSignedIn, isLoading } = useThunderID();
   const location = useLocation();
-  useIdleLogout();
+  const { warning, staySignedIn, signOutNow } = useIdleLogout(idleTimeoutMs);
 
   if (isLoading) return <div className="os-full-height" />;
 
@@ -17,5 +22,10 @@ export default function ProtectedRoute({
     return <Navigate to="/signin" replace state={{ from: location }} />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <IdleWarningModal open={warning} onStaySignedIn={staySignedIn} onSignOut={signOutNow} />
+      {children}
+    </>
+  );
 }

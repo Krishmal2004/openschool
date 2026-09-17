@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	leadershipmodule "github.com/openschool-org/openschool/internal/modules/leadership"
 	studentleadershipmodule "github.com/openschool-org/openschool/internal/modules/studentleadership"
@@ -59,7 +60,7 @@ func (h *TeacherSelfHandler) leadershipTeacher(c *gin.Context) (uuid.UUID, bool)
 
 	rank, _, err := h.positions.RankForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return uuid.Nil, false
 	}
 	if !rank.IsPrincipalOrVicePrincipal() {
@@ -109,7 +110,7 @@ func (h *TeacherSelfHandler) Position(c *gin.Context) {
 
 	summary, err := h.positions.SummaryForTeacher(c.Request.Context(), teacherID, yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -142,7 +143,7 @@ func (h *TeacherSelfHandler) Society(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "you are not the Teacher-in-Charge of any society this year"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -175,7 +176,7 @@ func (h *TeacherSelfHandler) LeadershipOverview(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -190,7 +191,7 @@ func (h *TeacherSelfHandler) Analytics(c *gin.Context) {
 
 	analytics, err := h.dashboard.Analytics(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 
@@ -211,7 +212,7 @@ func (h *TeacherSelfHandler) Timetables(c *gin.Context) {
 
 	list, err := h.timetables.ListByAcademicYear(c.Request.Context(), yearID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 

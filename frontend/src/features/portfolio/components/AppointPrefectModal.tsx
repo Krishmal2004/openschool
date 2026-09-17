@@ -14,11 +14,14 @@ interface Props {
 }
 
 export default function AppointPrefectModal({ academicYearId, assignedStudentIds, onClose }: Props) {
-  const { data: students } = useStudents();
+  // /students is server-paginated; this picker only sees the first 100
+  // until EntityCombobox gets a server-backed onSearch (see the
+  // SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.3/4.4 step 3 follow-up).
+  const { data: studentPage } = useStudents({ limit: 100 });
   const assign = useAssignPrefect();
   const [studentId, setStudentId] = useState("");
   const [rank, setRank] = useState<PrefectRank>("junior");
-  const available = (students ?? []).filter((s) => !assignedStudentIds.has(s.id));
+  const available = (studentPage?.items ?? []).filter((s) => !assignedStudentIds.has(s.id));
 
   return (
     <FormModal

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -103,7 +104,7 @@ func (h *StudentPortfolioHandler) ListProgressReports(c *gin.Context) {
 	}
 	reports, err := h.service.ListProgressReports(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, reports)
@@ -178,7 +179,7 @@ func (h *StudentPortfolioHandler) ListActivities(c *gin.Context) {
 	}
 	activities, err := h.service.ListActivities(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, activities)
@@ -253,7 +254,7 @@ func (h *StudentPortfolioHandler) ListLeadershipRoles(c *gin.Context) {
 	}
 	roles, err := h.service.ListLeadershipRoles(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, roles)
@@ -305,7 +306,7 @@ func (h *StudentPortfolioHandler) ListAwards(c *gin.Context) {
 	}
 	awards, err := h.service.ListAwards(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, awards)
@@ -357,7 +358,7 @@ func (h *StudentPortfolioHandler) ListDisciplinaryRecords(c *gin.Context) {
 	}
 	records, err := h.service.ListDisciplinaryRecords(c.Request.Context(), studentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, records)

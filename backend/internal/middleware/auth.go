@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/gin-gonic/gin"
@@ -103,6 +104,10 @@ func InitJWKS(jwksURL string) error {
 	if strings.TrimSpace(idp.Issuer()) == "" {
 		return errors.New("THUNDERID_ISSUER is required")
 	}
+	// Without an audience check, any token from the same issuer is accepted — including one minted for a different application (S9).
+	if strings.TrimSpace(idp.Audience()) == "" {
+		return errors.New("THUNDERID_AUDIENCE is required")
+	}
 	baseTransport := http.DefaultTransport
 	if os.Getenv("APP_ENV") == "development" {
 		baseTransport = &http.Transport{
@@ -152,9 +157,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		parserOpts := []jwt.ParserOption{
 			jwt.WithValidMethods([]string{"RS256"}),
 			jwt.WithIssuer(idp.Issuer()),
-		}
-		if aud := idp.Audience(); aud != "" {
-			parserOpts = append(parserOpts, jwt.WithAudience(aud))
+			jwt.WithAudience(idp.Audience()),
+			jwt.WithLeeway(30 * time.Second),
 		}
 
 		claims := &Claims{}

@@ -563,6 +563,7 @@ type Querier interface {
 	// GetStudentCurrentClass call per student.
 	ListStudentsEnrolledInCurrentClass(ctx context.Context, arg ListStudentsEnrolledInCurrentClassParams) ([]uuid.UUID, error)
 	ListStudentsMissingHouse(ctx context.Context) ([]StudentProfile, error)
+	ListStudentsPage(ctx context.Context, arg ListStudentsPageParams) ([]ListStudentsPageRow, error)
 	ListSubjectPeriodRequirementsByGrade(ctx context.Context, arg ListSubjectPeriodRequirementsByGradeParams) ([]ListSubjectPeriodRequirementsByGradeRow, error)
 	ListSubjectTeachersByClass(ctx context.Context, classID uuid.UUID) ([]ListSubjectTeachersByClassRow, error)
 	ListSubjects(ctx context.Context) ([]Subject, error)

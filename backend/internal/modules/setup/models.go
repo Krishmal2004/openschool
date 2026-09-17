@@ -6,5 +6,5 @@ type RegisterAdminRequest struct {
 	GivenName   string `json:"given_name" binding:"required"`
 	FamilyName  string `json:"family_name" binding:"required"`
 	PhoneNumber string `json:"phone_number"`
-	Password    string `json:"password" binding:"required,min=8"`
+	Password    string `json:"password" binding:"required,min=10"`
 }

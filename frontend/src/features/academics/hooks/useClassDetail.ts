@@ -20,12 +20,20 @@ export function useClassDetail(id: string) {
   const { data: classrooms } = useClassrooms();
   const { data: teachers } = useTeachers();
   const { data: years } = useAcademicYears();
-  const { data: allStudents } = useStudents();
+  // /students is server-paginated now; this picker only sees the first 100
+  // unenrolled students until EntityCombobox gets a server-backed onSearch
+  // (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4.3/4.4 step 3 — not
+  // done yet). Schools with 100+ students not yet in this class will need
+  // that follow-up before this picker can find everyone.
+  const { data: allStudentsPage } = useStudents({ limit: 100 });
 
   const students = useMemo(() => roster.data ?? [], [roster.data]);
   const c = cls.data;
   const enrolledIds = useMemo(() => new Set(students.map((s) => s.id)), [students]);
-  const enrolCandidates = useMemo(() => (allStudents ?? []).filter((s) => !enrolledIds.has(s.id)), [allStudents, enrolledIds]);
+  const enrolCandidates = useMemo(
+    () => (allStudentsPage?.items ?? []).filter((s) => !enrolledIds.has(s.id)),
+    [allStudentsPage, enrolledIds],
+  );
 
   return {
     cls,

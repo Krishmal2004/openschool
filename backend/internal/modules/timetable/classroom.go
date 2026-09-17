@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 var (
@@ -97,7 +98,7 @@ func (h *classroomHandler) create(c *gin.Context) {
 func (h *classroomHandler) list(c *gin.Context) {
 	classrooms, err := h.service.classrooms.list(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, classrooms)

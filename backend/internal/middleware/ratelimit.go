@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -80,5 +84,28 @@ func RateLimit(rps float64, burst int) gin.HandlerFunc {
 func PerAccountRateLimit(rps float64, burst int) gin.HandlerFunc {
 	return keyedRateLimit(rps, burst, func(c *gin.Context) string {
 		return c.GetString("userID")
+	})
+}
+
+// PerJSONFieldRateLimit throttles requests keyed by a top-level string field
+// in the JSON body (case-insensitively), e.g. the "identifier" on
+// /auth/forgot-password (S2): a per-IP limiter alone is either useless
+// (every user shares one IP behind the school's Nginx) or, once IPs are
+// resolved correctly, still lets an attacker spread guesses for one target
+// account across many IPs. This limiter targets the account instead. The
+// body is peeked and restored so the handler's own binding still works.
+func PerJSONFieldRateLimit(rps float64, burst int, field string) gin.HandlerFunc {
+	return keyedRateLimit(rps, burst, func(c *gin.Context) string {
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			return ""
+		}
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
+
+		var payload map[string]string
+		if err := json.Unmarshal(body, &payload); err != nil {
+			return ""
+		}
+		return strings.ToLower(strings.TrimSpace(payload[field]))
 	})
 }

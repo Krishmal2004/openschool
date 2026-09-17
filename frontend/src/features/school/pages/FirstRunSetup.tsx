@@ -36,8 +36,8 @@ export default function FirstRunSetup() {
     email: EMAIL_RE.test(form.email.trim()) ? undefined : "Enter a valid email address.",
     username: form.username.trim() ? undefined : "Username is required.",
     phone: isValidSriLankanPhone(form.phone) ? undefined : PHONE_INVALID_TEXT,
-    password: form.password.length >= 8 ? undefined : "Password must be at least 8 characters.",
-    confirmPassword: pw.valid ? undefined : "Passwords do not match.",
+    password: pw.passwordError,
+    confirmPassword: pw.confirmError,
   };
   const canSubmit = Object.values(errors).every((e) => !e);
 
@@ -116,7 +116,7 @@ export default function FirstRunSetup() {
             <div className="os-setup-form__section">
               <div className="os-setup-form__section-heading"><h3>Secure your account</h3></div>
               <div className="os-setup-security-grid">
-                <PasswordInput {...input("password", "Password", { helperText: "At least 8 characters." })} />
+                <PasswordInput {...input("password", "Password", { helperText: "At least 10 characters." })} />
                 <PasswordInput {...input("confirmPassword", "Confirm Password")} />
               </div>
             </div>

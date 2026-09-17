@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
@@ -55,7 +56,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 		}
 		prefects, err := service.ListPrefectsByYear(c.Request.Context(), yearID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, prefects)
@@ -64,7 +65,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 	teacherOrAdmin.GET("/prefects/years", func(c *gin.Context) {
 		years, err := service.ListPrefectYears(c.Request.Context())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, years)
@@ -78,7 +79,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 		}
 		appointments, err := service.ListPrefectsByStudent(c.Request.Context(), studentID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, appointments)
@@ -94,7 +95,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 			if errors.Is(err, ErrPrefectNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				apierror.RespondInternal(c, err)
 			}
 			return
 		}
@@ -155,7 +156,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 		}
 		societies, err := service.ListSocietiesByYear(c.Request.Context(), yearID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, societies)
@@ -164,7 +165,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 	teacherOrAdmin.GET("/societies/years", func(c *gin.Context) {
 		years, err := service.ListSocietyYears(c.Request.Context())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, years)
@@ -178,7 +179,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 		}
 		members, err := service.ListSocietyMembers(c.Request.Context(), societyID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, members)
@@ -239,7 +240,7 @@ func RegisterRoutes(admin, teacherOrAdmin, studentAccess *gin.RouterGroup, servi
 		}
 		memberships, err := service.ListSocietyMembershipsByStudent(c.Request.Context(), studentID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, memberships)

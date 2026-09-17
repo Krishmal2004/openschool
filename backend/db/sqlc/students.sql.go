@@ -309,6 +309,109 @@ func (q *Queries) ListStudents(ctx context.Context) ([]ListStudentsRow, error) {
 	return items, nil
 }
 
+const listStudentsPage = `-- name: ListStudentsPage :many
+SELECT
+    sp.id, sp.user_id, sp.full_name, sp.index_number, sp.address, sp.phone, sp.whatsapp, sp.special_remarks, sp.created_at, sp.updated_at, sp.gender, sp.house_id, sp.enrollment_status,
+    c.name AS class_name,
+    g.name AS grade_name,
+    h.name AS house_name,
+    COUNT(*) OVER () AS total
+FROM student_profiles sp
+LEFT JOIN class_students cs
+    ON cs.student_id = sp.id
+   AND cs.academic_year_id = (
+       SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1
+   )
+LEFT JOIN classes c ON c.id = cs.class_id
+LEFT JOIN grades  g ON g.id = c.grade_id
+LEFT JOIN houses  h ON h.id = sp.house_id
+WHERE ($1::text IS NULL OR sp.full_name ILIKE '%' || $1::text || '%' OR sp.index_number ILIKE '%' || $1::text || '%')
+  AND ($2::text IS NULL OR g.name = $2::text)
+  AND ($3::text IS NULL OR c.name = $3::text)
+  AND ($4::text IS NULL OR sp.gender = $4::text)
+  AND ($5::text IS NULL OR h.name = $5::text)
+ORDER BY sp.full_name ASC
+LIMIT $6::int OFFSET $7::int
+`
+
+type ListStudentsPageParams struct {
+	Search     pgtype.Text `json:"search"`
+	Grade      pgtype.Text `json:"grade"`
+	Class      pgtype.Text `json:"class"`
+	Gender     pgtype.Text `json:"gender"`
+	House      pgtype.Text `json:"house"`
+	PageLimit  int32       `json:"page_limit"`
+	PageOffset int32       `json:"page_offset"`
+}
+
+type ListStudentsPageRow struct {
+	ID               uuid.UUID          `json:"id"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	FullName         string             `json:"full_name"`
+	IndexNumber      string             `json:"index_number"`
+	Address          pgtype.Text        `json:"address"`
+	Phone            pgtype.Text        `json:"phone"`
+	Whatsapp         pgtype.Text        `json:"whatsapp"`
+	SpecialRemarks   pgtype.Text        `json:"special_remarks"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	Gender           pgtype.Text        `json:"gender"`
+	HouseID          pgtype.UUID        `json:"house_id"`
+	EnrollmentStatus string             `json:"enrollment_status"`
+	ClassName        pgtype.Text        `json:"class_name"`
+	GradeName        pgtype.Text        `json:"grade_name"`
+	HouseName        pgtype.Text        `json:"house_name"`
+	// Hand-edited: excluded from JSON since the handler reads it once for the
+	// page envelope's top-level "total" rather than repeating it per row.
+	Total int64 `json:"-"`
+}
+
+func (q *Queries) ListStudentsPage(ctx context.Context, arg ListStudentsPageParams) ([]ListStudentsPageRow, error) {
+	rows, err := q.db.Query(ctx, listStudentsPage,
+		arg.Search,
+		arg.Grade,
+		arg.Class,
+		arg.Gender,
+		arg.House,
+		arg.PageLimit,
+		arg.PageOffset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListStudentsPageRow{}
+	for rows.Next() {
+		var i ListStudentsPageRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.FullName,
+			&i.IndexNumber,
+			&i.Address,
+			&i.Phone,
+			&i.Whatsapp,
+			&i.SpecialRemarks,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Gender,
+			&i.HouseID,
+			&i.EnrollmentStatus,
+			&i.ClassName,
+			&i.GradeName,
+			&i.HouseName,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listStudentsByClass = `-- name: ListStudentsByClass :many
 SELECT
     sp.id, sp.user_id, sp.full_name, sp.index_number, sp.address, sp.phone, sp.whatsapp, sp.special_remarks, sp.created_at, sp.updated_at, sp.gender, sp.house_id, sp.enrollment_status
