@@ -178,7 +178,7 @@ export default function TeacherSubjects() {
           </tbody>
         </table>
 
-        {!loadingTeachers && teachers.length > 0 && (
+        {!loadingTeachers && totalItems > 0 && (
           <Pagination
             totalItems={totalItems}
             page={page}

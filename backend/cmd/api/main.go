@@ -186,8 +186,12 @@ func main() {
 		metricsPort = "9090"
 	}
 	metricsSrv := &http.Server{
-		Addr:    "127.0.0.1:" + metricsPort,
-		Handler: promhttp.Handler(),
+		Addr:              "127.0.0.1:" + metricsPort,
+		Handler:           promhttp.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {

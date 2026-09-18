@@ -62,7 +62,7 @@ func RegisterRoutes(admin *gin.RouterGroup, service *Service, audit ports.AuditR
 // both are pre-existing route/auth conditions, not audit failures.
 func auditReportExport(c *gin.Context, audit ports.AuditRecorder, action, classID, reason string) error {
 	if audit == nil {
-		return nil
+		return fmt.Errorf("audit recorder not configured")
 	}
 	actor, err := middleware.UserIDFromContext(c)
 	if err != nil {

@@ -77,7 +77,11 @@ func (r *studentRepository) ListPage(c context.Context, p StudentListParams) (an
 		// total=0, contradicting the actual filtered count. Re-probe with
 		// offset 0 to recover it.
 		params.PageLimit, params.PageOffset = 1, 0
-		if probe, err := r.queries.ListStudentsPage(c, params); err == nil && len(probe) > 0 {
+		probe, err := r.queries.ListStudentsPage(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
 			total = probe[0].Total
 		}
 	}
@@ -303,7 +307,11 @@ func (r *nonAcademicStaffRepository) listStaffPage(c context.Context, p StaffLis
 		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
 		// the offset lands past the last page, so it's re-probed here.
 		params.PageLimit, params.PageOffset = 1, 0
-		if probe, err := r.queries.ListNonAcademicStaff(c, params); err == nil && len(probe) > 0 {
+		probe, err := r.queries.ListNonAcademicStaff(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
 			total = probe[0].Total
 		}
 	}
@@ -396,7 +404,11 @@ func (r *guardianReader) ListPage(c context.Context, p GuardianListParams) (any,
 		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
 		// the offset lands past the last page, so it's re-probed here.
 		params.PageLimit, params.PageOffset = 1, 0
-		if probe, err := r.queries.ListGuardians(c, params); err == nil && len(probe) > 0 {
+		probe, err := r.queries.ListGuardians(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
 			total = probe[0].Total
 		}
 	}
@@ -475,7 +487,11 @@ func (r *teacherReader) ListPage(c context.Context, p TeacherListParams) (any, e
 		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
 		// the offset lands past the last page, so it's re-probed here.
 		params.PageLimit, params.PageOffset = 1, 0
-		if probe, err := r.queries.ListTeachersPage(c, params); err == nil && len(probe) > 0 {
+		probe, err := r.queries.ListTeachersPage(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
 			total = probe[0].Total
 		}
 	}

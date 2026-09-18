@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/idp"
@@ -214,7 +215,10 @@ func (s *StudentService) Delete(ctx context.Context, id, actor uuid.UUID) error 
 func (s *StudentService) Erase(ctx context.Context, id, actor uuid.UUID, reason string) error {
 	student, err := s.store.GetStudentRecord(ctx, id)
 	if err != nil {
-		return ErrStudentNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrStudentNotFound
+		}
+		return fmt.Errorf("failed to get student record: %w", err)
 	}
 
 	if err := s.store.AnonymizeProfile(ctx, id); err != nil {

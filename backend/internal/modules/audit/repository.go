@@ -38,7 +38,11 @@ func (r *Repository) list(ctx context.Context, entityType string, entityID *uuid
 		// page, so it's re-probed here rather than reporting total=0.
 		probeParams := params
 		probeParams.PageLimit, probeParams.PageOffset = 1, 0
-		if probe, err := r.queries.ListAuditLogs(ctx, probeParams); err == nil && len(probe) > 0 {
+		probe, err := r.queries.ListAuditLogs(ctx, probeParams)
+		if err != nil {
+			return nil, 0, err
+		}
+		if len(probe) > 0 {
 			total = probe[0].Total
 		}
 	}
