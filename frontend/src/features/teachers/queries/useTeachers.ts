@@ -16,8 +16,14 @@ export const teachersPageOptions = (params: TeacherListParams = {}) =>
 export const useTeachers = (params: TeacherListParams = {}) =>
   useQuery({ ...teachersPageOptions(params), placeholderData: keepPreviousData });
 
-export const useTeacher = (id: string) =>
-  useQuery({ queryKey: teacherKeys.detail(id), queryFn: () => teacherApi.get(id), enabled: !!id });
+// Exposed as options (like teachersPageOptions above) so a name-lookup-by-id
+// elsewhere — e.g. resolving a class's form_teacher_id — can use useQueries
+// without importing this feature's api/ module directly (the layer rule:
+// never api/ across a feature boundary).
+export const teacherDetailOptions = (id: string) =>
+  queryOptions({ queryKey: teacherKeys.detail(id), queryFn: () => teacherApi.get(id), enabled: !!id });
+
+export const useTeacher = (id: string) => useQuery(teacherDetailOptions(id));
 
 export const useTeacherSubjects = (id: string) =>
   useQuery({ queryKey: teacherKeys.subjects(id), queryFn: () => teacherApi.listSubjects(id), enabled: !!id });

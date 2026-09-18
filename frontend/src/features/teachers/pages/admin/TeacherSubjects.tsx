@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Search, Tag, SkeletonText } from "@carbon/react";
+import { Search, Tag, SkeletonText, Pagination } from "@carbon/react";
 import { useTeachers, useTeacherSubjects, useAssignTeacherSubject, useRemoveTeacherSubject } from "@/features/teachers/queries/useTeachers";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
+import { useDebounced } from "@/shared/hooks/useDebounced";
 import EntityCombobox from "@/shared/ui/EntityCombobox";
 import type { Teacher, TeacherSubject } from "@/features/teachers/api/teacher";
 import type { Subject } from "@/features/curriculum/api/subject";
@@ -96,15 +97,24 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
 }
 
 export default function TeacherSubjects() {
-  // /teachers is server-paginated; this page only sees the first 100 until
-  // it's rewired to server pagination + search
-  // (SECURITY_AND_PERFORMANCE_PLAYBOOK section 4.4).
-  const { data: teacherPage, isLoading: loadingTeachers, isError: teachersError, refetch: refetchTeachers } = useTeachers({ limit: 100 });
-  const teachers = teacherPage?.items;
-  const { data: subjects, isLoading: loadingSubjects, isError: subjectsError, refetch: refetchSubjects } = useSubjects();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounced(searchQuery, 300);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
-  if (loadingTeachers || loadingSubjects) {
+  // Server-paginated and server-searched (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+  // section 4) — a client-side filter over a capped page could neither find
+  // nor act on a teacher past the first page.
+  const { data: teacherPage, isLoading: loadingTeachers, isError: teachersError, refetch: refetchTeachers } = useTeachers({
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    search: debouncedSearch,
+  });
+  const teachers = teacherPage?.items ?? [];
+  const totalItems = teacherPage?.total ?? 0;
+  const { data: subjects, isLoading: loadingSubjects, isError: subjectsError, refetch: refetchSubjects } = useSubjects();
+
+  if (loadingSubjects) {
     return <LoadingSpinner />;
   }
 
@@ -115,11 +125,6 @@ export default function TeacherSubjects() {
   if (subjectsError) {
     return <ErrorMessage message="Could not load subjects." onRetry={refetchSubjects} />;
   }
-
-  const filteredTeachers = (teachers ?? []).filter((t) =>
-    t.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.employee_number.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="os-page">
@@ -138,7 +143,7 @@ export default function TeacherSubjects() {
           placeholder="Search teachers by name or employee number…"
           labelText="Search"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
         />
       </div>
 
@@ -153,18 +158,36 @@ export default function TeacherSubjects() {
             </tr>
           </thead>
           <tbody>
-            {filteredTeachers.map((t) => (
-              <TeacherSubjectRow key={t.id} teacher={t} allSubjects={subjects ?? []} />
-            ))}
-            {filteredTeachers.length === 0 && (
+            {loadingTeachers ? (
+              <tr>
+                <td colSpan={4} className="os-text-center os-c-tertiary os-p-8">
+                  <SkeletonText width="8rem" />
+                </td>
+              </tr>
+            ) : teachers.length === 0 ? (
               <tr>
                 <td colSpan={4} className="os-text-center os-c-tertiary os-p-8">
                   No teachers found matching your search.
                 </td>
               </tr>
+            ) : (
+              teachers.map((t) => (
+                <TeacherSubjectRow key={t.id} teacher={t} allSubjects={subjects ?? []} />
+              ))
             )}
           </tbody>
         </table>
+
+        {!loadingTeachers && teachers.length > 0 && (
+          <Pagination
+            totalItems={totalItems}
+            page={page}
+            pageSize={pageSize}
+            pageSizes={[25, 50, 100]}
+            onChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
+            size="sm"
+          />
+        )}
       </div>
     </div>
   );
