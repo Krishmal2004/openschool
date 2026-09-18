@@ -2,6 +2,7 @@ package people
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -187,7 +188,13 @@ func RegisterStudentRoutes(admin, teacherOrAdmin *gin.RouterGroup, runner Studen
 			return
 		}
 		if e := runner.Erase(c, id, a, r.Reason); e != nil {
-			c.JSON(400, gin.H{"error": e.Error()})
+			if errors.Is(e, ErrStudentNotFound) {
+				c.JSON(404, gin.H{"error": e.Error()})
+				return
+			}
+			// Anything else is a wrapped database error (e.g. from
+			// AnonymizeProfile) and must not be echoed to the client (S4).
+			apierror.RespondInternal(c, e)
 			return
 		}
 		c.JSON(200, gin.H{"message": "student profile erased"})

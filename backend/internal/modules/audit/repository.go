@@ -33,5 +33,14 @@ func (r *Repository) list(ctx context.Context, entityType string, entityID *uuid
 		result[i] = row{ID: value.ID, EntityType: value.EntityType, EntityID: value.EntityID, Action: value.Action, ActorID: value.ActorID, Before: value.Before, After: value.After, Reason: value.Reason, CreatedAt: value.CreatedAt, ActorName: value.ActorName}
 		total = value.Total
 	}
+	if len(rows) == 0 && offset > 0 {
+		// COUNT(*) OVER () is absent when the offset lands past the last
+		// page, so it's re-probed here rather than reporting total=0.
+		probeParams := params
+		probeParams.PageLimit, probeParams.PageOffset = 1, 0
+		if probe, err := r.queries.ListAuditLogs(ctx, probeParams); err == nil && len(probe) > 0 {
+			total = probe[0].Total
+		}
+	}
 	return result, total, nil
 }

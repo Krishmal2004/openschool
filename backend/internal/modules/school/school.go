@@ -114,7 +114,11 @@ func validateImageDataURL(value string) error {
 	if !ok {
 		return errInvalidLogoURL
 	}
-	mediaType, isBase64 := strings.CutSuffix(strings.TrimPrefix(header, "data:"), ";base64")
+	withoutScheme, hasDataPrefix := strings.CutPrefix(header, "data:")
+	if !hasDataPrefix {
+		return errInvalidLogoURL
+	}
+	mediaType, isBase64 := strings.CutSuffix(withoutScheme, ";base64")
 	if !isBase64 {
 		return errInvalidLogoURL
 	}

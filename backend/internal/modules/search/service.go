@@ -4,6 +4,7 @@ package search
 import (
 	"context"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
@@ -49,7 +50,12 @@ func (s *Service) Global(ctx context.Context, term string) (GlobalSearchResponse
 		Guardians: []SearchResultItem{}, NonAcademicStaff: []SearchResultItem{},
 	}
 	term = strings.TrimSpace(term)
-	if len(term) < minTermLength || len(term) > maxTermLength {
+	// Count characters, not bytes: a 22-character Sinhala/Chinese term can
+	// exceed 64 UTF-8 bytes while still being a reasonable search, and a
+	// single multi-byte character shouldn't be able to satisfy a
+	// 2-character minimum.
+	termLength := utf8.RuneCountInString(term)
+	if termLength < minTermLength || termLength > maxTermLength {
 		return response, nil
 	}
 	term = escapeLikeTerm(term)

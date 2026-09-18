@@ -3,8 +3,11 @@ package dashboard
 
 import (
 	"context"
+	"sort"
 	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -57,6 +60,16 @@ type staffGrowth struct {
 	TeacherCount int64
 }
 type timetableCompletion struct{ TotalClasses, PublishedClasses int64 }
+type recentStudent struct {
+	ID                                          uuid.UUID
+	FullName, IndexNumber, GradeName, ClassName string
+	CreatedAt                                   pgtype.Timestamptz
+}
+type recentTeacher struct {
+	ID                       uuid.UUID
+	FullName, EmployeeNumber string
+	CreatedAt                pgtype.Timestamptz
+}
 
 type store interface {
 	studentCountByGrade(context.Context) ([]countByGrade, error)
@@ -75,7 +88,13 @@ type store interface {
 	staffGrowth(context.Context) ([]staffGrowth, error)
 	notificationsSentCount(context.Context) (int64, error)
 	timetableCompletion(context.Context) (timetableCompletion, error)
+	recentStudents(context.Context, int32) ([]recentStudent, error)
+	recentTeachers(context.Context, int32) ([]recentTeacher, error)
 }
+
+// recentActivityLimit bounds how many of each of the newest students/teachers
+// feed the dashboard's combined "recent activity" list.
+const recentActivityLimit = 6
 
 type Service struct{ store store }
 
@@ -188,14 +207,73 @@ func (s *Service) Analytics(ctx context.Context) (DashboardAnalyticsResponse, er
 	if timetable.TotalClasses > 0 {
 		response.School.TimetableCompletionPct = float64(timetable.PublishedClasses) / float64(timetable.TotalClasses) * 100
 	}
+
+	recentActivity, err := s.recentActivity(ctx)
+	if err != nil {
+		return response, err
+	}
+	response.School.RecentActivity = recentActivity
+
 	return response, nil
+}
+
+// recentActivity merges the newest students and teachers into one
+// server-sorted feed — a dedicated query per entity (recentStudents/
+// recentTeachers), not a slice of the capped, alphabetically-sorted list
+// pages, which could otherwise miss anyone enrolled/added after the first
+// page once more than one page of records exists.
+func (s *Service) recentActivity(ctx context.Context) ([]RecentActivityItem, error) {
+	students, err := s.store.recentStudents(ctx, recentActivityLimit)
+	if err != nil {
+		return nil, err
+	}
+	teachers, err := s.store.recentTeachers(ctx, recentActivityLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]RecentActivityItem, 0, len(students)+len(teachers))
+	for _, st := range students {
+		sub := st.GradeName
+		if st.ClassName != "" {
+			sub += " " + st.ClassName
+		}
+		if st.IndexNumber != "" {
+			if sub != "" {
+				sub += " · "
+			}
+			sub += st.IndexNumber
+		}
+		items = append(items, RecentActivityItem{
+			Key: "student-" + st.ID.String(), Text: st.FullName + " enrolled", Sub: sub,
+			Time: formatTimestamptz(st.CreatedAt), Path: "/students/" + st.ID.String(), Kind: "student",
+		})
+	}
+	for _, t := range teachers {
+		items = append(items, RecentActivityItem{
+			Key: "teacher-" + t.ID.String(), Text: t.FullName + " added as a teacher", Sub: t.EmployeeNumber,
+			Time: formatTimestamptz(t.CreatedAt), Path: "/teachers/" + t.ID.String(), Kind: "teacher",
+		})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].Time > items[j].Time })
+	if len(items) > recentActivityLimit {
+		items = items[:recentActivityLimit]
+	}
+	return items, nil
+}
+
+func formatTimestamptz(value pgtype.Timestamptz) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.Time.Format(time.RFC3339)
 }
 
 func emptyResponse() DashboardAnalyticsResponse {
 	return DashboardAnalyticsResponse{
 		Student:  DashboardStudentAnalytics{ByGrade: []CountRow{}, ByClass: []CountRow{}, GenderDistribution: []CountRow{}, HouseDistribution: []HouseCountRow{}, AttendanceTrend: []AttendanceTrendPoint{}},
 		Academic: DashboardAcademicAnalytics{SubjectPerformance: []PerformanceRow{}, GradeWisePerformance: []PerformanceRow{}, ClassWisePerformance: []PerformanceRow{}},
-		School:   DashboardSchoolAnalytics{StudentGrowth: []GrowthPoint{}, StaffGrowth: []GrowthPoint{}},
+		School:   DashboardSchoolAnalytics{StudentGrowth: []GrowthPoint{}, StaffGrowth: []GrowthPoint{}, RecentActivity: []RecentActivityItem{}},
 	}
 }
 

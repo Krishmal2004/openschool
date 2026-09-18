@@ -27,6 +27,9 @@ var (
 	// ErrDefaultPasswordExpired is returned when "keep this password" is no
 	// longer available and the account must set a real password (S1).
 	ErrDefaultPasswordExpired = errors.New("this account has kept its default password for too long — set a new password to continue")
+	// ErrPasswordAlreadyChanged is returned when KeepDefaultPassword is
+	// called on an account that has already set a real password.
+	ErrPasswordAlreadyChanged = errors.New("this account has already set a password")
 )
 
 // passwordResetTokenTTL bounds how long an emailed reset link stays valid.
@@ -178,6 +181,15 @@ func (s *Service) KeepDefaultPassword(ctx context.Context, userID uuid.UUID) err
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
 	}
+	// Only a first-login account (must_change_password still true) may make
+	// this choice. Without this check, an account that already set a real
+	// password could re-trigger KeptDefaultPassword=true, which /me later
+	// turns back into must_change_password=true once DefaultPasswordExpiry
+	// elapses from account creation — incorrectly forcing the password
+	// interstitial on an account whose password was already changed.
+	if !user.MustChangePassword {
+		return ErrPasswordAlreadyChanged
+	}
 	if s.now().Sub(user.CreatedAt) > DefaultPasswordExpiry {
 		return ErrDefaultPasswordExpired
 	}
@@ -188,6 +200,10 @@ func (s *Service) setPassword(ctx context.Context, userID uuid.UUID, newPassword
 	user, err := s.store.userByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
+	}
+
+	if len(newPassword) < MinPasswordLength {
+		return ErrPasswordTooShort
 	}
 
 	if isCommonPassword(newPassword) || s.matchesIdentitySecret(ctx, user, newPassword) {

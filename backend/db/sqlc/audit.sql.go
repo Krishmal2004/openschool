@@ -59,7 +59,7 @@ FROM audit_logs al
 LEFT JOIN users u ON u.id = al.actor_id
 WHERE ($1::text IS NULL OR al.entity_type = $1)
   AND ($2::uuid IS NULL OR al.entity_id = $2)
-ORDER BY al.created_at DESC
+ORDER BY al.created_at DESC, al.id DESC
 LIMIT $3::int OFFSET $4::int
 `
 

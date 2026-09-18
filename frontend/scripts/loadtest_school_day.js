@@ -27,7 +27,11 @@ import { SharedArray } from "k6/data";
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8080";
 
 const tokens = new SharedArray("tokens", function () {
-  return JSON.parse(open("./TOKENS.json"));
+  const parsed = JSON.parse(open("./TOKENS.json"));
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("TOKENS.json must be a non-empty JSON array of access tokens");
+  }
+  return parsed;
 });
 
 export const options = {

@@ -57,7 +57,7 @@ func TestStudentProvisioningAPIWithPostgres(t *testing.T) {
 	store := NewStudentStore(pool)
 	firstUserID, duplicateEmailUserID := uuid.New(), uuid.New()
 	provider := &peopleIntegrationIdentity{userIDs: []uuid.UUID{firstUserID, duplicateEmailUserID}}
-	service := NewStudentService(store, provider, nil, nil, nil)
+	service := NewStudentService(store, provider, nil, nil, nil, nil)
 	router := gin.New()
 	group := router.Group("")
 	actorID := uuid.New()
@@ -107,7 +107,7 @@ func TestStudentProvisioningAPIWithPostgres(t *testing.T) {
 
 	roleFailureUserID := uuid.New()
 	failingProvider := &peopleIntegrationIdentity{userIDs: []uuid.UUID{roleFailureUserID}, assignErr: errors.New("role assignment failed")}
-	failingService := NewStudentService(store, failingProvider, nil, nil, nil)
+	failingService := NewStudentService(store, failingProvider, nil, nil, nil, nil)
 	request.Email, request.IndexNumber = "rollback@example.test", "STU-003"
 	if _, err := failingService.Create(context.Background(), request, actorID); err == nil {
 		t.Fatal("expected role assignment failure")

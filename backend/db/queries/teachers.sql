@@ -69,7 +69,7 @@ SELECT *, COUNT(*) OVER () AS total
 FROM teacher_profiles
 WHERE (sqlc.narg(search)::text IS NULL OR full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR employee_number ILIKE '%' || sqlc.narg(search)::text || '%')
   AND (sqlc.narg(status)::text IS NULL OR employment_status = sqlc.narg(status)::text)
-ORDER BY full_name ASC
+ORDER BY full_name ASC, id ASC
 LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
 
 -- name: UpdateTeacherProfile :one

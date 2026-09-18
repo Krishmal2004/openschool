@@ -46,6 +46,7 @@ type userAccount struct {
 	Role                string
 	CreatedAt           time.Time
 	KeptDefaultPassword bool
+	MustChangePassword  bool
 }
 
 type resetToken struct {

@@ -77,6 +77,27 @@ func TestEncryptBackupFileRejectsInvalidRecipient(t *testing.T) {
 	}
 }
 
+func TestCopyBackupFileRejectsSameDirectoryAsSource(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "openschool_20260101_020000.dump")
+	want := []byte("dump contents")
+	if err := os.WriteFile(src, want, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := copyBackupFile(src, dir); err == nil {
+		t.Fatal("copyBackupFile accepted a destination equal to the source directory")
+	}
+
+	got, err := os.ReadFile(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(want) {
+		t.Fatal("copyBackupFile truncated the source file")
+	}
+}
+
 func TestCopyBackupFileCopiesToDestination(t *testing.T) {
 	srcDir, destDir := t.TempDir(), filepath.Join(t.TempDir(), "offsite")
 	src := filepath.Join(srcDir, "openschool_20260101_020000.dump")

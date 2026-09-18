@@ -30,6 +30,22 @@ func init() {
 	prometheus.MustRegister(requestsTotal, requestDuration)
 }
 
+// allowedMethods bounds the "method" label to the verbs the router actually
+// accepts (see the CORS config in main.go). Without this, an unauthenticated
+// client could send arbitrary method tokens and create unbounded new label
+// series, exhausting Prometheus/app memory.
+var allowedMethods = map[string]bool{
+	"GET": true, "POST": true, "PUT": true, "PATCH": true,
+	"DELETE": true, "OPTIONS": true, "HEAD": true,
+}
+
+func normalizeMethod(method string) string {
+	if allowedMethods[method] {
+		return method
+	}
+	return "other"
+}
+
 // Metrics records each request's count and latency under its route
 // template (never the raw path, so /students/:id doesn't fan out into one
 // series per student).
@@ -42,7 +58,8 @@ func Metrics() gin.HandlerFunc {
 		if route == "" {
 			route = "unmatched"
 		}
-		requestsTotal.WithLabelValues(c.Request.Method, route, strconv.Itoa(c.Writer.Status())).Inc()
-		requestDuration.WithLabelValues(c.Request.Method, route).Observe(time.Since(start).Seconds())
+		method := normalizeMethod(c.Request.Method)
+		requestsTotal.WithLabelValues(method, route, strconv.Itoa(c.Writer.Status())).Inc()
+		requestDuration.WithLabelValues(method, route).Observe(time.Since(start).Seconds())
 	}
 }

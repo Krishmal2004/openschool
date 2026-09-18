@@ -15,5 +15,5 @@ FROM audit_logs al
 LEFT JOIN users u ON u.id = al.actor_id
 WHERE (sqlc.narg(entity_type)::text IS NULL OR al.entity_type = sqlc.narg(entity_type))
   AND (sqlc.narg(entity_id)::uuid IS NULL OR al.entity_id = sqlc.narg(entity_id))
-ORDER BY al.created_at DESC
+ORDER BY al.created_at DESC, al.id DESC
 LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;

@@ -155,11 +155,6 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// Not on /api/v1 and carries no auth of its own — the proxy must not
-	// expose it publicly (section 5: "/metrics for Prometheus, protected by
-	// the proxy"). See deploy/nginx.conf.example for a reference restriction.
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
 	scheduler := app.Setup(r, db)
 	scheduler.Start()
 	defer scheduler.Stop()
@@ -182,12 +177,32 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// /metrics carries no auth of its own, so it's served on its own listener
+	// bound to loopback rather than on the public API port — the reverse
+	// proxy has no route to it, and reaching it requires access to the host
+	// itself (e.g. a Prometheus scraper running as a sidecar).
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9090"
+	}
+	metricsSrv := &http.Server{
+		Addr:    "127.0.0.1:" + metricsPort,
+		Handler: promhttp.Handler(),
+	}
+
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server failed: %v", err)
 		}
 	}()
 	log.Printf("listening on :%s", port)
+
+	go func() {
+		if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("metrics server failed: %v", err)
+		}
+	}()
+	log.Printf("metrics listening on 127.0.0.1:%s", metricsPort)
 
 	// A deploy mid-request must not drop it: wait for SIGTERM/SIGINT, then
 	// stop accepting new connections and let in-flight ones finish (S13).
@@ -196,9 +211,17 @@ func main() {
 	<-stop
 	log.Println("shutting down")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// The shutdown deadline must cover the longest request the server allows
+	// (RequestTimeout, 15s) plus a cleanup margin, or a SIGTERM arriving just
+	// after a slow request starts could make main exit while it's in flight.
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
+	}
+	metricsCtx, metricsCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer metricsCancel()
+	if err := metricsSrv.Shutdown(metricsCtx); err != nil {
+		log.Printf("metrics server shutdown failed: %v", err)
 	}
 }

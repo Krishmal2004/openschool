@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 
+	"github.com/openschool-org/openschool/internal/idp"
 	"github.com/openschool-org/openschool/internal/modules/notifications"
 )
 
@@ -25,11 +24,12 @@ const studentRetentionYears = 7
 type DataRetentionAgent struct {
 	checks   *Repository
 	notifSvc *notifications.NotificationService
+	idp      idp.Provider
 }
 
 // NewDataRetentionAgent constructs a DataRetentionAgent with its dependencies.
-func NewDataRetentionAgent(checks *Repository, notifSvc *notifications.NotificationService) *DataRetentionAgent {
-	return &DataRetentionAgent{checks: checks, notifSvc: notifSvc}
+func NewDataRetentionAgent(checks *Repository, notifSvc *notifications.NotificationService, provider idp.Provider) *DataRetentionAgent {
+	return &DataRetentionAgent{checks: checks, notifSvc: notifSvc, idp: provider}
 }
 
 // Name returns this agent's job_settings/job_runs identifier.
@@ -54,7 +54,6 @@ func (a *DataRetentionAgent) Run(ctx context.Context) (Result, error) {
 	}
 
 	var errs []error
-	names := make([]string, 0, len(candidates))
 	erased := 0
 	for _, c := range candidates {
 		if err := a.checks.AnonymizeStudentProfile(ctx, c.ID); err != nil {
@@ -62,18 +61,34 @@ func (a *DataRetentionAgent) Run(ctx context.Context) (Result, error) {
 			continue
 		}
 		if c.HasUser {
-			if err := a.checks.EraseStudentUser(ctx, c.UserID); err != nil {
-				// The profile is already anonymised — the PDPA-sensitive part is
-				// done — so a failure here is logged, not treated as the whole
-				// candidate having failed.
-				log.Printf("data-retention: profile %s anonymised but failed to scrub user %s: %v", c.ID, c.UserID, err)
+			// The profile is already anonymised — the PDPA-sensitive part is
+			// done — so a failure here doesn't fail the whole candidate. It's
+			// persisted for retry instead of only logged, since IdentityErasureRetryAgent
+			// is the only thing that will ever pick this back up otherwise.
+			localErr := a.checks.EraseStudentUser(ctx, c.UserID)
+			var idpErr error
+			if a.idp != nil {
+				idpErr = a.idp.DeleteUser(ctx, c.UserID.String())
+			}
+			if localErr != nil || idpErr != nil {
+				lastErr := ""
+				if localErr != nil {
+					lastErr = localErr.Error()
+				} else if idpErr != nil {
+					lastErr = idpErr.Error()
+				}
+				if err := a.checks.RecordPendingErasure(ctx, c.UserID, localErr == nil, idpErr == nil, lastErr); err != nil {
+					errs = append(errs, fmt.Errorf("failed to record pending erasure for %s: %w", c.UserID, err))
+				}
 			}
 		}
-		names = append(names, c.FullName)
 		erased++
 	}
 
-	summary := fmt.Sprintf("anonymised %d student(s) past the %d-year retention window: %s", erased, studentRetentionYears, strings.Join(names, ", "))
+	// Aggregate counts only — the erased students' names must not survive in
+	// a stored, un-redacted admin notification once their profiles are meant
+	// to be anonymised (S11).
+	summary := fmt.Sprintf("anonymised %d student(s) past the %d-year retention window", erased, studentRetentionYears)
 	if err := notifyAdmins(ctx, a.checks, a.notifSvc, "Nightly retention purge ran", summary, "general", SeverityElevated); err != nil {
 		errs = append(errs, fmt.Errorf("ran purge but failed to notify admins: %w", err))
 	}

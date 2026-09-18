@@ -82,6 +82,45 @@ func (r *Repository) EraseStudentUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+// pendingErasure is a user whose local scrub and/or identity-provider
+// deletion hasn't completed yet after its profile was already anonymised.
+type pendingErasure struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	LocalDone bool
+	IdpDone   bool
+}
+
+// RecordPendingErasure upserts a retry record for userID: localDone/idpDone
+// report what has been confirmed done *this attempt* — the query itself
+// only ever moves either flag from false to true, so a later call that only
+// retries the still-failing half can't un-mark the half that already
+// succeeded. lastErr is freeform, for operator visibility only.
+func (r *Repository) RecordPendingErasure(ctx context.Context, userID uuid.UUID, localDone, idpDone bool, lastErr string) error {
+	return r.queries.UpsertPendingErasure(ctx, db.UpsertPendingErasureParams{
+		UserID: userID, LocalDone: localDone, IdpDone: idpDone,
+		LastError: pgtype.Text{String: lastErr, Valid: lastErr != ""},
+	})
+}
+
+// ListPendingErasures returns up to limit not-yet-fully-completed erasure retries, oldest first.
+func (r *Repository) ListPendingErasures(ctx context.Context, limit int32) ([]pendingErasure, error) {
+	rows, err := r.queries.ListPendingErasures(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]pendingErasure, len(rows))
+	for i, row := range rows {
+		result[i] = pendingErasure{ID: row.ID, UserID: row.UserID, LocalDone: row.LocalDone, IdpDone: row.IdpDone}
+	}
+	return result, nil
+}
+
+// DeletePendingErasure removes a retry record once both steps have completed.
+func (r *Repository) DeletePendingErasure(ctx context.Context, id uuid.UUID) error {
+	return r.queries.DeletePendingErasure(ctx, id)
+}
+
 func (r *Repository) ListCurrentAcademicYears(ctx context.Context) ([]academicYear, error) {
 	return mapRows(func() ([]db.AcademicYear, error) { return r.queries.ListCurrentAcademicYears(ctx) }, func(row db.AcademicYear) academicYear {
 		return academicYear{Label: row.Label}

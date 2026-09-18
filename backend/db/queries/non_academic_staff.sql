@@ -27,7 +27,7 @@ WHERE id = $1;
 SELECT *, COUNT(*) OVER () AS total FROM non_academic_staff
 WHERE (sqlc.narg(search)::text IS NULL OR full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR employee_number ILIKE '%' || sqlc.narg(search)::text || '%')
   AND (sqlc.narg(designation)::text IS NULL OR designation = sqlc.narg(designation)::text)
-ORDER BY full_name ASC
+ORDER BY full_name ASC, id ASC
 LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
 
 -- name: UpdateNonAcademicStaff :one

@@ -105,7 +105,7 @@ const listNonAcademicStaff = `-- name: ListNonAcademicStaff :many
 SELECT id, full_name, employee_number, designation, phone, joined_date, gender, house_id, employment_status, created_at, updated_at, COUNT(*) OVER () AS total FROM non_academic_staff
 WHERE ($1::text IS NULL OR full_name ILIKE '%' || $1::text || '%' OR employee_number ILIKE '%' || $1::text || '%')
   AND ($2::text IS NULL OR designation = $2::text)
-ORDER BY full_name ASC
+ORDER BY full_name ASC, id ASC
 LIMIT $3::int OFFSET $4::int
 `
 

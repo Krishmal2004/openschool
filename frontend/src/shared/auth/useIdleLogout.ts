@@ -68,6 +68,22 @@ export function useIdleLogout(timeoutMs: number = IDLE_TIMEOUT_MS) {
     if (!isSignedIn) return;
 
     resetTimer(true);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (warningRef.current) clearTimeout(warningRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetTimer(true) should only re-run on sign-in/timeout changes, not every render
+  }, [isSignedIn, timeoutMs]);
+
+  // Registered separately from timer init, and re-registered whenever
+  // handleActivity changes (i.e. whenever `warning` changes): otherwise the
+  // listener keeps closing over the `warning` value from whichever render it
+  // was attached in, so activity arriving right after the warning modal
+  // opens would reset the timer and dismiss it without going through
+  // staySignedIn.
+  useEffect(() => {
+    if (!isSignedIn) return;
+
     ACTIVITY_EVENTS.forEach((event) =>
       window.addEventListener(event, handleActivity, { passive: true }),
     );
@@ -76,11 +92,8 @@ export function useIdleLogout(timeoutMs: number = IDLE_TIMEOUT_MS) {
       ACTIVITY_EVENTS.forEach((event) =>
         window.removeEventListener(event, handleActivity),
       );
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningRef.current) clearTimeout(warningRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetTimer(true) should only re-run on sign-in/timeout changes, not every render
-  }, [isSignedIn, timeoutMs]);
+  }, [isSignedIn, handleActivity]);
 
   return { warning, staySignedIn: () => resetTimer(true), signOutNow: handleIdleTimeout };
 }

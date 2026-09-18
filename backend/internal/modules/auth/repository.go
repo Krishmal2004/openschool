@@ -24,6 +24,7 @@ func toUserAccount(row db.User) userAccount {
 	return userAccount{
 		ID: row.ID, Email: row.Email, Role: row.Role,
 		CreatedAt: row.CreatedAt.Time, KeptDefaultPassword: row.KeptDefaultPassword,
+		MustChangePassword: row.MustChangePassword,
 	}
 }
 

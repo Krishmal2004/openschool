@@ -36,10 +36,14 @@ export default function FirstRunSetup() {
     email: EMAIL_RE.test(form.email.trim()) ? undefined : "Enter a valid email address.",
     username: form.username.trim() ? undefined : "Username is required.",
     phone: isValidSriLankanPhone(form.phone) ? undefined : PHONE_INVALID_TEXT,
-    password: pw.passwordError,
-    confirmPassword: pw.confirmError,
+    password: form.password ? pw.passwordError : "Password is required.",
+    confirmPassword: form.confirmPassword ? pw.confirmError : "Confirm your password.",
   };
-  const canSubmit = Object.values(errors).every((e) => !e);
+  // pw.passwordError/confirmError are both undefined while the fields are
+  // still empty (validateNewPassword only flags a *wrong* value, not a
+  // missing one), so canSubmit must also require pw.valid — otherwise the
+  // very first admin account could be created with a blank password.
+  const canSubmit = pw.valid && Object.values(errors).every((e) => !e);
 
   const input = (field: Field, labelText: string, extra: Record<string, unknown> = {}) => ({
     id: `setup-${field}`,

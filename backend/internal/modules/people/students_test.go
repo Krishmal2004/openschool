@@ -82,7 +82,7 @@ func TestEraseAnonymisesProfileAndRemovesIdentity(t *testing.T) {
 	store := &eraseStoreStub{record: studentRecord{ID: studentID, UserID: userID}}
 	identity := &eraseIdentityStub{}
 	audit := &eraseAuditStub{}
-	service := NewStudentService(store, identity, nil, audit, nil)
+	service := NewStudentService(store, identity, nil, audit, nil, nil)
 
 	if err := service.Erase(context.Background(), studentID, actorID, "guardian requested erasure"); err != nil {
 		t.Fatal(err)
@@ -103,7 +103,7 @@ func TestEraseAnonymisesProfileAndRemovesIdentity(t *testing.T) {
 
 func TestEraseFailsClosedWhenStudentNotFound(t *testing.T) {
 	store := &eraseStoreStub{recordErr: errors.New("no rows")}
-	service := NewStudentService(store, &eraseIdentityStub{}, nil, &eraseAuditStub{}, nil)
+	service := NewStudentService(store, &eraseIdentityStub{}, nil, &eraseAuditStub{}, nil, nil)
 
 	if err := service.Erase(context.Background(), uuid.New(), uuid.New(), "reason"); err == nil {
 		t.Fatal("Erase should fail when the student cannot be found")

@@ -10,10 +10,20 @@ import { guardiansPageOptions } from "@/features/guardians/queries/useGuardians"
 // entry here doesn't touch every portal's nav file. Only the highest-
 // traffic paginated list pages are covered — extend this map as more
 // pages get their own server-paginated query.
+// Each entry's params must match the target page's *initial* query exactly
+// (query keys are compared by value) — prefetching with different defaults
+// (e.g. `{}`) populates a cache entry the page never reads, so it still
+// issues its own request on mount and the prefetch is wasted.
 const PREFETCHERS: Record<string, (queryClient: QueryClient) => void> = {
-  "/students": (queryClient) => void queryClient.prefetchQuery(studentsPageOptions()),
-  "/teachers": (queryClient) => void queryClient.prefetchQuery(teachersPageOptions()),
-  "/guardians": (queryClient) => void queryClient.prefetchQuery(guardiansPageOptions()),
+  "/students": (queryClient) => void queryClient.prefetchQuery(
+    studentsPageOptions({ limit: 25, offset: 0, search: "", grade: "", class: "", gender: "", house: "" }),
+  ),
+  "/teachers": (queryClient) => void queryClient.prefetchQuery(
+    teachersPageOptions({ limit: 25, offset: 0, search: "", status: "" }),
+  ),
+  "/guardians": (queryClient) => void queryClient.prefetchQuery(
+    guardiansPageOptions({ limit: 10, offset: 0, search: "", orphansOnly: false }),
+  ),
 };
 
 export function prefetchForPath(queryClient: QueryClient, path: string) {

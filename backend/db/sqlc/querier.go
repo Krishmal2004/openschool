@@ -93,6 +93,14 @@ type Querier interface {
 	DashboardExaminationSummary(ctx context.Context) (DashboardExaminationSummaryRow, error)
 	DashboardGradeWisePerformance(ctx context.Context) ([]DashboardGradeWisePerformanceRow, error)
 	DashboardNotificationsSentCount(ctx context.Context) (int64, error)
+	// Newest-enrolled students for the admin dashboard's activity feed — a
+	// dedicated, server-sorted query rather than slicing a capped, alphabetical
+	// ListStudentsPage result, which could otherwise miss a recently enrolled
+	// student once more than one page of students exists.
+	DashboardRecentStudents(ctx context.Context, limit int32) ([]DashboardRecentStudentsRow, error)
+	// Newest-added teachers for the admin dashboard's activity feed — see
+	// DashboardRecentStudents for why this is a dedicated query.
+	DashboardRecentTeachers(ctx context.Context, limit int32) ([]DashboardRecentTeachersRow, error)
 	// present/late/absent/leave totals across all staff (teachers + non-academic)
 	// for the current calendar month.
 	DashboardStaffAttendanceThisMonth(ctx context.Context) (DashboardStaffAttendanceThisMonthRow, error)
@@ -137,6 +145,7 @@ type Querier interface {
 	DeleteLevel(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteMedium(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteNonAcademicStaff(ctx context.Context, id uuid.UUID) (int64, error)
+	DeletePendingErasure(ctx context.Context, id uuid.UUID) error
 	DeletePrefect(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteProgressReport(ctx context.Context, arg DeleteProgressReportParams) (int64, error)
 	DeleteSectionHead(ctx context.Context, id uuid.UUID) (int64, error)
@@ -482,6 +491,7 @@ type Querier interface {
 	// for (subject selection is per-student for A/L buckets) — so this is a
 	// breadth proxy, not a claim of exact completion percentage.
 	ListOpenTermMarksProgress(ctx context.Context) ([]ListOpenTermMarksProgressRow, error)
+	ListPendingErasures(ctx context.Context, limit int32) ([]PendingIdentityErasure, error)
 	// every prefect appointment a student has held, across all years — for the
 	// student portfolio's read-only "prefect appointments" rollup tab.
 	ListPrefectAppointmentsByStudent(ctx context.Context, studentID uuid.UUID) ([]ListPrefectAppointmentsByStudentRow, error)
@@ -700,6 +710,7 @@ type Querier interface {
 	// Teacher-in-charge for a whole grade (grades without A/L streams).
 	UpsertGradeSectionHead(ctx context.Context, arg UpsertGradeSectionHeadParams) (SectionHead, error)
 	UpsertNonAcademicStaffAttendance(ctx context.Context, arg UpsertNonAcademicStaffAttendanceParams) (StaffAttendanceRecord, error)
+	UpsertPendingErasure(ctx context.Context, arg UpsertPendingErasureParams) error
 	UpsertPrefect(ctx context.Context, arg UpsertPrefectParams) (Prefect, error)
 	// Swaps who the Principal is (at most one row can ever exist — permanent
 	// until resignation/promotion, not renewed per year).

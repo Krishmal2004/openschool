@@ -3,7 +3,8 @@ import { UserFollow } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { useCurrentClasses, useStreams } from "@/features/academics/queries/useClasses";
 import { useCurrentAcademicYear } from "@/features/school/queries/useAcademicYears";
-import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { useTeacher, useTeachers } from "@/features/teachers/queries/useTeachers";
+import type { Teacher } from "@/features/teachers/api/teacher";
 import { useSectionHeads, useAssignSectionHead, useRemoveSectionHead } from "@/features/teachers/queries/useSectionHeads";
 import type { SectionHead } from "@/features/teachers/api/sectionHead";
 import EmptyState from "@/shared/ui/EmptyState";
@@ -66,32 +67,18 @@ export default function SectionHeadsPanel() {
       ) : rows.length === 0 ? (
         <EmptyState title="No classes yet" description="Section heads are derived from the grades and streams your classes actually use." />
       ) : (
-        rows.map((row) => {
-          const head = headFor(row);
-          return (
-            <div key={row.key} className="os-list-row os-py-3 os-px-6">
-              <UserFollow size={16} className="os-fill-tertiary os-shrink-0" />
-              <div className="os-flex-1 os-min-w-0">
-                <p className="os-m-0 os-text-md os-fw-500 os-c-primary">{row.gradeName}{row.streamName ? ` - ${row.streamName}` : ""}</p>
-                {head && <p className="os-m-0 os-text-xs os-c-secondary">Current: {head.teacher_name}</p>}
-              </div>
-              <div className="os-w-16">
-                <EntityCombobox
-                  id={`tic-${row.key}`}
-                  items={teachers ?? []}
-                  selectedId={head?.teacher_id ?? ""}
-                  onSelect={(teacher_id) => teacher_id && assign.mutate({ academic_year_id: currentYear.id, grade_id: row.gradeId, stream_id: row.streamId, teacher_id })}
-                  onSearch={setTeacherSearch}
-                  getId={(t) => t.id}
-                  itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
-                  placeholder="Search teachers…"
-                />
-              </div>
-              {/* Vacating a post is only possible by removing the appointment. */}
-              <Button kind="danger--ghost" size="sm" onClick={() => head && setToRemove(head)} disabled={!head || remove.isPending}>Remove</Button>
-            </div>
-          );
-        })
+        rows.map((row) => (
+          <SectionHeadRow
+            key={row.key}
+            row={row}
+            head={headFor(row)}
+            teachers={teachers ?? []}
+            onSearch={setTeacherSearch}
+            onAssign={(teacher_id) => assign.mutate({ academic_year_id: currentYear.id, grade_id: row.gradeId, stream_id: row.streamId, teacher_id })}
+            onRemoveClick={setToRemove}
+            removeDisabled={remove.isPending}
+          />
+        ))
       )}
 
       <MutationErrorNotification isError={assign.isError} error={assign.error} title="Could not assign section head" fallback="Please try again." onClose={() => assign.reset()} className="os-mx-6" />
@@ -110,6 +97,53 @@ export default function SectionHeadsPanel() {
         onClose={() => setToRemove(null)}
         onConfirm={() => toRemove && currentYear && remove.mutate({ id: toRemove.id, academicYearId: currentYear.id }, { onSettled: () => setToRemove(null) })}
       />
+    </div>
+  );
+}
+
+interface SectionHeadRowProps {
+  row: Row;
+  head: SectionHead | undefined;
+  teachers: Teacher[];
+  onSearch: (term: string) => void;
+  onAssign: (teacherId: string) => void;
+  onRemoveClick: (head: SectionHead) => void;
+  removeDisabled: boolean;
+}
+
+// One row's own component so it can fetch its own current teacher by id —
+// the shared search-page `teachers` list may not contain it (no search
+// typed yet, or a term that doesn't match), which would otherwise resolve
+// the combobox to no selection and show an empty field for an existing
+// appointment.
+function SectionHeadRow({ row, head, teachers, onSearch, onAssign, onRemoveClick, removeDisabled }: SectionHeadRowProps) {
+  const { data: currentTeacher } = useTeacher(head?.teacher_id ?? "");
+  const items = useMemo(
+    () => (currentTeacher && !teachers.some((t) => t.id === currentTeacher.id) ? [currentTeacher, ...teachers] : teachers),
+    [teachers, currentTeacher],
+  );
+
+  return (
+    <div className="os-list-row os-py-3 os-px-6">
+      <UserFollow size={16} className="os-fill-tertiary os-shrink-0" />
+      <div className="os-flex-1 os-min-w-0">
+        <p className="os-m-0 os-text-md os-fw-500 os-c-primary">{row.gradeName}{row.streamName ? ` - ${row.streamName}` : ""}</p>
+        {head && <p className="os-m-0 os-text-xs os-c-secondary">Current: {head.teacher_name}</p>}
+      </div>
+      <div className="os-w-16">
+        <EntityCombobox
+          id={`tic-${row.key}`}
+          items={items}
+          selectedId={head?.teacher_id ?? ""}
+          onSelect={(teacher_id) => teacher_id && onAssign(teacher_id)}
+          onSearch={onSearch}
+          getId={(t) => t.id}
+          itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
+          placeholder="Search teachers…"
+        />
+      </div>
+      {/* Vacating a post is only possible by removing the appointment. */}
+      <Button kind="danger--ghost" size="sm" onClick={() => head && onRemoveClick(head)} disabled={!head || removeDisabled}>Remove</Button>
     </div>
   );
 }

@@ -26,14 +26,28 @@ server {
     gzip_types application/json text/css application/javascript;
 
     # Static SPA build: hashed assets are immutable, index.html must always revalidate.
+    #
+    # nginx does not merge add_header across nesting levels: a location that
+    # defines its own add_header stops inheriting every add_header set at the
+    # server level, not just the one it overrides. Both locations below repeat
+    # the S7 headers for that reason — dropping them here would ship the SPA's
+    # actual HTML response (and its assets) without CSP/HSTS/etc.
     root /var/www/openschool/dist;
     location / {
         try_files $uri /index.html;
     }
     location ~* \.(js|css|woff2|png|webp|svg)$ {
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://<thunderid-base-url>; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" always;
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
     location = /index.html {
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://<thunderid-base-url>; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" always;
         add_header Cache-Control "no-cache";
     }
 

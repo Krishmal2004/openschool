@@ -300,7 +300,7 @@ WHERE (
     $2::bool IS NOT TRUE
     OR NOT EXISTS (SELECT 1 FROM student_guardians sg WHERE sg.guardian_id = g.id)
   )
-ORDER BY g.full_name ASC
+ORDER BY g.full_name ASC, g.id ASC
 LIMIT $3::int OFFSET $4::int
 `
 

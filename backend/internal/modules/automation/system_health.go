@@ -112,6 +112,13 @@ func (a *SystemHealthAgent) Run(ctx context.Context) (Result, error) {
 
 // runBackup writes a new pg_dump and returns its path for the size-anomaly check to stat.
 func (a *SystemHealthAgent) runBackup(ctx context.Context) (string, error) {
+	// S11: backups must be encrypted at rest outside local development —
+	// fail closed rather than silently writing PII to disk in plaintext.
+	// APP_ENV unset is treated as non-development.
+	if os.Getenv("BACKUP_AGE_RECIPIENT") == "" && os.Getenv("APP_ENV") != "development" {
+		return "", fmt.Errorf("BACKUP_AGE_RECIPIENT is required outside APP_ENV=development")
+	}
+
 	// 0700: the dump files inside contain the full DB, including password
 	// hashes and personal data — no reason for other local users to even
 	// list the directory.
@@ -158,10 +165,11 @@ func (a *SystemHealthAgent) runBackup(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("could not encrypt backup: %w", err)
 		}
 		if err := os.Remove(outPath); err != nil {
-			log.Printf("system-health: encrypted backup written to %s but failed to remove plaintext %s: %v", encPath, outPath, err)
+			return encPath, fmt.Errorf("encrypted backup written to %s but failed to remove plaintext %s: %w", encPath, outPath, err)
 		}
 		finalPath = encPath
 	} else {
+		// Only reachable in APP_ENV=development — see the check above.
 		log.Printf("system-health: BACKUP_AGE_RECIPIENT is not set — nightly backup %s is stored unencrypted", outPath)
 	}
 
@@ -224,6 +232,9 @@ func copyBackupFile(src, destDir string) error {
 	defer in.Close()
 
 	dest := filepath.Join(destDir, filepath.Base(src))
+	if filepath.Clean(dest) == filepath.Clean(src) {
+		return fmt.Errorf("offsite backup destination %q must differ from source", dest)
+	}
 	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err

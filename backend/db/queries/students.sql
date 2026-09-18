@@ -81,7 +81,7 @@ WHERE (sqlc.narg(search)::text IS NULL OR sp.full_name ILIKE '%' || sqlc.narg(se
   AND (sqlc.narg(class)::text IS NULL OR c.name = sqlc.narg(class)::text)
   AND (sqlc.narg(gender)::text IS NULL OR sp.gender = sqlc.narg(gender)::text)
   AND (sqlc.narg(house)::text IS NULL OR h.name = sqlc.narg(house)::text)
-ORDER BY sp.full_name ASC
+ORDER BY sp.full_name ASC, sp.id ASC
 LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
 
 -- name: UpdateStudentProfile :one

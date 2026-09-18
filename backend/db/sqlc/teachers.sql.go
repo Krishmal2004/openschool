@@ -428,7 +428,7 @@ SELECT id, user_id, full_name, employee_number, joined_date, phone, created_at, 
 FROM teacher_profiles
 WHERE ($1::text IS NULL OR full_name ILIKE '%' || $1::text || '%' OR employee_number ILIKE '%' || $1::text || '%')
   AND ($2::text IS NULL OR employment_status = $2::text)
-ORDER BY full_name ASC
+ORDER BY full_name ASC, id ASC
 LIMIT $3::int OFFSET $4::int
 `
 

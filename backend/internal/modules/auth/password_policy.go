@@ -12,6 +12,17 @@ import (
 // leave the account exactly as guessable as before.
 var ErrWeakPassword = errors.New("that password is too common or matches information printed on your ID card — choose a different one")
 
+// ErrPasswordTooShort is returned when a new password is under
+// MinPasswordLength.
+var ErrPasswordTooShort = errors.New("password must be at least 10 characters")
+
+// MinPasswordLength mirrors the `min=10` request-binding tags on
+// ResetPasswordRequest/ChangePasswordRequest (models.go). setPassword
+// enforces it again here so any caller reaching the shared setter directly
+// — not just the two HTTP request shapes that carry that tag today — can't
+// bypass the minimum length.
+const MinPasswordLength = 10
+
 // commonPasswords is a small deny list of the most-guessed passwords and
 // keyboard patterns, mirroring frontend/src/shared/auth/password.ts so a
 // direct API call can't bypass the client-side check. It is intentionally

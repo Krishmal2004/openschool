@@ -349,7 +349,7 @@ WHERE ($1::text IS NULL OR sp.full_name ILIKE '%' || $1::text || '%' OR sp.index
   AND ($3::text IS NULL OR c.name = $3::text)
   AND ($4::text IS NULL OR sp.gender = $4::text)
   AND ($5::text IS NULL OR h.name = $5::text)
-ORDER BY sp.full_name ASC
+ORDER BY sp.full_name ASC, sp.id ASC
 LIMIT $6::int OFFSET $7::int
 `
 

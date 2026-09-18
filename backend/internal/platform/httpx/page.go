@@ -3,6 +3,7 @@ package httpx
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +32,7 @@ type PageParams struct {
 // the match arbitrarily, and one "%" alone would scan the whole table.
 func ParsePage(c *gin.Context) PageParams {
 	limit := int32(DefaultPageLimit)
-	if v, err := strconv.Atoi(c.Query("limit")); err == nil && v > 0 {
+	if v, err := strconv.ParseInt(c.Query("limit"), 10, 32); err == nil && v > 0 {
 		limit = int32(v)
 	}
 	if limit > MaxPageLimit {
@@ -39,13 +40,23 @@ func ParsePage(c *gin.Context) PageParams {
 	}
 
 	var offset int32
-	if v, err := strconv.Atoi(c.Query("offset")); err == nil && v > 0 {
+	// ParseInt with a 32-bit size rejects anything outside int32's range
+	// outright, rather than truncating: an offset like 2147483648 fits in a
+	// 64-bit int on most hosts, so a bare int(v) cast here would silently
+	// wrap negative and send Postgres a negative OFFSET.
+	if v, err := strconv.ParseInt(c.Query("offset"), 10, 32); err == nil && v > 0 {
 		offset = int32(v)
 	}
 
 	search := strings.TrimSpace(c.Query("search"))
 	if len(search) > MaxSearchLength {
 		search = search[:MaxSearchLength]
+		// Truncating by byte index can split a multi-byte UTF-8 character;
+		// back off until the result is valid again so it doesn't reach
+		// Postgres as invalid encoding.
+		for !utf8.ValidString(search) {
+			search = search[:len(search)-1]
+		}
 	}
 
 	return PageParams{Limit: limit, Offset: offset, Search: EscapeLikeTerm(search)}

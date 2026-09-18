@@ -203,7 +203,7 @@ var testServiceNow = time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
 
 func TestKeepDefaultPasswordOnlyClearsFlag(t *testing.T) {
 	userID := uuid.New()
-	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow}}
+	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow, MustChangePassword: true}}
 	provider := &passwordUpdaterStub{}
 	if err := newTestService(store, guardianStub{}, provider, &mailerStub{}).KeepDefaultPassword(context.Background(), userID); err != nil {
 		t.Fatal(err)
@@ -215,9 +215,18 @@ func TestKeepDefaultPasswordOnlyClearsFlag(t *testing.T) {
 
 func TestKeepDefaultPasswordRefusedOnceExpired(t *testing.T) {
 	userID := uuid.New()
-	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow.Add(-8 * 24 * time.Hour)}}
+	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow.Add(-8 * 24 * time.Hour), MustChangePassword: true}}
 	err := newTestService(store, guardianStub{}, &passwordUpdaterStub{}, &mailerStub{}).KeepDefaultPassword(context.Background(), userID)
 	if !errors.Is(err, ErrDefaultPasswordExpired) || store.setCalled {
+		t.Fatalf("KeepDefaultPassword() = %v; flag cleared = %v", err, store.setCalled)
+	}
+}
+
+func TestKeepDefaultPasswordRefusedAfterPasswordAlreadyChanged(t *testing.T) {
+	userID := uuid.New()
+	store := &authStoreStub{user: userAccount{ID: userID, CreatedAt: testServiceNow, MustChangePassword: false}}
+	err := newTestService(store, guardianStub{}, &passwordUpdaterStub{}, &mailerStub{}).KeepDefaultPassword(context.Background(), userID)
+	if !errors.Is(err, ErrPasswordAlreadyChanged) || store.setCalled {
 		t.Fatalf("KeepDefaultPassword() = %v; flag cleared = %v", err, store.setCalled)
 	}
 }

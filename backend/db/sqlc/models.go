@@ -213,6 +213,17 @@ type PasswordResetToken struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type PendingIdentityErasure struct {
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	LocalDone bool               `json:"local_done"`
+	IdpDone   bool               `json:"idp_done"`
+	LastError pgtype.Text        `json:"last_error"`
+	Attempts  int32              `json:"attempts"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Prefect struct {
 	ID             uuid.UUID          `json:"id"`
 	AcademicYearID uuid.UUID          `json:"academic_year_id"`
