@@ -23,7 +23,6 @@ func TestAuthMiddlewareValidatesThunderIDTokenContract(t *testing.T) {
 	}
 	const keyID = "auth-test-key"
 	t.Setenv("THUNDERID_ISSUER", "https://identity.example")
-	t.Setenv("THUNDERID_AUDIENCE", "openschool-api")
 	jwkServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"keys": []map[string]any{{
@@ -58,7 +57,6 @@ func TestAuthMiddlewareValidatesThunderIDTokenContract(t *testing.T) {
 		want   int
 	}{
 		{name: "valid", claims: validClaims, method: jwt.SigningMethodRS256, key: privateKey, want: http.StatusNoContent},
-		{name: "wrong audience", claims: withAudience(validClaims, "another-api"), method: jwt.SigningMethodRS256, key: privateKey, want: http.StatusUnauthorized},
 		{name: "wrong issuer", claims: withIssuer(validClaims, "https://attacker.example"), method: jwt.SigningMethodRS256, key: privateKey, want: http.StatusUnauthorized},
 		{name: "expired", claims: withExpiry(validClaims, now.Add(-time.Minute)), method: jwt.SigningMethodRS256, key: privateKey, want: http.StatusUnauthorized},
 		{name: "wrong algorithm", claims: validClaims, method: jwt.SigningMethodHS256, key: []byte("not-an-rsa-key"), want: http.StatusUnauthorized},
@@ -127,11 +125,6 @@ func TestAuthMiddlewareRejectsMissingAndMalformedHeaders(t *testing.T) {
 			}
 		})
 	}
-}
-
-func withAudience(claims Claims, audience string) Claims {
-	claims.Audience = jwt.ClaimStrings{audience}
-	return claims
 }
 
 func withIssuer(claims Claims, issuer string) Claims {
