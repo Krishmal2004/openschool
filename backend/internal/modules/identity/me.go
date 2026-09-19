@@ -4,10 +4,12 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	authz "github.com/openschool-org/openschool/internal/authz"
+	"github.com/openschool-org/openschool/internal/modules/auth"
 )
 
 type userProvisioner interface {
@@ -22,7 +24,17 @@ type ensureUserCommand struct {
 }
 
 type provisionedUser struct {
-	MustChangePassword bool
+	MustChangePassword  bool
+	KeptDefaultPassword bool
+	CreatedAt           time.Time
+}
+
+// defaultPasswordExpired reports whether a "keep this password" choice has
+// stood long enough that the account must actually change its password
+// (S1) — mirrors auth.Service.KeepDefaultPassword's own check, so /me and
+// the write path that enforces it never disagree.
+func (u provisionedUser) defaultPasswordExpired(now time.Time) bool {
+	return u.KeptDefaultPassword && now.Sub(u.CreatedAt) > auth.DefaultPasswordExpiry
 }
 
 type meService struct{ users userProvisioner }
@@ -49,6 +61,7 @@ func (h *meHandler) get(c *gin.Context) {
 	roleList, _ := tokenRoles.([]string)
 
 	mustChangePassword := false
+	defaultPasswordExpired := false
 	if parsedID, err := uuid.Parse(userID); err == nil {
 		user, provisionErr := h.service.ensureProvisioned(c.Request.Context(), ensureUserCommand{
 			ID: parsedID, Email: email, FullName: givenName + " " + familyName, Role: authz.ResolveAppRole(roleList),
@@ -56,7 +69,11 @@ func (h *meHandler) get(c *gin.Context) {
 		if provisionErr != nil {
 			log.Printf("/me: failed to provision local user %s: %v", parsedID, provisionErr)
 		} else {
-			mustChangePassword = user.MustChangePassword
+			// A "keep this password" choice re-triggers the interstitial once
+			// it expires, even though must_change_password itself was
+			// already cleared at the time of that choice (S1).
+			defaultPasswordExpired = user.defaultPasswordExpired(time.Now())
+			mustChangePassword = user.MustChangePassword || defaultPasswordExpired
 		}
 	}
 
@@ -64,6 +81,7 @@ func (h *meHandler) get(c *gin.Context) {
 		"user_id": userID, "email": email, "username": c.GetString("username"),
 		"given_name": givenName, "family_name": familyName,
 		"phone_number": c.GetString("phone_number"), "roles": tokenRoles,
-		"must_change_password": mustChangePassword,
+		"must_change_password":     mustChangePassword,
+		"default_password_expired": defaultPasswordExpired,
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -23,7 +24,7 @@ func (h *JobsHandler) List(c *gin.Context) {
 	ctx := c.Request.Context()
 	status, err := h.service.List(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, status)
@@ -47,7 +48,7 @@ func (h *JobsHandler) SetEnabled(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})

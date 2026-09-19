@@ -20,14 +20,22 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{queries: db.New(pool)}
 }
 
+func toUserAccount(row db.User) userAccount {
+	return userAccount{
+		ID: row.ID, Email: row.Email, Role: row.Role,
+		CreatedAt: row.CreatedAt.Time, KeptDefaultPassword: row.KeptDefaultPassword,
+		MustChangePassword: row.MustChangePassword,
+	}
+}
+
 func (r *Repository) userByEmail(ctx context.Context, email string) (userAccount, error) {
 	row, err := r.queries.GetUserByEmail(ctx, email)
-	return userAccount{ID: row.ID, Email: row.Email, Role: row.Role}, err
+	return toUserAccount(row), err
 }
 
 func (r *Repository) userByID(ctx context.Context, id uuid.UUID) (userAccount, error) {
 	row, err := r.queries.GetUserByID(ctx, id)
-	return userAccount{ID: row.ID, Email: row.Email, Role: row.Role}, err
+	return toUserAccount(row), err
 }
 
 func (r *Repository) teacherCredentialsMatch(ctx context.Context, userID uuid.UUID, nic string) bool {
@@ -54,6 +62,10 @@ func (r *Repository) consumeResetToken(ctx context.Context, tokenHash string) (r
 	return resetToken{UserID: row.UserID}, err
 }
 
-func (r *Repository) setMustChangePassword(ctx context.Context, id uuid.UUID, mustChange bool) error {
-	return r.queries.SetMustChangePassword(ctx, db.SetMustChangePasswordParams{ID: id, MustChangePassword: mustChange})
+// clearMustChangePassword records that the account is no longer blocked on
+// first-login setup. keptDefault distinguishes "chose to keep the default
+// password" from "set a real one" — the two need telling apart so an
+// unchanged default password can still expire after a week (S1).
+func (r *Repository) clearMustChangePassword(ctx context.Context, id uuid.UUID, keptDefault bool) error {
+	return r.queries.ClearMustChangePassword(ctx, db.ClearMustChangePasswordParams{ID: id, KeptDefaultPassword: keptDefault})
 }

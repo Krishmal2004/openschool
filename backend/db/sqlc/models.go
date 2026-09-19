@@ -213,6 +213,17 @@ type PasswordResetToken struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type PendingIdentityErasure struct {
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	LocalDone bool               `json:"local_done"`
+	IdpDone   bool               `json:"idp_done"`
+	LastError pgtype.Text        `json:"last_error"`
+	Attempts  int32              `json:"attempts"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Prefect struct {
 	ID             uuid.UUID          `json:"id"`
 	AcademicYearID uuid.UUID          `json:"academic_year_id"`
@@ -365,6 +376,8 @@ type StudentProfile struct {
 	Gender           pgtype.Text        `json:"gender"`
 	HouseID          pgtype.UUID        `json:"house_id"`
 	EnrollmentStatus string             `json:"enrollment_status"`
+	LeftAt           pgtype.Timestamptz `json:"left_at"`
+	ErasedAt         pgtype.Timestamptz `json:"erased_at"`
 }
 
 type StudentProgressReport struct {
@@ -540,14 +553,15 @@ type TimetableStatusHistory struct {
 }
 
 type User struct {
-	ID                 uuid.UUID          `json:"id"`
-	Email              string             `json:"email"`
-	FullName           string             `json:"full_name"`
-	Role               string             `json:"role"`
-	IsActive           bool               `json:"is_active"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	MustChangePassword bool               `json:"must_change_password"`
+	ID                  uuid.UUID          `json:"id"`
+	Email               string             `json:"email"`
+	FullName            string             `json:"full_name"`
+	Role                string             `json:"role"`
+	IsActive            bool               `json:"is_active"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	MustChangePassword  bool               `json:"must_change_password"`
+	KeptDefaultPassword bool               `json:"kept_default_password"`
 }
 
 type VicePrincipalGradeScope struct {

@@ -1,6 +1,10 @@
 package auth
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // ForgotPasswordRequest identifies the caller by their login identifier
 // (email — every role that can self-serve a reset has one on file) plus a
@@ -25,7 +29,7 @@ type ForgotPasswordResponse struct {
 // by ForgotPassword — the unauthenticated counterpart to ChangePassword.
 type ResetPasswordRequest struct {
 	Token       string `json:"token" binding:"required"`
-	NewPassword string `json:"new_password" binding:"required,min=8"`
+	NewPassword string `json:"new_password" binding:"required,min=10"`
 }
 
 // ChangePasswordRequest is used both by the signed-in "Change password"
@@ -33,13 +37,16 @@ type ResetPasswordRequest struct {
 // 8.3) — both already have an authenticated session, so neither needs a
 // reset token.
 type ChangePasswordRequest struct {
-	NewPassword string `json:"new_password" binding:"required,min=8"`
+	NewPassword string `json:"new_password" binding:"required,min=10"`
 }
 
 type userAccount struct {
-	ID    uuid.UUID
-	Email string
-	Role  string
+	ID                  uuid.UUID
+	Email               string
+	Role                string
+	CreatedAt           time.Time
+	KeptDefaultPassword bool
+	MustChangePassword  bool
 }
 
 type resetToken struct {

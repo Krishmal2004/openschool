@@ -35,12 +35,13 @@ const FINDINGS = [
 
 export default function Students() {
   const navigate = useNavigate();
-  const { data: students, isLoading, isError, refetch } = useStudents();
   const { data: grades } = useGrades();
   const { data: houses } = useHouses();
   const { data: classes } = useCurrentClasses();
   const deleteStudent = useDeleteStudent();
   const [toDelete, setToDelete] = useState<Student | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({
     query: "",
@@ -55,18 +56,27 @@ export default function Students() {
     [classes, filters.grade],
   );
 
-  // Memoised so typing in the search box does not re-filter thousands of rows per keystroke.
-  const filtered = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
-    return (students ?? []).filter(
-      (s) =>
-        (!q || s.full_name.toLowerCase().includes(q) || s.index_number.toLowerCase().includes(q)) &&
-        (!filters.grade || s.grade_name === filters.grade) &&
-        (!filters.cls || s.class_name === filters.cls) &&
-        (!filters.gender || s.gender === filters.gender) &&
-        (!filters.house || s.house_name === filters.house),
-    );
-  }, [students, debouncedSearch, filters.grade, filters.cls, filters.gender, filters.house]);
+  // The server does the filtering now; search/filters/page/size all live in
+  // the query key so a different combination is a different cache entry,
+  // and keepPreviousData (in useStudents) keeps the old page on screen
+  // while the next one loads instead of flashing a skeleton.
+  const params = {
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    search: debouncedSearch,
+    grade: filters.grade,
+    class: filters.cls,
+    gender: filters.gender,
+    house: filters.house,
+  };
+  const { data, isLoading, isError, refetch } = useStudents(params);
+  const students = data?.items ?? [];
+
+  // A filter/search change makes the current page number meaningless against the new result set.
+  const setFilter = <K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) => {
+    setPage(1);
+    set(key, value);
+  };
 
   const columns: GridColumn<Student>[] = [
     { key: "index_number", header: "Index No.", render: (s) => <span className="os-table__mono">{s.index_number}</span> },
@@ -117,12 +127,12 @@ export default function Students() {
       <AgentFindingsBanner titles={FINDINGS} />
 
       <div className="os-section">
-        <FilterBar search={{ value: filters.query, onChange: (v) => set("query", v), placeholder: "Search by name or index number…" }}>
+        <FilterBar search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or index number…" }}>
           <EntityCombobox
             id="filter-grade"
             items={grades ?? []}
             selectedId={filters.grade}
-            onSelect={(v) => { set("grade", v); set("cls", ""); }}
+            onSelect={(v) => { setFilter("grade", v); setFilter("cls", ""); }}
             getId={(g) => g.name}
             itemToString={(g) => g.name}
             placeholder="All grades"
@@ -131,17 +141,17 @@ export default function Students() {
             id="filter-class"
             items={classOptions}
             selectedId={filters.cls}
-            onSelect={(v) => set("cls", v)}
+            onSelect={(v) => setFilter("cls", v)}
             getId={(c) => c.name}
             itemToString={(c) => c.name}
             placeholder="All classes"
           />
-          <Select id="filter-gender" labelText="" size="md" value={filters.gender} onChange={(e) => set("gender", e.target.value)}>
+          <Select id="filter-gender" labelText="" size="md" value={filters.gender} onChange={(e) => setFilter("gender", e.target.value)}>
             <SelectItem value="" text="Any gender" />
             <SelectItem value="male" text="Male" />
             <SelectItem value="female" text="Female" />
           </Select>
-          <Select id="filter-house" labelText="" size="md" value={filters.house} onChange={(e) => set("house", e.target.value)}>
+          <Select id="filter-house" labelText="" size="md" value={filters.house} onChange={(e) => setFilter("house", e.target.value)}>
             <SelectItem value="" text="All houses" />
             {houses?.map((h) => <SelectItem key={h.id} value={h.name} text={h.name} />)}
           </Select>
@@ -149,8 +159,8 @@ export default function Students() {
 
         <ActiveFilterTags
           filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))}
-          onClear={(k) => clear(k as keyof typeof filters)}
-          onClearAll={() => clear()}
+          onClear={(k) => { clear(k as keyof typeof filters); setPage(1); }}
+          onClearAll={() => { clear(); setPage(1); }}
         />
 
         <MutationErrorNotification
@@ -165,17 +175,18 @@ export default function Students() {
         <ListState
           isLoading={isLoading}
           isError={isError}
-          isEmpty={filtered.length === 0}
+          isEmpty={students.length === 0}
           errorMessage="Failed to load students"
           onRetry={refetch}
           skeleton={<TableSkeleton headers={columns.map((c) => c.header)} />}
           empty={{ title: "No students found", description: "Enrol your first student or adjust your search filters to get started." }}
         >
           <DataGrid
-            rows={filtered}
+            rows={students}
             columns={columns}
             getRowId={(s) => s.id}
             countLabel={(shown, total) => `Showing ${shown} of ${total} students`}
+            server={{ page, pageSize, totalItems: data?.total ?? 0, onChange: ({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); } }}
           />
         </ListState>
       </div>

@@ -3,6 +3,9 @@ package identity
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/openschool-org/openschool/internal/modules/auth"
 )
 
 type provisionerStub struct {
@@ -39,5 +42,25 @@ func TestEnsureProvisionedDelegatesKnownRole(t *testing.T) {
 	}
 	if !repository.called || repository.command != command || !result.MustChangePassword {
 		t.Fatalf("known role was not forwarded to the repository")
+	}
+}
+
+func TestDefaultPasswordExpired(t *testing.T) {
+	now := time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name string
+		user provisionedUser
+		want bool
+	}{
+		{"never kept default password", provisionedUser{KeptDefaultPassword: false, CreatedAt: now.Add(-30 * 24 * time.Hour)}, false},
+		{"kept recently", provisionedUser{KeptDefaultPassword: true, CreatedAt: now.Add(-time.Hour)}, false},
+		{"kept past the expiry window", provisionedUser{KeptDefaultPassword: true, CreatedAt: now.Add(-(auth.DefaultPasswordExpiry + time.Hour))}, true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.user.defaultPasswordExpired(now); got != test.want {
+				t.Fatalf("defaultPasswordExpired() = %v, want %v", got, test.want)
+			}
+		})
 	}
 }

@@ -1,8 +1,7 @@
-import { useMemo } from "react";
-import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons-react";
 import { useSchool } from "@/features/school/queries/useSchool";
 import { useStudents } from "@/features/students/queries/useStudents";
 import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { useDashboardAnalytics } from "@/features/reports/queries/useDashboardAnalytics";
 import { useCurrentClasses } from "@/features/academics/queries/useClasses";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
 import { useAcademicYears } from "@/features/school/queries/useAcademicYears";
@@ -10,14 +9,27 @@ import { useDailySessions } from "@/features/attendance/queries/useAttendance";
 import { useStaffAttendanceByDate } from "@/features/attendance/queries/useStaffAttendance";
 import type { DailySession } from "@/features/attendance/api/attendance";
 import { todayISODate } from "@/shared/lib/date";
+import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons-react";
 import StatCard from "@/features/reports/components/dashboard/StatCard";
 import AttendanceByClassSection from "@/features/reports/components/dashboard/AttendanceByClassSection";
-import RecentActivitySection, { type RecentActivityItem } from "@/features/reports/components/dashboard/RecentActivitySection";
+import RecentActivitySection from "@/features/reports/components/dashboard/RecentActivitySection";
+import { useMemo } from "react";
 
 export default function Dashboard() {
   const { data: school } = useSchool();
-  const { data: students, isLoading: studentsLoading } = useStudents();
-  const { data: teachers, isLoading: teachersLoading } = useTeachers();
+  // Only `total` is used from these two — a small limit keeps the request
+  // light since the page doesn't render any of the individual rows.
+  const { data: studentPage, isLoading: studentsLoading } = useStudents({ limit: 1 });
+  const studentCount = studentPage?.total ?? 0;
+  const { data: teacherPage, isLoading: teachersLoading } = useTeachers({ limit: 1 });
+  const teacherCount = teacherPage?.total ?? 0;
+  // The activity feed comes from a dedicated, server-sorted (created_at
+  // DESC) query on the backend (dashboard.Service.recentActivity), not a
+  // client-side slice of a capped, alphabetically-sorted list page — the
+  // latter could miss a recently enrolled student/teacher once more than
+  // one page of records exists.
+  const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics();
+  const recentActivity = useMemo(() => analytics?.school.recent_activity ?? [], [analytics]);
   const { data: classes, isLoading: classesLoading } = useCurrentClasses();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
   const { data: years } = useAcademicYears();
@@ -27,34 +39,7 @@ export default function Dashboard() {
   const title = school?.name ? `${school.name} - Admin Dashboard` : "Admin Dashboard";
   const currentYear = years?.find((y) => y.is_current) ?? null;
 
-  const recentActivity = useMemo(() => {
-    const items: RecentActivityItem[] = [];
-    for (const s of students ?? []) {
-      if (!s.created_at) continue;
-      items.push({
-        key: `student-${s.id}`,
-        text: `${s.full_name} enrolled`,
-        sub: [s.grade_name, s.class_name, s.index_number].filter(Boolean).join(" · "),
-        time: s.created_at,
-        path: `/students/${s.id}`,
-        kind: "student",
-      });
-    }
-    for (const t of teachers ?? []) {
-      if (!t.created_at) continue;
-      items.push({
-        key: `teacher-${t.id}`,
-        text: `${t.full_name} added as a teacher`,
-        sub: t.employee_number,
-        time: t.created_at,
-        path: `/teachers/${t.id}`,
-        kind: "teacher",
-      });
-    }
-    return items.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 6);
-  }, [students, teachers]);
-
-  const dashboardLoading = studentsLoading || teachersLoading;
+  const dashboardLoading = analyticsLoading;
 
   const sessionByClassId = useMemo(() => {
     const map = new Map<string, DailySession>();
@@ -98,8 +83,8 @@ export default function Dashboard() {
       </div>
 
       <div className="os-stat-grid">
-        <StatCard label="Total Students" value={students?.length ?? 0} loading={studentsLoading} Icon={UserMultiple} path="/students" />
-        <StatCard label="Teachers" value={teachers?.length ?? 0} loading={teachersLoading} Icon={Education} path="/teachers" />
+        <StatCard label="Total Students" value={studentCount} loading={studentsLoading} Icon={UserMultiple} path="/students" />
+        <StatCard label="Teachers" value={teacherCount} loading={teachersLoading} Icon={Education} path="/teachers" />
         <StatCard label="Classes" value={classes?.length ?? 0} loading={classesLoading} Icon={Building} path="/classes" />
         <StatCard label="Subjects" value={subjects?.length ?? 0} loading={subjectsLoading} Icon={Book} path="/subjects" />
       </div>

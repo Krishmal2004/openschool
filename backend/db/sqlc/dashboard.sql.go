@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -150,6 +151,101 @@ func (q *Queries) DashboardNotificationsSentCount(ctx context.Context) (int64, e
 	var sent_count int64
 	err := row.Scan(&sent_count)
 	return sent_count, err
+}
+
+const dashboardRecentStudents = `-- name: DashboardRecentStudents :many
+SELECT sp.id, sp.full_name, sp.index_number, sp.created_at, g.name AS grade_name, c.name AS class_name
+FROM student_profiles sp
+LEFT JOIN class_students cs
+    ON cs.student_id = sp.id
+   AND cs.academic_year_id = (
+       SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1
+   )
+LEFT JOIN classes c ON c.id = cs.class_id
+LEFT JOIN grades  g ON g.id = c.grade_id
+ORDER BY sp.created_at DESC, sp.id DESC
+LIMIT $1
+`
+
+type DashboardRecentStudentsRow struct {
+	ID          uuid.UUID          `json:"id"`
+	FullName    string             `json:"full_name"`
+	IndexNumber string             `json:"index_number"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	GradeName   pgtype.Text        `json:"grade_name"`
+	ClassName   pgtype.Text        `json:"class_name"`
+}
+
+// Newest-enrolled students for the admin dashboard's activity feed — a
+// dedicated, server-sorted query rather than slicing a capped, alphabetical
+// ListStudentsPage result, which could otherwise miss a recently enrolled
+// student once more than one page of students exists.
+func (q *Queries) DashboardRecentStudents(ctx context.Context, limit int32) ([]DashboardRecentStudentsRow, error) {
+	rows, err := q.db.Query(ctx, dashboardRecentStudents, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DashboardRecentStudentsRow{}
+	for rows.Next() {
+		var i DashboardRecentStudentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.IndexNumber,
+			&i.CreatedAt,
+			&i.GradeName,
+			&i.ClassName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const dashboardRecentTeachers = `-- name: DashboardRecentTeachers :many
+SELECT id, full_name, employee_number, created_at
+FROM teacher_profiles
+ORDER BY created_at DESC, id DESC
+LIMIT $1
+`
+
+type DashboardRecentTeachersRow struct {
+	ID             uuid.UUID          `json:"id"`
+	FullName       string             `json:"full_name"`
+	EmployeeNumber string             `json:"employee_number"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+// Newest-added teachers for the admin dashboard's activity feed — see
+// DashboardRecentStudents for why this is a dedicated query.
+func (q *Queries) DashboardRecentTeachers(ctx context.Context, limit int32) ([]DashboardRecentTeachersRow, error) {
+	rows, err := q.db.Query(ctx, dashboardRecentTeachers, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DashboardRecentTeachersRow{}
+	for rows.Next() {
+		var i DashboardRecentTeachersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.EmployeeNumber,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const dashboardStaffAttendanceThisMonth = `-- name: DashboardStaffAttendanceThisMonth :one

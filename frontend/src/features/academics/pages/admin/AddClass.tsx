@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Button, Select, SelectItem, TextInput, InlineNotification } from "@carbon/react";
 import { ArrowLeft, Save } from "@carbon/icons-react";
@@ -14,7 +15,9 @@ export default function AddClass() {
   const { data: grades, isLoading: gradesLoading } = useGrades();
   const { data: streams } = useStreams();
   const { data: mediums } = useMediums();
-  const { data: teachers } = useTeachers();
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const { data: teacherPage } = useTeachers({ limit: 25, search: teacherSearch });
+  const teachers = teacherPage?.items;
   const f = useCreateClassForm(searchParams.get("grade_id") ?? "");
   const { form, set, touched } = f;
   const regularClassrooms = f.classrooms?.filter((c) => c.room_type === "regular");
@@ -71,6 +74,7 @@ export default function AddClass() {
               items={teachers ?? []}
               selectedId={form.form_teacher_id}
               onSelect={(id) => set("form_teacher_id", id)}
+              onSearch={setTeacherSearch}
               getId={(t) => t.id}
               itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
               placeholder="Search teachers by name or employee number…"

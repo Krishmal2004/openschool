@@ -36,6 +36,11 @@ func Connect(dsn string) (*pgxpool.Pool, error) {
 	config.MaxConnLifetime = 30 * time.Minute
 	config.MaxConnIdleTime = 5 * time.Minute
 	config.HealthCheckPeriod = time.Minute
+	// A slow or runaway query must not hold a pooled connection indefinitely under load (S15).
+	if config.ConnConfig.RuntimeParams == nil {
+		config.ConnConfig.RuntimeParams = map[string]string{}
+	}
+	config.ConnConfig.RuntimeParams["statement_timeout"] = strconv.FormatInt(int64(envInt32("DB_STATEMENT_TIMEOUT_MS", 10_000)), 10)
 
 	return pgxpool.NewWithConfig(context.Background(), config)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
 
@@ -120,7 +121,7 @@ func (h *streamHandler) get(c *gin.Context) {
 func (h *streamHandler) list(c *gin.Context) {
 	values, err := h.service.streams.listStreams(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, values)
@@ -164,7 +165,7 @@ func (h *streamHandler) listGroups(c *gin.Context) {
 	}
 	values, err := h.service.streams.listGroups(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, values)

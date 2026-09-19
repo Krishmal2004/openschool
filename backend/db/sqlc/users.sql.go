@@ -11,6 +11,22 @@ import (
 	"github.com/google/uuid"
 )
 
+const clearMustChangePassword = `-- name: ClearMustChangePassword :exec
+UPDATE users
+SET must_change_password = FALSE, kept_default_password = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type ClearMustChangePasswordParams struct {
+	ID                  uuid.UUID `json:"id"`
+	KeptDefaultPassword bool      `json:"kept_default_password"`
+}
+
+func (q *Queries) ClearMustChangePassword(ctx context.Context, arg ClearMustChangePasswordParams) error {
+	_, err := q.db.Exec(ctx, clearMustChangePassword, arg.ID, arg.KeptDefaultPassword)
+	return err
+}
+
 const countUsersByRole = `-- name: CountUsersByRole :one
 SELECT COUNT(*) FROM users
 WHERE role = $1
@@ -33,7 +49,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5
 )
-RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password
+RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password
 `
 
 type CreateUserParams struct {
@@ -62,6 +78,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }
@@ -72,7 +89,7 @@ SET
     is_active  = FALSE,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password
+RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password
 `
 
 func (q *Queries) DeactivateUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -87,6 +104,7 @@ func (q *Queries) DeactivateUser(ctx context.Context, id uuid.UUID) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }
@@ -102,7 +120,7 @@ INSERT INTO users (
     $1, $2, $3, $4, $5
 )
 ON CONFLICT (id) DO UPDATE SET id = users.id
-RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password
+RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password
 `
 
 type EnsureUserExistsParams struct {
@@ -135,12 +153,13 @@ func (q *Queries) EnsureUserExists(ctx context.Context, arg EnsureUserExistsPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password FROM users
+SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password FROM users
 WHERE email = $1
 `
 
@@ -156,12 +175,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password FROM users
+SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password FROM users
 WHERE id = $1
 `
 
@@ -177,12 +197,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password FROM users
+SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password FROM users
 ORDER BY full_name ASC
 `
 
@@ -204,6 +225,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.MustChangePassword,
+			&i.KeptDefaultPassword,
 		); err != nil {
 			return nil, err
 		}
@@ -216,7 +238,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 }
 
 const listUsersByRole = `-- name: ListUsersByRole :many
-SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password FROM users
+SELECT id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password FROM users
 WHERE role = $1
 ORDER BY full_name ASC
 `
@@ -239,6 +261,7 @@ func (q *Queries) ListUsersByRole(ctx context.Context, role string) ([]User, err
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.MustChangePassword,
+			&i.KeptDefaultPassword,
 		); err != nil {
 			return nil, err
 		}
@@ -273,7 +296,7 @@ SET
     email      = $3,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password
+RETURNING id, email, full_name, role, is_active, created_at, updated_at, must_change_password, kept_default_password
 `
 
 type UpdateUserParams struct {
@@ -294,6 +317,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.MustChangePassword,
+		&i.KeptDefaultPassword,
 	)
 	return i, err
 }

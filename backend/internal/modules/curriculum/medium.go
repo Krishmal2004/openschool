@@ -9,8 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/openschool-org/openschool/internal/apierror"
+	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
+
+// referenceDataMaxAgeSeconds is how long a client may cache rarely-changing
+// reference data (mediums) before revalidating (section 5).
+const referenceDataMaxAgeSeconds = 300
 
 var (
 	errMediumNotFound = errors.New("medium not found")
@@ -74,7 +80,7 @@ func RegisterMediumRoutes(admin, protected *gin.RouterGroup, pool *pgxpool.Pool)
 	admin.POST("/mediums", handler.create)
 	admin.PUT("/mediums/:id", handler.update)
 	admin.DELETE("/mediums/:id", handler.delete)
-	protected.GET("/mediums", handler.list)
+	protected.GET("/mediums", middleware.CacheReference(referenceDataMaxAgeSeconds), handler.list)
 }
 
 func (h *mediumHandler) create(c *gin.Context) {
@@ -94,7 +100,7 @@ func (h *mediumHandler) create(c *gin.Context) {
 func (h *mediumHandler) list(c *gin.Context) {
 	mediums, err := h.service.list(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mediums)

@@ -54,18 +54,20 @@ func (q *Queries) CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) 
 }
 
 const listAuditLogs = `-- name: ListAuditLogs :many
-SELECT al.id, al.entity_type, al.entity_id, al.action, al.actor_id, al.before, al.after, al.reason, al.created_at, u.full_name AS actor_name
+SELECT al.id, al.entity_type, al.entity_id, al.action, al.actor_id, al.before, al.after, al.reason, al.created_at, u.full_name AS actor_name, COUNT(*) OVER () AS total
 FROM audit_logs al
 LEFT JOIN users u ON u.id = al.actor_id
 WHERE ($1::text IS NULL OR al.entity_type = $1)
   AND ($2::uuid IS NULL OR al.entity_id = $2)
-ORDER BY al.created_at DESC
-LIMIT 200
+ORDER BY al.created_at DESC, al.id DESC
+LIMIT $3::int OFFSET $4::int
 `
 
 type ListAuditLogsParams struct {
 	EntityType pgtype.Text `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
+	PageLimit  int32       `json:"page_limit"`
+	PageOffset int32       `json:"page_offset"`
 }
 
 type ListAuditLogsRow struct {
@@ -79,13 +81,15 @@ type ListAuditLogsRow struct {
 	Reason     pgtype.Text        `json:"reason"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	ActorName  pgtype.Text        `json:"actor_name"`
+	// Hand-edited: excluded from JSON — read once for the page envelope's total.
+	Total int64 `json:"-"`
 }
 
 // entity_type/entity_id are optional filters (pass a zero UUID / empty
 // string to skip that filter — checked in the repository layer, since
 // sqlc.narg with a nullable uuid comparison reads awkwardly here).
 func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]ListAuditLogsRow, error) {
-	rows, err := q.db.Query(ctx, listAuditLogs, arg.EntityType, arg.EntityID)
+	rows, err := q.db.Query(ctx, listAuditLogs, arg.EntityType, arg.EntityID, arg.PageLimit, arg.PageOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +108,7 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 			&i.Reason,
 			&i.CreatedAt,
 			&i.ActorName,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}

@@ -44,9 +44,13 @@ ORDER BY n.sent_at DESC
 LIMIT 100;
 
 -- name: ListMyDraftNotifications :many
+-- Bounded like the sent-notification lists (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+-- section 4): an admin who never sends or deletes a draft could otherwise
+-- grow this without bound.
 SELECT * FROM notifications
 WHERE status = 'draft' AND created_by = $1
-ORDER BY updated_at DESC;
+ORDER BY updated_at DESC
+LIMIT 100;
 
 -- name: GetNotificationRecipientStats :one
 SELECT

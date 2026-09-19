@@ -25,12 +25,14 @@ AND g.id NOT IN (
 );
 
 -- name: ListGuardians :many
--- Every guardian on file, optionally filtered by a search term matched
--- against name/phone/email and/or restricted to "orphans" (linked to no
--- student — e.g. their last child left the school). Used both by the
--- guardian directory and the "link an existing guardian to this student
--- too" search picker (siblings sharing a guardian).
-SELECT g.* FROM guardians g
+-- Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4):
+-- serves both the guardian directory (no search term, paged) and the "link
+-- an existing guardian to this student too" search picker (siblings
+-- sharing a guardian; always passes a search term). The caller-supplied
+-- search term is escaped by the service layer (httpx.EscapeLikeTerm)
+-- before it reaches here, restricted to "orphans" (linked to no student —
+-- e.g. their last child left the school).
+SELECT g.*, COUNT(*) OVER () AS total FROM guardians g
 WHERE (
     sqlc.narg(search)::text IS NULL
     OR g.full_name ILIKE '%' || sqlc.narg(search) || '%'
@@ -41,7 +43,8 @@ WHERE (
     sqlc.narg(orphans_only)::bool IS NOT TRUE
     OR NOT EXISTS (SELECT 1 FROM student_guardians sg WHERE sg.guardian_id = g.id)
   )
-ORDER BY g.full_name ASC;
+ORDER BY g.full_name ASC, g.id ASC
+LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
 
 -- name: FindGuardianDuplicateCandidates :many
 -- Near-matches by phone or email, surfaced as a soft warning ("this

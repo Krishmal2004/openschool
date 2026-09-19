@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 	"github.com/openschool-org/openschool/internal/ports"
@@ -28,12 +29,19 @@ type staffCreate struct {
 }
 type staffUpdate struct{ FullName, Designation, Phone, Gender string }
 type staffRecord struct{ HouseID *uuid.UUID }
+// StaffListParams is the non-academic-staff pagination request: the shared
+// limit/offset/search contract plus the designation filter.
+type StaffListParams struct {
+	httpx.PageParams
+	Designation string
+}
+
 type nonAcademicStaffStore interface {
 	nextStaffEmployeeNumber(context.Context) (string, error)
 	createStaff(context.Context, staffCreate) (any, error)
 	getStaff(context.Context, uuid.UUID) (any, error)
 	staffRecord(context.Context, uuid.UUID) (staffRecord, error)
-	listStaff(context.Context, string, string) (any, error)
+	listStaffPage(context.Context, StaffListParams) (any, error)
 	updateStaff(context.Context, uuid.UUID, staffUpdate) (any, error)
 	updateStaffStatus(context.Context, uuid.UUID, string) (any, error)
 	updateStaffHouse(context.Context, uuid.UUID, *uuid.UUID) (any, error)
@@ -72,8 +80,8 @@ func (s *NonAcademicStaffService) Get(ctx context.Context, id uuid.UUID) (any, e
 	}
 	return value, nil
 }
-func (s *NonAcademicStaffService) List(ctx context.Context, search, designation string) (any, error) {
-	return s.store.listStaff(ctx, search, designation)
+func (s *NonAcademicStaffService) ListPage(ctx context.Context, params StaffListParams) (any, error) {
+	return s.store.listStaffPage(ctx, params)
 }
 func (s *NonAcademicStaffService) Update(ctx context.Context, id uuid.UUID, req UpdateNonAcademicStaffRequest) (any, error) {
 	if !ValidNonAcademicDesignations[req.Designation] {
@@ -132,9 +140,10 @@ func optionalUUID(raw, label string) (*uuid.UUID, error) {
 
 func RegisterNonAcademicStaffRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *NonAcademicStaffService) {
 	teacherOrAdmin.GET("/non-academic-staff", func(c *gin.Context) {
-		value, err := service.List(c, c.Query("search"), c.Query("designation"))
+		params := StaffListParams{PageParams: httpx.ParsePage(c), Designation: c.Query("designation")}
+		value, err := service.ListPage(c, params)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, value)

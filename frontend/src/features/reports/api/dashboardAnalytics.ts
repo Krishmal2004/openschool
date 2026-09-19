@@ -36,6 +36,15 @@ export interface StaffAttendanceTotals {
   leave_count: number;
 }
 
+export interface RecentActivityItem {
+  key: string;
+  text: string;
+  sub: string;
+  time: string;
+  path: string;
+  kind: "student" | "teacher";
+}
+
 export interface DashboardAnalytics {
   student: {
     total: number;
@@ -66,6 +75,7 @@ export interface DashboardAnalytics {
     timetable_completion_pct: number;
     total_classes: number;
     published_classes: number;
+    recent_activity: RecentActivityItem[];
   };
 }
 

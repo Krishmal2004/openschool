@@ -32,6 +32,16 @@ UPDATE users
 SET must_change_password = $2, updated_at = NOW()
 WHERE id = $1;
 
+-- name: ClearMustChangePassword :exec
+-- Used by both a real password change (kept_default_password = FALSE) and
+-- the first-login "keep this password" choice (kept_default_password =
+-- TRUE) — the two clear must_change_password identically but need telling
+-- apart so an unchanged default password can still expire after a week
+-- (S1, docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md).
+UPDATE users
+SET must_change_password = FALSE, kept_default_password = $2, updated_at = NOW()
+WHERE id = $1;
+
 -- name: GetUserByID :one
 SELECT * FROM users
 WHERE id = $1;

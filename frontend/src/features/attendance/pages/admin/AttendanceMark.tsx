@@ -8,7 +8,7 @@ import { useSession, useSessionRecords, useMarkAttendance } from "@/features/att
 import { useClass } from "@/features/academics/queries/useClasses";
 import { useStudentsByClass } from "@/features/students/queries/useStudents";
 import { useGrades } from "@/features/academics/queries/useGrades";
-import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { useTeacher } from "@/features/teachers/queries/useTeachers";
 import { useRole } from "@/shared/auth/useRole";
 import { useAttendanceMarking } from "@/features/attendance/hooks/useAttendanceMarking";
 import AttendanceSummaryCards from "@/features/attendance/components/AttendanceSummaryCards";
@@ -29,7 +29,10 @@ export default function AttendanceMark() {
   const { data: cls } = useClass(session?.class_id ?? "");
   const { data: students, isLoading: studentsLoading } = useStudentsByClass(session?.class_id ?? "");
   const { data: grades } = useGrades();
-  const { data: teachers } = useTeachers();
+  // Who took this session — a single-record lookup by id, not a picker, so
+  // a capped /teachers page can't be used as a directory
+  // (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+  const { data: takenByTeacher } = useTeacher(session?.taken_by ?? "");
   const markAttendance = useMarkAttendance(id);
   const marking = useAttendanceMarking(id, records, students);
 
@@ -43,7 +46,7 @@ export default function AttendanceMark() {
   const isOverride = locked && isAdmin;
   const backPath = role === "teacher" ? "/t/attendance" : "/attendance";
   const gradeName = grades?.find((g) => g.id === cls?.grade_id)?.name;
-  const teacherName = teachers?.find((t) => t.id === session?.taken_by)?.full_name;
+  const teacherName = takenByTeacher?.full_name;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();

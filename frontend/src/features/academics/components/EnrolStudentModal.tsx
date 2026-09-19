@@ -6,6 +6,7 @@ import EntityCombobox from "@/shared/ui/EntityCombobox";
 interface Props {
   open: boolean;
   enrolCandidates: Student[];
+  onStudentSearch: (term: string) => void;
   studentChoice: string;
   onStudentChoiceChange: (id: string) => void;
   enrollStudent: ReturnType<typeof useEnrollStudent>;
@@ -16,6 +17,7 @@ interface Props {
 export default function EnrolStudentModal({
   open,
   enrolCandidates,
+  onStudentSearch,
   studentChoice,
   onStudentChoiceChange,
   enrollStudent,
@@ -48,6 +50,7 @@ export default function EnrolStudentModal({
           items={enrolCandidates}
           selectedId={studentChoice}
           onSelect={onStudentChoiceChange}
+          onSearch={onStudentSearch}
           getId={(s) => s.id}
           itemToString={(s) => `${s.full_name} - ${s.index_number}`}
           placeholder="Search students by name or index number…"

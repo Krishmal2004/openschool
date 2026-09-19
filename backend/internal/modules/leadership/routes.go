@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 )
@@ -52,7 +53,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 	teacherOrAdmin.GET("/positions", func(c *gin.Context) {
 		positions, err := service.ListPositions(c.Request.Context())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, positions)
@@ -73,7 +74,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 			if errors.Is(err, ErrPositionNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				apierror.RespondInternal(c, err)
 			}
 			return
 		}
@@ -102,7 +103,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 		}
 		sectionHeads, err := service.ListSectionHeads(c.Request.Context(), yearID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, sectionHeads)
@@ -118,7 +119,7 @@ func RegisterRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *Service) {
 			if errors.Is(err, ErrSectionHeadNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				apierror.RespondInternal(c, err)
 			}
 			return
 		}

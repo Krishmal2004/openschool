@@ -18,8 +18,10 @@ func RegisterRoutes(public, protected *gin.RouterGroup, pool *pgxpool.Pool, guar
 
 	// Rate-limited like /setup/admin — an unauthenticated endpoint that
 	// checks a caller-supplied secret against an account must not be usable
-	// to brute-force NIC/index numbers.
-	public.POST("/auth/forgot-password", middleware.RateLimit(1, 5), handler.ForgotPassword)
+	// to brute-force NIC/index numbers. Two limiters: per-IP (device) and
+	// per-identifier/5-per-hour (account) — an attacker spreading guesses for
+	// one target across many IPs is still caught by the second (S2).
+	public.POST("/auth/forgot-password", middleware.RateLimit(1, 5), middleware.PerJSONFieldRateLimit(5.0/3600, 5, "identifier"), handler.ForgotPassword)
 	public.POST("/auth/reset-password", middleware.RateLimit(1, 5), handler.ResetPassword)
 
 	protected.POST("/auth/change-password", handler.ChangePassword)

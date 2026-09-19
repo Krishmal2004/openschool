@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	auditmodule "github.com/openschool-org/openschool/internal/modules/audit"
+	automationmodule "github.com/openschool-org/openschool/internal/modules/automation"
 	peoplemodule "github.com/openschool-org/openschool/internal/modules/people"
 	schoolmodule "github.com/openschool-org/openschool/internal/modules/school"
 	"github.com/openschool-org/openschool/internal/ports"
@@ -11,8 +12,12 @@ import (
 
 func registerPeople(groups HTTPGroups, pool *pgxpool.Pool, houses ports.HouseAssignments, audit *auditmodule.Service) {
 	studentStore := peoplemodule.NewStudentStore(pool)
-	studentService := peoplemodule.NewStudentService(studentStore, thunderid.NewClient(), houses, audit, schoolmodule.NewSchoolTypeReader(pool))
-	peoplemodule.RegisterStudentRoutes(groups.Admin, groups.TeacherOrAdmin, studentService, studentStore, studentService)
+	// automationmodule.Repository backs PendingEraser too — IdentityErasureRetryAgent
+	// (internal/modules/automation) is what actually retries a failed local
+	// scrub/identity-provider deletion recorded here (S11).
+	pendingEraser := automationmodule.NewRepository(pool)
+	studentService := peoplemodule.NewStudentService(studentStore, thunderid.NewClient(), houses, audit, schoolmodule.NewSchoolTypeReader(pool), pendingEraser)
+	peoplemodule.RegisterStudentRoutes(groups.Admin, groups.TeacherOrAdmin, studentService, studentStore, studentService, audit)
 
 	teacherService := peoplemodule.NewTeacherService(studentStore, thunderid.NewClient(), houses, audit)
 	peoplemodule.RegisterTeacherReadRoutes(groups.TeacherOrAdmin, groups.Admin, peoplemodule.NewTeacherReader(pool))

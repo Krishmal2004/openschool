@@ -36,10 +36,14 @@ export default function FirstRunSetup() {
     email: EMAIL_RE.test(form.email.trim()) ? undefined : "Enter a valid email address.",
     username: form.username.trim() ? undefined : "Username is required.",
     phone: isValidSriLankanPhone(form.phone) ? undefined : PHONE_INVALID_TEXT,
-    password: form.password.length >= 8 ? undefined : "Password must be at least 8 characters.",
-    confirmPassword: pw.valid ? undefined : "Passwords do not match.",
+    password: form.password ? pw.passwordError : "Password is required.",
+    confirmPassword: form.confirmPassword ? pw.confirmError : "Confirm your password.",
   };
-  const canSubmit = Object.values(errors).every((e) => !e);
+  // pw.passwordError/confirmError are both undefined while the fields are
+  // still empty (validateNewPassword only flags a *wrong* value, not a
+  // missing one), so canSubmit must also require pw.valid — otherwise the
+  // very first admin account could be created with a blank password.
+  const canSubmit = pw.valid && Object.values(errors).every((e) => !e);
 
   const input = (field: Field, labelText: string, extra: Record<string, unknown> = {}) => ({
     id: `setup-${field}`,
@@ -116,7 +120,7 @@ export default function FirstRunSetup() {
             <div className="os-setup-form__section">
               <div className="os-setup-form__section-heading"><h3>Secure your account</h3></div>
               <div className="os-setup-security-grid">
-                <PasswordInput {...input("password", "Password", { helperText: "At least 8 characters." })} />
+                <PasswordInput {...input("password", "Password", { helperText: "At least 10 characters." })} />
                 <PasswordInput {...input("confirmPassword", "Confirm Password")} />
               </div>
             </div>

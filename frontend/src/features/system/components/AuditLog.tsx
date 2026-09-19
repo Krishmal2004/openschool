@@ -1,4 +1,5 @@
-import { SkeletonText, Tag } from "@carbon/react";
+import { useState } from "react";
+import { Pagination, SkeletonText, Tag } from "@carbon/react";
 import { useAuditLogs } from "@/features/system/queries/useAuditLogs";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import EmptyState from "@/shared/ui/EmptyState";
@@ -12,8 +13,14 @@ function formatAction(action: string) {
   return action.replace(/_/g, " ");
 }
 
+// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4) —
+// an append-only log grows without bound, so this can no longer just show
+// "the last 200" and call it done.
 export default function AuditLog() {
-  const { data: logs, isLoading, isError, refetch } = useAuditLogs();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const { data, isLoading, isError, refetch } = useAuditLogs({ limit: pageSize, offset: (page - 1) * pageSize });
+  const logs = data?.items;
 
   return (
     <div>
@@ -79,6 +86,17 @@ export default function AuditLog() {
               </div>
             ))}
           </div>
+        )}
+
+        {!isLoading && logs && logs.length > 0 && (
+          <Pagination
+            totalItems={data?.total ?? 0}
+            page={page}
+            pageSize={pageSize}
+            pageSizes={[25, 50, 100]}
+            onChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
+            size="sm"
+          />
         )}
       </div>
     </div>

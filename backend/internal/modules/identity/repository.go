@@ -23,7 +23,11 @@ func (r *userRepository) ensureExists(ctx context.Context, command ensureUserCom
 	if err != nil {
 		return provisionedUser{}, err
 	}
-	return provisionedUser{MustChangePassword: user.MustChangePassword}, nil
+	return provisionedUser{
+		MustChangePassword:  user.MustChangePassword,
+		KeptDefaultPassword: user.KeptDefaultPassword,
+		CreatedAt:           user.CreatedAt.Time,
+	}, nil
 }
 
 func (r *userRepository) listIDs(ctx context.Context) ([]uuid.UUID, error) {

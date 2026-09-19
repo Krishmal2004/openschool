@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Add, Close } from "@carbon/icons-react";
 import { Button, Select, SelectItem, Pagination, Tile, Tag, TableToolbarSearch, ClickableTile } from "@carbon/react";
 import { useNonAcademicStaffList } from "@/features/staff/queries/useNonAcademicStaff";
-import { NON_ACADEMIC_DESIGNATIONS } from "@/features/staff/api/nonAcademicStaff";
-import { usePagination } from "@/shared/hooks/usePagination";
+import { NON_ACADEMIC_DESIGNATIONS, type NonAcademicDesignation } from "@/features/staff/api/nonAcademicStaff";
+import { useDebounced } from "@/shared/hooks/useDebounced";
 import EmptyState from "@/shared/ui/EmptyState";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import Avatar from "@/shared/ui/Avatar";
@@ -12,22 +12,31 @@ import { designationLabel } from "@/features/staff/constants";
 import StaffFormModal from "@/features/staff/components/StaffFormModal";
 import StaffDetail from "@/features/staff/components/StaffDetail";
 
+// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
 export default function NonAcademicStaff() {
   const [search, setSearch] = useState("");
-  const [designation, setDesignation] = useState("");
+  const debouncedSearch = useDebounced(search, 300);
+  const [designation, setDesignation] = useState<NonAcademicDesignation | "">("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const { data: staff, isLoading, isError, refetch } = useNonAcademicStaffList(search, designation);
-
-  const ordered = useMemo(() => {
-    if (!staff) return [];
-    return [...staff].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  }, [staff]);
+  const { data, isLoading, isError, refetch } = useNonAcademicStaffList({
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    search: debouncedSearch,
+    designation,
+  });
+  const ordered = data?.items ?? [];
+  const totalItems = data?.total ?? 0;
 
   const selected = ordered.find((s) => s.id === selectedId) ?? null;
 
-  const { page, pageSize, pageItems, totalItems, onChange } = usePagination(ordered, 10);
+  const onChange = ({ page: p, pageSize: ps }: { page: number; pageSize: number }) => {
+    setPage(p);
+    setPageSize(ps);
+  };
 
   return (
     <div className="os-page">
@@ -50,7 +59,7 @@ export default function NonAcademicStaff() {
               persistent
               placeholder="Search staff by name or employee number…"
               value={search}
-              onChange={(e) => setSearch(typeof e === "string" ? e : e.target.value)}
+              onChange={(e) => { setSearch(typeof e === "string" ? e : e.target.value); setPage(1); }}
             />
           </div>
           <div className="os-min-w-14">
@@ -60,7 +69,7 @@ export default function NonAcademicStaff() {
               hideLabel
               size="md"
               value={designation}
-              onChange={(e) => setDesignation(e.target.value)}
+              onChange={(e) => { setDesignation(e.target.value as NonAcademicDesignation | ""); setPage(1); }}
             >
               <SelectItem value="" text="All designations" />
               {NON_ACADEMIC_DESIGNATIONS.map((d) => (
@@ -74,12 +83,12 @@ export default function NonAcademicStaff() {
           <div className="os-flex os-items-center os-gap-2 os-wrap os-mt-3">
             <span className="os-text-xs os-fw-600 os-c-tertiary">Active Filters:</span>
             {designation && (
-              <Tag type="teal" filter onClose={() => setDesignation("")}>
+              <Tag type="teal" filter onClose={() => { setDesignation(""); setPage(1); }}>
                 Role: {designationLabel(designation)}
               </Tag>
             )}
-            {search && <Tag type="blue" filter onClose={() => setSearch("")}>Search: "{search}"</Tag>}
-            <Button kind="ghost" size="sm" renderIcon={Close} onClick={() => { setSearch(""); setDesignation(""); }}>
+            {search && <Tag type="blue" filter onClose={() => { setSearch(""); setPage(1); }}>Search: "{search}"</Tag>}
+            <Button kind="ghost" size="sm" renderIcon={Close} onClick={() => { setSearch(""); setDesignation(""); setPage(1); }}>
               Clear All
             </Button>
           </div>
@@ -108,7 +117,7 @@ export default function NonAcademicStaff() {
           )}
 
           {!isLoading &&
-            pageItems.map((s) => {
+            ordered.map((s) => {
               const isSelected = selected?.id === s.id;
               return (
                 <ClickableTile
