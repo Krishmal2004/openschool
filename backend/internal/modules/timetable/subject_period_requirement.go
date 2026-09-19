@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 var (
@@ -92,7 +93,7 @@ func (h *subjectPeriodRequirementHandler) listByGrade(c *gin.Context) {
 	}
 	requirements, err := h.service.requirements.listByGrade(c.Request.Context(), yearID, gradeID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, requirements)

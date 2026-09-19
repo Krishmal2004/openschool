@@ -3,8 +3,10 @@ import { subjectApi } from "@/features/curriculum/api/subject";
 import type { CreateSubjectRequest } from "@/features/curriculum/api/subject";
 import { curriculumKeys } from "@/features/curriculum/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
+import { REFERENCE_DATA_STALE_TIME_MS } from "@/shared/api/staleTime";
 
-export const useSubjects = () => useQuery({ queryKey: curriculumKeys.subjects(), queryFn: subjectApi.list });
+export const useSubjects = () =>
+  useQuery({ queryKey: curriculumKeys.subjects(), queryFn: subjectApi.list, staleTime: REFERENCE_DATA_STALE_TIME_MS });
 
 export const useCreateSubject = () => {
   const invalidate = useInvalidate();

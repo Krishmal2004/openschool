@@ -159,3 +159,30 @@ func (r *Repository) timetableCompletion(ctx context.Context) (timetableCompleti
 	value, err := r.queries.DashboardTimetableCompletion(ctx)
 	return timetableCompletion{TotalClasses: value.TotalClasses, PublishedClasses: value.PublishedClasses}, err
 }
+
+func (r *Repository) recentStudents(ctx context.Context, limit int32) ([]recentStudent, error) {
+	rows, err := r.queries.DashboardRecentStudents(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]recentStudent, len(rows))
+	for i, value := range rows {
+		result[i] = recentStudent{
+			ID: value.ID, FullName: value.FullName, IndexNumber: value.IndexNumber,
+			CreatedAt: value.CreatedAt, GradeName: value.GradeName.String, ClassName: value.ClassName.String,
+		}
+	}
+	return result, nil
+}
+
+func (r *Repository) recentTeachers(ctx context.Context, limit int32) ([]recentTeacher, error) {
+	rows, err := r.queries.DashboardRecentTeachers(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]recentTeacher, len(rows))
+	for i, value := range rows {
+		result[i] = recentTeacher{ID: value.ID, FullName: value.FullName, EmployeeNumber: value.EmployeeNumber, CreatedAt: value.CreatedAt}
+	}
+	return result, nil
+}

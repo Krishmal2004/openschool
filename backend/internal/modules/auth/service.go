@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,6 +24,12 @@ var (
 	// call can't be used to enumerate which identifiers exist.
 	ErrInvalidCredentials = errors.New("no account matches those details")
 	ErrResetTokenInvalid  = errors.New("reset link is invalid, already used, or has expired")
+	// ErrDefaultPasswordExpired is returned when "keep this password" is no
+	// longer available and the account must set a real password (S1).
+	ErrDefaultPasswordExpired = errors.New("this account has kept its default password for too long — set a new password to continue")
+	// ErrPasswordAlreadyChanged is returned when KeepDefaultPassword is
+	// called on an account that has already set a real password.
+	ErrPasswordAlreadyChanged = errors.New("this account has already set a password")
 )
 
 // passwordResetTokenTTL bounds how long an emailed reset link stays valid.
@@ -35,8 +42,15 @@ type authStore interface {
 	studentCredentialsMatch(context.Context, uuid.UUID, string) bool
 	createResetToken(context.Context, uuid.UUID, string, time.Time) error
 	consumeResetToken(context.Context, string) (resetToken, error)
-	setMustChangePassword(context.Context, uuid.UUID, bool) error
+	clearMustChangePassword(ctx context.Context, id uuid.UUID, keptDefault bool) error
 }
+
+// DefaultPasswordExpiry bounds how long a "keep this password" choice
+// stands before the default password is treated as expired again (S1):
+// the initial password is the NIC or index number, both printed on
+// documents other students see, so letting that choice stand forever
+// would leave the account exactly as guessable as before.
+const DefaultPasswordExpiry = 7 * 24 * time.Hour
 
 // PasswordUpdater is the narrow identity-provider operation needed by Auth.
 type PasswordUpdater interface {
@@ -66,34 +80,47 @@ func NewService(
 
 // ForgotPassword verifies the caller knows a user's login identifier and initial-password secret, then mints a short-lived one-time token and emails a reset link — hand-rolled since ThunderID exposes no reset primitive. The token is never returned in the response: NIC/index numbers appear on ID cards/report cards, so aren't secret enough to also hand over the takeover token (see docs audit C-1).
 func (s *Service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest) (ForgotPasswordResponse, error) {
+	// Logged without the secret: this is the audit trail for account-takeover
+	// attempts against the forgot-password flow (S2, S11).
+	logAttempt := func(outcome string) {
+		slog.Info("forgot-password attempt", "role", req.Role, "identifier", req.Identifier, "outcome", outcome)
+	}
+
 	user, err := s.store.userByEmail(ctx, req.Identifier)
 	if err != nil || user.Role != req.Role {
+		logAttempt("no matching account")
 		return ForgotPasswordResponse{}, ErrInvalidCredentials
 	}
 
 	switch req.Role {
 	case authz.RoleTeacher:
 		if !s.store.teacherCredentialsMatch(ctx, user.ID, req.Secret) {
+			logAttempt("secret mismatch")
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	case authz.RoleStudent:
 		if !s.store.studentCredentialsMatch(ctx, user.ID, req.Secret) {
+			logAttempt("secret mismatch")
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	case authz.RoleParent:
 		if err := s.guardians.VerifyCredentials(ctx, user.ID, req.Secret); err != nil {
+			logAttempt("secret mismatch")
 			return ForgotPasswordResponse{}, ErrInvalidCredentials
 		}
 	default:
 		// Unreachable — ForgotPasswordRequest.Role is already
 		// constrained to teacher/student/parent by its binding tag.
+		logAttempt("invalid role")
 		return ForgotPasswordResponse{}, ErrInvalidCredentials
 	}
 
 	if err := s.issueAndEmailResetToken(ctx, user.ID, user.Email); err != nil {
+		logAttempt("token issue failed")
 		return ForgotPasswordResponse{}, err
 	}
 
+	logAttempt("reset link sent")
 	return ForgotPasswordResponse{
 		Message: "If those details match an account, a password reset link has been sent to the email on file.",
 	}, nil
@@ -112,7 +139,10 @@ func (s *Service) issueAndEmailResetToken(ctx context.Context, userID uuid.UUID,
 		return fmt.Errorf("failed to create reset token: %w", err)
 	}
 
-	resetLink := fmt.Sprintf("%s/reset-password?token=%s", s.frontend(), token)
+	// The token travels in the URL fragment, not a query string: a fragment
+	// is never sent to a server, so it can't land in the SPA host's or a
+	// proxy's access log, though it's still POSTed to the API explicitly (S5).
+	resetLink := fmt.Sprintf("%s/reset-password#token=%s", s.frontend(), token)
 	body := fmt.Sprintf(
 		"A password reset was requested for your OpenSchool account.\n\n"+
 			"Reset your password using the link below. It expires in %d minutes and can only be used once.\n\n%s\n\n"+
@@ -142,9 +172,28 @@ func (s *Service) ChangePassword(ctx context.Context, userID uuid.UUID, newPassw
 	return s.setPassword(ctx, userID, newPassword)
 }
 
-// KeepDefaultPassword clears the must-change flag without touching the password — the first-login "Keep this password" choice.
+// KeepDefaultPassword clears the must-change flag without touching the
+// password — the first-login "Keep this password" choice. Refused once that
+// choice has already expired (DefaultPasswordExpiry since account creation):
+// at that point the account must actually change its password.
 func (s *Service) KeepDefaultPassword(ctx context.Context, userID uuid.UUID) error {
-	return s.store.setMustChangePassword(ctx, userID, false)
+	user, err := s.store.userByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+	// Only a first-login account (must_change_password still true) may make
+	// this choice. Without this check, an account that already set a real
+	// password could re-trigger KeptDefaultPassword=true, which /me later
+	// turns back into must_change_password=true once DefaultPasswordExpiry
+	// elapses from account creation — incorrectly forcing the password
+	// interstitial on an account whose password was already changed.
+	if !user.MustChangePassword {
+		return ErrPasswordAlreadyChanged
+	}
+	if s.now().Sub(user.CreatedAt) > DefaultPasswordExpiry {
+		return ErrDefaultPasswordExpired
+	}
+	return s.store.clearMustChangePassword(ctx, userID, true)
 }
 
 func (s *Service) setPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
@@ -153,13 +202,38 @@ func (s *Service) setPassword(ctx context.Context, userID uuid.UUID, newPassword
 		return fmt.Errorf("user not found: %w", err)
 	}
 
+	if len(newPassword) < MinPasswordLength {
+		return ErrPasswordTooShort
+	}
+
+	if isCommonPassword(newPassword) || s.matchesIdentitySecret(ctx, user, newPassword) {
+		return ErrWeakPassword
+	}
+
 	if err := s.idp.UpdateUser(ctx, userID.String(), user.Role, map[string]any{
 		"password": newPassword,
 	}); err != nil {
 		return fmt.Errorf("failed to update identity provider password: %w", err)
 	}
 
-	return s.store.setMustChangePassword(ctx, userID, false)
+	return s.store.clearMustChangePassword(ctx, userID, false)
+}
+
+// matchesIdentitySecret reports whether candidate equals the account's own
+// NIC/index number — reusing the same lookups ForgotPassword uses to verify
+// that secret, so the check never has to hold the plaintext NIC/index number
+// in memory itself (S1). Admin has no such secret on file.
+func (s *Service) matchesIdentitySecret(ctx context.Context, user userAccount, candidate string) bool {
+	switch user.Role {
+	case authz.RoleTeacher:
+		return s.store.teacherCredentialsMatch(ctx, user.ID, candidate)
+	case authz.RoleStudent:
+		return s.store.studentCredentialsMatch(ctx, user.ID, candidate)
+	case authz.RoleParent:
+		return s.guardians.VerifyCredentials(ctx, user.ID, candidate) == nil
+	default:
+		return false
+	}
 }
 
 func hashResetToken(token string) string {

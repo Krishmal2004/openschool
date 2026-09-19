@@ -99,6 +99,7 @@ export function useClassDetailModals(id: string, cls: ClassRow | undefined, deta
       <AssignTeacherModal
         open={teacherOpen}
         teachers={detail.teachers}
+        onTeacherSearch={detail.onTeacherSearch}
         teacherChoice={teacherChoice}
         onTeacherChoiceChange={setTeacherChoice}
         assignFormTeacher={assignFormTeacher}
@@ -120,6 +121,7 @@ export function useClassDetailModals(id: string, cls: ClassRow | undefined, deta
       <EnrolStudentModal
         open={enrolOpen}
         enrolCandidates={detail.enrolCandidates}
+        onStudentSearch={detail.onStudentSearch}
         studentChoice={studentChoice}
         onStudentChoiceChange={setStudentChoice}
         enrollStudent={enrollStudent}

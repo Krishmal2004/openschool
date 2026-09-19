@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/platform/httpx"
 	"github.com/openschool-org/openschool/internal/ports"
 )
@@ -227,7 +228,7 @@ func (h *houseHandler) get(c *gin.Context) {
 func (h *houseHandler) list(c *gin.Context) {
 	houses, err := h.service.list(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, houses)
@@ -272,7 +273,7 @@ func (h *houseHandler) delete(c *gin.Context) {
 func (h *houseHandler) reassignMissing(c *gin.Context) {
 	assigned, err := h.service.reassignMissing(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"assigned": assigned})
@@ -281,7 +282,7 @@ func (h *houseHandler) reassignMissing(c *gin.Context) {
 func (h *houseHandler) reassignMissingStaff(c *gin.Context) {
 	assigned, err := h.service.reassignMissingStaff(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"assigned": assigned})

@@ -1,6 +1,7 @@
 import api from "@/shared/api/client";
 import type { Student } from "@/features/students/api/student";
 import type { MyNotification } from "@/features/notifications/api/notification";
+import type { Page } from "@/shared/api/page";
 
 export type GuardianRelationship = "father" | "mother" | "guardian" | "other";
 
@@ -44,13 +45,24 @@ export interface ProvisionGuardianLoginRequest {
   family_name: string;
 }
 
+// /guardians is server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+// section 4). limit is capped at 100 server-side regardless of what's asked for.
+export interface GuardianListParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  orphansOnly?: boolean;
+}
+
 export const guardianApi = {
-  list: (search?: string, orphansOnly?: boolean) =>
+  list: (params: GuardianListParams = {}) =>
     api
-      .get<Guardian[]>("/guardians", {
+      .get<Page<Guardian>>("/guardians", {
         params: {
-          ...(search ? { search } : {}),
-          ...(orphansOnly ? { orphans: "true" } : {}),
+          limit: params.limit,
+          offset: params.offset,
+          search: params.search,
+          ...(params.orphansOnly ? { orphans: "true" } : {}),
         },
       })
       .then((r) => r.data),

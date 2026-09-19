@@ -1,4 +1,5 @@
 import api from "@/shared/api/client";
+import type { Page } from "@/shared/api/page";
 
 export type NonAcademicDesignation =
   | "lab_assistant"
@@ -52,16 +53,18 @@ export interface UpdateNonAcademicStaffRequest {
   gender?: "male" | "female";
 }
 
+// /non-academic-staff is server-paginated
+// (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+export interface StaffListParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  designation?: NonAcademicDesignation | "";
+}
+
 export const nonAcademicStaffApi = {
-  list: (search?: string, designation?: string) =>
-    api
-      .get<NonAcademicStaff[]>("/non-academic-staff", {
-        params: {
-          ...(search ? { search } : {}),
-          ...(designation ? { designation } : {}),
-        },
-      })
-      .then((r) => r.data),
+  list: (params: StaffListParams = {}) =>
+    api.get<Page<NonAcademicStaff>>("/non-academic-staff", { params }).then((r) => r.data),
 
   get: (id: string) =>
     api.get<NonAcademicStaff>(`/non-academic-staff/${id}`).then((r) => r.data),

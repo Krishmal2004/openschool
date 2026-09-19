@@ -2,6 +2,7 @@ package school
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"testing"
 
@@ -56,6 +57,33 @@ func TestCreateSchoolInvariants(t *testing.T) {
 	}
 	if store.created.SchoolType != "mixed" {
 		t.Fatalf("default school type = %q", store.created.SchoolType)
+	}
+}
+
+func TestValidateLogoURL(t *testing.T) {
+	pngSignature := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+	realPNG := "data:image/png;base64," + base64.StdEncoding.EncodeToString(append(pngSignature, []byte("rest of the file")...))
+	forgedPrefix := "data:image/png;base64," + base64.StdEncoding.EncodeToString([]byte("<script>alert(1)</script>"))
+
+	tests := []struct {
+		name    string
+		value   string
+		wantErr bool
+	}{
+		{"empty is allowed (no logo set)", "", false},
+		{"real PNG signature", realPNG, false},
+		{"prefix claims PNG but bytes are not", forgedPrefix, true},
+		{"not a data URL", "https://example.test/logo.png", true},
+		{"data URL missing ;base64", "data:image/png,abc", true},
+		{"unsupported media type", "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=", true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateLogoURL(test.value)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("validateLogoURL(%q) error = %v, wantErr %v", test.value, err, test.wantErr)
+			}
+		})
 	}
 }
 

@@ -2,12 +2,14 @@ package people
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/openschool-org/openschool/db/sqlc"
+	"github.com/openschool-org/openschool/internal/platform/httpx"
 	"github.com/openschool-org/openschool/internal/ports"
 )
 
@@ -52,7 +54,39 @@ func (r *studentRepository) Get(c context.Context, id uuid.UUID) (any, error) {
 func (r *studentRepository) GetWithClass(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetStudentWithClass(c, id)
 }
-func (r *studentRepository) List(c context.Context) (any, error) { return r.queries.ListStudents(c) }
+
+// ListPage is the paginated replacement for the old unbounded List — the
+// concrete row/page types stay here since this is the one file in the
+// module allowed to import db/sqlc (internal/architecture enforces this).
+func (r *studentRepository) ListPage(c context.Context, p StudentListParams) (any, error) {
+	params := db.ListStudentsPageParams{
+		Search: nullableText(p.Search), Grade: nullableText(p.Grade), Class: nullableText(p.Class),
+		Gender: nullableText(p.Gender), House: nullableText(p.House),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	}
+	rows, err := r.queries.ListStudentsPage(c, params)
+	if err != nil {
+		return nil, err
+	}
+	total := int64(0)
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if p.Offset > 0 {
+		// COUNT(*) OVER () only rides along on a returned row: an offset past
+		// the last page returns zero rows and would otherwise report
+		// total=0, contradicting the actual filtered count. Re-probe with
+		// offset 0 to recover it.
+		params.PageLimit, params.PageOffset = 1, 0
+		probe, err := r.queries.ListStudentsPage(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
+			total = probe[0].Total
+		}
+	}
+	return httpx.Page[db.ListStudentsPageRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
+}
 func (r *studentRepository) ListByClass(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListStudentsByClass(c, id)
 }
@@ -98,6 +132,22 @@ func (r *studentRepository) Delete(c context.Context, id uuid.UUID) error {
 }
 func (r *studentRepository) DeleteUser(c context.Context, id uuid.UUID) error {
 	return r.queries.DeleteUser(c, id)
+}
+func (r *studentRepository) AnonymizeProfile(c context.Context, id uuid.UUID) error {
+	return r.queries.AnonymizeStudentProfile(c, id)
+}
+
+// EraseUser scrubs the local user row's PII and deactivates it. The email is
+// replaced with a unique erased-marker (still unique-constrained) rather
+// than a fixed value, since a second erasure would otherwise collide.
+func (r *studentRepository) EraseUser(c context.Context, id uuid.UUID) error {
+	if _, err := r.queries.UpdateUser(c, db.UpdateUserParams{
+		ID: id, FullName: "Erased Student", Email: fmt.Sprintf("erased-%s@erased.invalid", id),
+	}); err != nil {
+		return err
+	}
+	_, err := r.queries.DeactivateUser(c, id)
+	return err
 }
 
 func (r *studentRepository) NextEmployee(c context.Context) (string, error) {
@@ -241,8 +291,31 @@ func (r *nonAcademicStaffRepository) staffRecord(c context.Context, id uuid.UUID
 	}
 	return staffRecord{HouseID: house}, err
 }
-func (r *nonAcademicStaffRepository) listStaff(c context.Context, search, designation string) (any, error) {
-	return r.queries.ListNonAcademicStaff(c, db.ListNonAcademicStaffParams{Search: pgtype.Text{String: search, Valid: search != ""}, Designation: pgtype.Text{String: designation, Valid: designation != ""}})
+func (r *nonAcademicStaffRepository) listStaffPage(c context.Context, p StaffListParams) (any, error) {
+	params := db.ListNonAcademicStaffParams{
+		Search: nullableText(p.Search), Designation: nullableText(p.Designation),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	}
+	rows, err := r.queries.ListNonAcademicStaff(c, params)
+	if err != nil {
+		return nil, err
+	}
+	total := int64(0)
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if p.Offset > 0 {
+		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
+		// the offset lands past the last page, so it's re-probed here.
+		params.PageLimit, params.PageOffset = 1, 0
+		probe, err := r.queries.ListNonAcademicStaff(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
+			total = probe[0].Total
+		}
+	}
+	return httpx.Page[db.ListNonAcademicStaffRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
 }
 func (r *nonAcademicStaffRepository) updateStaff(c context.Context, id uuid.UUID, p staffUpdate) (any, error) {
 	return r.queries.UpdateNonAcademicStaff(c, db.UpdateNonAcademicStaffParams{ID: id, FullName: p.FullName, Designation: p.Designation, Phone: pgtype.Text{String: p.Phone, Valid: p.Phone != ""}, Gender: pgtype.Text{String: p.Gender, Valid: p.Gender != ""}})
@@ -315,8 +388,31 @@ func NewGuardianReader(pool *pgxpool.Pool) GuardianReader {
 func (r *guardianReader) Get(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetGuardianByID(c, id)
 }
-func (r *guardianReader) List(c context.Context, search string, orphans bool) (any, error) {
-	return r.queries.ListGuardians(c, db.ListGuardiansParams{Search: pgtype.Text{String: search, Valid: search != ""}, OrphansOnly: pgtype.Bool{Bool: orphans, Valid: orphans}})
+func (r *guardianReader) ListPage(c context.Context, p GuardianListParams) (any, error) {
+	params := db.ListGuardiansParams{
+		Search: nullableText(p.Search), OrphansOnly: pgtype.Bool{Bool: p.OrphansOnly, Valid: p.OrphansOnly},
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	}
+	rows, err := r.queries.ListGuardians(c, params)
+	if err != nil {
+		return nil, err
+	}
+	total := int64(0)
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if p.Offset > 0 {
+		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
+		// the offset lands past the last page, so it's re-probed here.
+		params.PageLimit, params.PageOffset = 1, 0
+		probe, err := r.queries.ListGuardians(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
+			total = probe[0].Total
+		}
+	}
+	return httpx.Page[db.ListGuardiansRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
 }
 func (r *guardianReader) Students(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListStudentsByGuardianID(c, id)
@@ -375,7 +471,32 @@ func NewTeacherReader(pool *pgxpool.Pool) TeacherReader { return &teacherReader{
 func (r *teacherReader) Get(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.GetTeacherByID(c, id)
 }
-func (r *teacherReader) List(c context.Context) (any, error) { return r.queries.ListTeachers(c) }
+func (r *teacherReader) ListPage(c context.Context, p TeacherListParams) (any, error) {
+	params := db.ListTeachersPageParams{
+		Search: nullableText(p.Search), Status: nullableText(p.Status),
+		PageLimit: p.Limit, PageOffset: p.Offset,
+	}
+	rows, err := r.queries.ListTeachersPage(c, params)
+	if err != nil {
+		return nil, err
+	}
+	total := int64(0)
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if p.Offset > 0 {
+		// See studentRepository.ListPage: COUNT(*) OVER () is absent when
+		// the offset lands past the last page, so it's re-probed here.
+		params.PageLimit, params.PageOffset = 1, 0
+		probe, err := r.queries.ListTeachersPage(c, params)
+		if err != nil {
+			return nil, err
+		}
+		if len(probe) > 0 {
+			total = probe[0].Total
+		}
+	}
+	return httpx.Page[db.ListTeachersPageRow]{Items: rows, Total: total, Limit: p.Limit, Offset: p.Offset}, nil
+}
 func (r *teacherReader) Subjects(c context.Context, id uuid.UUID) (any, error) {
 	return r.queries.ListSubjectsByTeacher(c, id)
 }

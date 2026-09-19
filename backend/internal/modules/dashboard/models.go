@@ -60,13 +60,25 @@ type DashboardAcademicAnalytics struct {
 	AttendancePercentage float64          `json:"attendance_percentage"`
 }
 
+// RecentActivityItem mirrors the frontend's RecentActivitySection item shape
+// directly, so Dashboard.tsx can render this list without reshaping it.
+type RecentActivityItem struct {
+	Key  string `json:"key"`
+	Text string `json:"text"`
+	Sub  string `json:"sub"`
+	Time string `json:"time"`
+	Path string `json:"path"`
+	Kind string `json:"kind"`
+}
+
 type DashboardSchoolAnalytics struct {
-	StudentGrowth          []GrowthPoint `json:"student_growth"`
-	StaffGrowth            []GrowthPoint `json:"staff_growth"`
-	NotificationsSentCount int64         `json:"notifications_sent_count"`
-	TimetableCompletionPct float64       `json:"timetable_completion_pct"`
-	TotalClasses           int64         `json:"total_classes"`
-	PublishedClasses       int64         `json:"published_classes"`
+	StudentGrowth          []GrowthPoint        `json:"student_growth"`
+	StaffGrowth            []GrowthPoint        `json:"staff_growth"`
+	NotificationsSentCount int64                `json:"notifications_sent_count"`
+	TimetableCompletionPct float64              `json:"timetable_completion_pct"`
+	TotalClasses           int64                `json:"total_classes"`
+	PublishedClasses       int64                `json:"published_classes"`
+	RecentActivity         []RecentActivityItem `json:"recent_activity"`
 }
 
 type DashboardAnalyticsResponse struct {

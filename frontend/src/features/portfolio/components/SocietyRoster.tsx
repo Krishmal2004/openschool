@@ -37,7 +37,8 @@ interface Props {
 // Roster editor shared by the admin Societies page and the teacher My Society page; the backend enforces who may mutate.
 export default function SocietyRoster({ societyId, readOnly }: Props) {
   const { data: members, isLoading, isError, refetch } = useSocietyMembers(societyId);
-  const { data: students } = useStudents();
+  const [studentSearch, setStudentSearch] = useState("");
+  const { data: studentPage } = useStudents({ limit: 25, search: studentSearch });
   const assignMember = useAssignSocietyMember(societyId);
   const removeMember = useRemoveSocietyMember(societyId);
 
@@ -71,7 +72,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
   const memberStudentIds = new Set((members ?? []).map((m) => m.student_id));
-  const availableStudents = (students ?? []).filter((s) => !memberStudentIds.has(s.id));
+  const availableStudents = (studentPage?.items ?? []).filter((s) => !memberStudentIds.has(s.id));
 
   if (isError) {
     return <ErrorMessage message="Could not load the roster." onRetry={refetch} />;
@@ -144,6 +145,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
               items={availableStudents}
               selectedId={studentChoice}
               onSelect={setStudentChoice}
+              onSearch={setStudentSearch}
               getId={(s) => s.id}
               itemToString={(s) => `${s.full_name} — ${s.index_number}`}
               placeholder="Search students by name or index number…"

@@ -1,4 +1,6 @@
+import type { StaffListParams } from "@/features/staff/api/nonAcademicStaff";
+
 export const staffKeys = {
   all: ["non-academic-staff"] as const,
-  list: (search: string, designation: string) => ["non-academic-staff", "list", { search, designation }] as const,
+  list: (params: StaffListParams = {}) => ["non-academic-staff", "list", params] as const,
 };

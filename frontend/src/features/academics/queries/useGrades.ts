@@ -3,8 +3,10 @@ import { gradeApi } from "@/features/academics/api/grade";
 import type { Grade, CreateGradeRequest } from "@/features/academics/api/grade";
 import { gradeKeys } from "@/features/academics/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
+import { REFERENCE_DATA_STALE_TIME_MS } from "@/shared/api/staleTime";
 
-export const useGrades = () => useQuery({ queryKey: gradeKeys.all, queryFn: gradeApi.list });
+export const useGrades = () =>
+  useQuery({ queryKey: gradeKeys.all, queryFn: gradeApi.list, staleTime: REFERENCE_DATA_STALE_TIME_MS });
 
 export const useCreateGrade = () => {
   const invalidate = useInvalidate();

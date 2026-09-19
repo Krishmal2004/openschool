@@ -3,13 +3,18 @@ package school
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/openschool-org/openschool/internal/middleware"
 )
+
+// referenceDataMaxAgeSeconds is how long a client may cache rarely-changing
+// reference data (grades, houses) before revalidating (section 5).
+const referenceDataMaxAgeSeconds = 300
 
 // RegisterHouseRoutes mounts house management using the shared assignment service.
 func RegisterHouseRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *HouseService) {
 	handler := &houseHandler{service: service}
 	admin.POST("/houses", handler.create)
-	teacherOrAdmin.GET("/houses", handler.list)
+	teacherOrAdmin.GET("/houses", middleware.CacheReference(referenceDataMaxAgeSeconds), handler.list)
 	teacherOrAdmin.GET("/houses/:id", handler.get)
 	admin.PUT("/houses/:id", handler.update)
 	admin.DELETE("/houses/:id", handler.delete)
@@ -21,7 +26,7 @@ func RegisterHouseRoutes(admin, teacherOrAdmin *gin.RouterGroup, service *HouseS
 func RegisterGradeRoutes(admin, teacherOrAdmin *gin.RouterGroup, pool *pgxpool.Pool) {
 	handler := newGradeHandler(newGradeRepository(pool))
 	admin.POST("/grades", handler.create)
-	teacherOrAdmin.GET("/grades", handler.list)
+	teacherOrAdmin.GET("/grades", middleware.CacheReference(referenceDataMaxAgeSeconds), handler.list)
 	teacherOrAdmin.GET("/grades/:id", handler.get)
 	admin.PUT("/grades/:id", handler.update)
 	admin.DELETE("/grades/:id", handler.delete)

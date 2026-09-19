@@ -1,7 +1,9 @@
 package school
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/validation"
 )
 
@@ -80,8 +83,59 @@ type schoolStore interface {
 }
 type schoolService struct{ store schoolStore }
 
+// imageSignatures maps a data URL's declared media type to the byte
+// sequence a real file of that type starts with. Checking only the
+// "data:image/..." prefix (the previous behaviour) accepts anything —
+// including an SVG, which can carry a <script>, or arbitrary bytes with a
+// forged prefix — since the string never has to match the actual content
+// (S8). Only raster formats a browser will just paint are accepted.
+var imageSignatures = map[string][]byte{
+	"image/png":  {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A},
+	"image/jpeg": {0xFF, 0xD8, 0xFF},
+	"image/gif":  {0x47, 0x49, 0x46, 0x38},
+	"image/webp": {0x52, 0x49, 0x46, 0x46}, // "RIFF"; the "WEBP" tag at byte 8 is checked separately below
+}
+
 func validateLogoURL(value string) error {
-	if value != "" && (!strings.HasPrefix(value, "data:image/") || len(value) > maxLogoDataURLChars) {
+	if value == "" {
+		return nil
+	}
+	if len(value) > maxLogoDataURLChars || validateImageDataURL(value) != nil {
+		return errInvalidLogoURL
+	}
+	return nil
+}
+
+// validateImageDataURL confirms value is "data:<mediatype>;base64,<data>"
+// where the decoded bytes actually start with that media type's magic
+// number, rather than trusting the caller-supplied media type string.
+func validateImageDataURL(value string) error {
+	header, payload, ok := strings.Cut(value, ",")
+	if !ok {
+		return errInvalidLogoURL
+	}
+	withoutScheme, hasDataPrefix := strings.CutPrefix(header, "data:")
+	if !hasDataPrefix {
+		return errInvalidLogoURL
+	}
+	mediaType, isBase64 := strings.CutSuffix(withoutScheme, ";base64")
+	if !isBase64 {
+		return errInvalidLogoURL
+	}
+	signature, known := imageSignatures[mediaType]
+	if !known {
+		return errInvalidLogoURL
+	}
+
+	// Decoding a small leading slice is enough to check any signature above;
+	// truncate to a full base64 quartet so decoding doesn't fail on a cut mid-group.
+	n := min(64, len(payload))
+	n -= n % 4
+	decoded, err := base64.StdEncoding.DecodeString(payload[:n])
+	if err != nil || len(decoded) < len(signature) || !bytes.Equal(decoded[:len(signature)], signature) {
+		return errInvalidLogoURL
+	}
+	if mediaType == "image/webp" && (len(decoded) < 12 || string(decoded[8:12]) != "WEBP") {
 		return errInvalidLogoURL
 	}
 	return nil
@@ -181,7 +235,7 @@ func (h *schoolHandler) updateSchool(c *gin.Context) {
 	}
 	value, err := h.service.updateSchool(c.Request.Context(), id, command)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, value)
@@ -202,7 +256,7 @@ func (h *schoolHandler) createYear(c *gin.Context) {
 func (h *schoolHandler) listYears(c *gin.Context) {
 	values, err := h.service.store.listYears(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, values)
@@ -224,7 +278,7 @@ func (h *schoolHandler) setCurrentYear(c *gin.Context) {
 		if errors.Is(err, errAcademicYearNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 		}
 		return
 	}

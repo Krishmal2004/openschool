@@ -46,7 +46,7 @@ export default function AddGuardianModal({
     isValidSriLankanPhone(form.phone) &&
     form.nic_number.trim().length > 0;
 
-  const results = (search.data ?? []).filter((g) => !existingGuardianIds.includes(g.id));
+  const results = (search.data?.items ?? []).filter((g) => !existingGuardianIds.includes(g.id));
 
   const handleLink = (guardianId: string) => {
     linkGuardian.mutate({ guardianId, isPrimaryContact: false }, { onSuccess: onClose });

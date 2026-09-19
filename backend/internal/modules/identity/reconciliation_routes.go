@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
 
@@ -17,7 +18,7 @@ func newReconciliationHandler(service *reconciliationService) *reconciliationHan
 func (h *reconciliationHandler) listOrphaned(c *gin.Context) {
 	orphaned, err := h.service.findOrphaned(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, orphaned)
@@ -35,7 +36,7 @@ func (h *reconciliationHandler) deleteOrphaned(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "orphaned account deleted"})

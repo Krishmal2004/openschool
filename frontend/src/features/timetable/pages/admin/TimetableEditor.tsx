@@ -4,6 +4,7 @@ import { Button, Tag, SkeletonText } from "@carbon/react";
 import { useClass, useClassSubjectTeachers } from "@/features/academics/queries/useClasses";
 import { useGrades } from "@/features/academics/queries/useGrades";
 import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import type { Teacher } from "@/features/teachers/api/teacher";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
 import { useClassrooms } from "@/features/timetable/queries/useClassrooms";
 import { useGradeSections, useGradeSectionPeriods } from "@/features/timetable/queries/useGradeSections";
@@ -36,7 +37,9 @@ export default function TimetableEditor() {
   const { data: entries } = useTimetableEntries(id);
   const { data: cls } = useClass(timetable?.class_id ?? "");
   const { data: grades } = useGrades();
-  const { data: teachers } = useTeachers();
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const { data: teacherPage } = useTeachers({ limit: 25, search: teacherSearch });
+  const teachers = teacherPage?.items;
   const { data: subjects } = useSubjects();
   const { data: classrooms } = useClassrooms();
   const { data: gradeSections } = useGradeSections(timetable?.academic_year_id ?? "");
@@ -69,6 +72,20 @@ export default function TimetableEditor() {
   }, [subjects, classSubjects, gradeName]);
 
   const entryAt = (day: number, period: number) => entries?.find((e) => e.day_of_week === day && e.period_number === period);
+
+  // The cell being edited may already have a teacher assigned who isn't
+  // among the current search results (e.g. no search typed yet) — merged
+  // in from the entry's own teacher_name so the field doesn't look empty.
+  // employee_number is unknown here, so it's left blank in the label.
+  const cellTeachers = useMemo(() => {
+    const list = teachers ?? [];
+    const existing = cell ? entryAt(cell.day, cell.period) : undefined;
+    if (existing?.teacher_id && existing.teacher_name && !list.some((t) => t.id === existing.teacher_id)) {
+      return [{ id: existing.teacher_id, full_name: existing.teacher_name, employee_number: "" } as Teacher, ...list];
+    }
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- entryAt closes over `entries`, already a dep
+  }, [teachers, cell, entries]);
 
   const openCell = (day: number, period: number) => {
     const existing = entryAt(day, period);
@@ -160,7 +177,8 @@ export default function TimetableEditor() {
         form={cellForm}
         onFormChange={setCellForm}
         subjects={filteredSubjects}
-        teachers={teachers ?? []}
+        teachers={cellTeachers}
+        onTeacherSearch={setTeacherSearch}
         classrooms={classrooms ?? []}
         canClear={!!cell && !!entryAt(cell.day, cell.period)}
         save={saveEntries}

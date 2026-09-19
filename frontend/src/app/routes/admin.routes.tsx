@@ -1,6 +1,7 @@
 import { Navigate, Route } from "react-router";
 import { lazy as page } from "react";
 import ProtectedRoute from "@/shared/auth/ProtectedRoute";
+import { ADMIN_IDLE_TIMEOUT_MS } from "@/shared/auth/useIdleLogout";
 import RootLayout from "@/layouts/RootLayout";
 
 const NotFound = page(() => import("@/app/pages/NotFound"));
@@ -47,8 +48,8 @@ const NotificationCenter = page(() => import("@/features/notifications/pages/Not
 
 export function adminRoutes() {
   return [
-    <Route key="school-setup" path="/school-setup" element={<ProtectedRoute><SchoolSetup /></ProtectedRoute>} />,
-    <Route key="admin" element={<ProtectedRoute><RootLayout /></ProtectedRoute>}>
+    <Route key="school-setup" path="/school-setup" element={<ProtectedRoute idleTimeoutMs={ADMIN_IDLE_TIMEOUT_MS}><SchoolSetup /></ProtectedRoute>} />,
+    <Route key="admin" element={<ProtectedRoute idleTimeoutMs={ADMIN_IDLE_TIMEOUT_MS}><RootLayout /></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="/students" element={<Students />} />
       <Route path="/students/new" element={<AddStudent />} />

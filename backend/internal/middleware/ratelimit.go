@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,10 +19,38 @@ const evictAfter = 30 * time.Minute
 // sweepInterval is how often the eviction pass runs.
 const sweepInterval = 10 * time.Minute
 
+// maxKeyLength bounds the size of any one limiter key. Without this, a
+// caller-controlled identifier (PerJSONFieldRateLimit reads one straight out
+// of the request body) could retain up to the body size limit per key for
+// the whole evictAfter window.
+const maxKeyLength = 254
+
+// maxLimiterEntries bounds how many distinct keys are tracked at once,
+// regardless of key length, so a single source can't grow the map without
+// bound between sweeps by cycling through many distinct identifiers.
+const maxLimiterEntries = 20000
+
 // limiterEntry pairs one key's token bucket with when it was last used, so the sweep goroutine knows what's idle.
 type limiterEntry struct {
 	limiter  *rate.Limiter
 	lastSeen time.Time
+}
+
+// evictOldestLocked drops the least-recently-seen entry so the map can accept
+// a new key without growing past maxLimiterEntries between sweeps. Caller
+// must hold the map's mutex.
+func evictOldestLocked(limiters map[string]*limiterEntry) {
+	var oldestKey string
+	var oldestSeen time.Time
+	first := true
+	for key, e := range limiters {
+		if first || e.lastSeen.Before(oldestSeen) {
+			oldestKey, oldestSeen, first = key, e.lastSeen, false
+		}
+	}
+	if !first {
+		delete(limiters, oldestKey)
+	}
 }
 
 // keyedRateLimit is the shared token-bucket-per-key implementation behind RateLimit and PerAccountRateLimit; keyFunc returning "" skips limiting (e.g. no signed-in subject yet).
@@ -31,6 +63,9 @@ func keyedRateLimit(rps float64, burst int, keyFunc func(*gin.Context) string) g
 		defer mu.Unlock()
 		e, ok := limiters[key]
 		if !ok {
+			if len(limiters) >= maxLimiterEntries {
+				evictOldestLocked(limiters)
+			}
 			e = &limiterEntry{limiter: rate.NewLimiter(rate.Limit(rps), burst)}
 			limiters[key] = e
 		}
@@ -80,5 +115,32 @@ func RateLimit(rps float64, burst int) gin.HandlerFunc {
 func PerAccountRateLimit(rps float64, burst int) gin.HandlerFunc {
 	return keyedRateLimit(rps, burst, func(c *gin.Context) string {
 		return c.GetString("userID")
+	})
+}
+
+// PerJSONFieldRateLimit throttles requests keyed by a top-level string field
+// in the JSON body (case-insensitively), e.g. the "identifier" on
+// /auth/forgot-password (S2): a per-IP limiter alone is either useless
+// (every user shares one IP behind the school's Nginx) or, once IPs are
+// resolved correctly, still lets an attacker spread guesses for one target
+// account across many IPs. This limiter targets the account instead. The
+// body is peeked and restored so the handler's own binding still works.
+func PerJSONFieldRateLimit(rps float64, burst int, field string) gin.HandlerFunc {
+	return keyedRateLimit(rps, burst, func(c *gin.Context) string {
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			return ""
+		}
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
+
+		var payload map[string]string
+		if err := json.Unmarshal(body, &payload); err != nil {
+			return ""
+		}
+		key := strings.ToLower(strings.TrimSpace(payload[field]))
+		if len(key) > maxKeyLength {
+			key = key[:maxKeyLength]
+		}
+		return key
 	})
 }

@@ -1,11 +1,12 @@
 import type { useAssignFormTeacher } from "@/features/academics/queries/useClasses";
-import type { useTeachers } from "@/features/teachers/queries/useTeachers";
+import type { Teacher } from "@/features/teachers/api/teacher";
 import FormModal from "@/shared/ui/FormModal";
 import EntityCombobox from "@/shared/ui/EntityCombobox";
 
 interface Props {
   open: boolean;
-  teachers: ReturnType<typeof useTeachers>["data"];
+  teachers: Teacher[] | undefined;
+  onTeacherSearch: (term: string) => void;
   teacherChoice: string;
   onTeacherChoiceChange: (id: string) => void;
   assignFormTeacher: ReturnType<typeof useAssignFormTeacher>;
@@ -16,6 +17,7 @@ interface Props {
 export default function AssignTeacherModal({
   open,
   teachers,
+  onTeacherSearch,
   teacherChoice,
   onTeacherChoiceChange,
   assignFormTeacher,
@@ -41,6 +43,7 @@ export default function AssignTeacherModal({
         items={teachers ?? []}
         selectedId={teacherChoice}
         onSelect={onTeacherChoiceChange}
+        onSearch={onTeacherSearch}
         getId={(t) => t.id}
         itemToString={(t) => `${t.full_name} - ${t.employee_number}`}
         placeholder="Search teachers by name or employee number…"

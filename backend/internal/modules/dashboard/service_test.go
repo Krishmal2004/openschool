@@ -27,6 +27,8 @@ type dashboardStore struct {
 	staffHistory    []staffGrowth
 	notifications   int64
 	timetable       timetableCompletion
+	students        []recentStudent
+	teachers        []recentTeacher
 }
 
 func (s *dashboardStore) studentCountByGrade(context.Context) ([]countByGrade, error) {
@@ -74,6 +76,12 @@ func (s *dashboardStore) notificationsSentCount(context.Context) (int64, error) 
 }
 func (s *dashboardStore) timetableCompletion(context.Context) (timetableCompletion, error) {
 	return s.timetable, nil
+}
+func (s *dashboardStore) recentStudents(context.Context, int32) ([]recentStudent, error) {
+	return s.students, nil
+}
+func (s *dashboardStore) recentTeachers(context.Context, int32) ([]recentTeacher, error) {
+	return s.teachers, nil
 }
 
 func dashboardNumeric(t *testing.T, value string) pgtype.Numeric {

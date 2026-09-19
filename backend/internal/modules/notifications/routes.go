@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openschool-org/openschool/internal/apierror"
 	"github.com/openschool-org/openschool/internal/authz"
 	"github.com/openschool-org/openschool/internal/middleware"
 )
@@ -156,7 +157,7 @@ func (h *NotificationHandler) ListSent(c *gin.Context) {
 	}
 	list, err := h.service.ListSent(c.Request.Context(), callerID, role)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, list)
@@ -169,7 +170,7 @@ func (h *NotificationHandler) ListDrafts(c *gin.Context) {
 	}
 	list, err := h.service.ListMyDrafts(c.Request.Context(), callerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, list)
@@ -202,7 +203,7 @@ func (h *NotificationHandler) ListMine(c *gin.Context) {
 	}
 	list, err := h.service.ListMine(c.Request.Context(), callerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, list)
@@ -215,7 +216,7 @@ func (h *NotificationHandler) ListMyArchived(c *gin.Context) {
 	}
 	list, err := h.service.ListMyArchived(c.Request.Context(), callerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, list)
@@ -228,7 +229,7 @@ func (h *NotificationHandler) UnreadCount(c *gin.Context) {
 	}
 	count, err := h.service.CountMyUnread(c.Request.Context(), callerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"unread_count": count})

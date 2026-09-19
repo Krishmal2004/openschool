@@ -155,3 +155,28 @@ FROM classes c
 LEFT JOIN timetables t ON t.class_id = c.id AND t.status = 'published'
     AND t.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1)
 WHERE c.academic_year_id = (SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1);
+
+-- name: DashboardRecentStudents :many
+-- Newest-enrolled students for the admin dashboard's activity feed — a
+-- dedicated, server-sorted query rather than slicing a capped, alphabetical
+-- ListStudentsPage result, which could otherwise miss a recently enrolled
+-- student once more than one page of students exists.
+SELECT sp.id, sp.full_name, sp.index_number, sp.created_at, g.name AS grade_name, c.name AS class_name
+FROM student_profiles sp
+LEFT JOIN class_students cs
+    ON cs.student_id = sp.id
+   AND cs.academic_year_id = (
+       SELECT id FROM academic_years WHERE is_current = TRUE LIMIT 1
+   )
+LEFT JOIN classes c ON c.id = cs.class_id
+LEFT JOIN grades  g ON g.id = c.grade_id
+ORDER BY sp.created_at DESC, sp.id DESC
+LIMIT $1;
+
+-- name: DashboardRecentTeachers :many
+-- Newest-added teachers for the admin dashboard's activity feed — see
+-- DashboardRecentStudents for why this is a dedicated query.
+SELECT id, full_name, employee_number, created_at
+FROM teacher_profiles
+ORDER BY created_at DESC, id DESC
+LIMIT $1;

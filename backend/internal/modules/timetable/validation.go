@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 type ValidationIssue struct {
@@ -152,7 +153,7 @@ func (h *validationHandler) validate(c *gin.Context) {
 	}
 	result, err := h.service.validate(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, result)

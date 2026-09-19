@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 type StatusHistoryItem struct {
@@ -49,7 +50,7 @@ func (h *statusHistoryHandler) list(c *gin.Context) {
 	}
 	history, err := h.service.list(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apierror.RespondInternal(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, history)

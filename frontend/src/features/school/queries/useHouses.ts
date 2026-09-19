@@ -5,8 +5,10 @@ import { schoolKeys } from "@/features/school/keys";
 import { studentKeys } from "@/features/students/keys";
 import { teacherKeys } from "@/features/teachers/keys";
 import { useInvalidate } from "@/shared/api/useInvalidate";
+import { REFERENCE_DATA_STALE_TIME_MS } from "@/shared/api/staleTime";
 
-export const useHouses = () => useQuery({ queryKey: schoolKeys.houses(), queryFn: houseApi.list });
+export const useHouses = () =>
+  useQuery({ queryKey: schoolKeys.houses(), queryFn: houseApi.list, staleTime: REFERENCE_DATA_STALE_TIME_MS });
 
 export const useCreateHouse = () => {
   const invalidate = useInvalidate();

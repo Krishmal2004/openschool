@@ -1,0 +1,76 @@
+# Reference reverse-proxy config implementing docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+# section 3 (S3, S7) and section 5 (infrastructure). Adjust paths/domains before use;
+# this is not wired into any build and is not applied automatically.
+
+server {
+    listen 443 ssl http2;
+    server_name school.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/school.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/school.example.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # S7: transport and browser hardening headers. The API sets HSTS and
+    # Permissions-Policy too (belt-and-braces); CSP only makes sense here,
+    # against the SPA's HTML response.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    # font-src/style-src still list Google Fonts because the SPA loads IBM
+    # Plex from fonts.googleapis.com/fonts.gstatic.com today (index.html).
+    # Once the fonts playbook's "self-host IBM Plex" item lands (Phase C —
+    # see the performance checklist), drop both google font hosts here.
+    add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://<thunderid-base-url>; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" always;
+
+    gzip on;
+    gzip_types application/json text/css application/javascript;
+
+    # Static SPA build: hashed assets are immutable, index.html must always revalidate.
+    #
+    # nginx does not merge add_header across nesting levels: a location that
+    # defines its own add_header stops inheriting every add_header set at the
+    # server level, not just the one it overrides. Both locations below repeat
+    # the S7 headers for that reason — dropping them here would ship the SPA's
+    # actual HTML response (and its assets) without CSP/HSTS/etc.
+    root /var/www/openschool/dist;
+    location / {
+        try_files $uri /index.html;
+    }
+    location ~* \.(js|css|woff2|png|webp|svg)$ {
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://<thunderid-base-url>; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" always;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+    location = /index.html {
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Content-Security-Policy "default-src 'self'; connect-src 'self' https://<thunderid-base-url>; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" always;
+        add_header Cache-Control "no-cache";
+    }
+
+    # API: proxied to the Go binary. X-Forwarded-For here is what makes S3's
+    # TRUSTED_PROXIES=<this proxy's IP> setting meaningful — without this
+    # header (or with it forwarded but TRUSTED_PROXIES left empty), the
+    # backend's per-IP rate limiter and audit IPs see this proxy's address
+    # for every request instead of the real client.
+    location /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /healthz {
+        proxy_pass http://127.0.0.1:8080;
+    }
+}
+
+server {
+    listen 80;
+    server_name school.example.com;
+    return 301 https://$host$request_uri;
+}

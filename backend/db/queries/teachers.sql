@@ -61,6 +61,17 @@ WHERE user_id = $1 AND nic_number = $2;
 SELECT * FROM teacher_profiles
 ORDER BY full_name ASC;
 
+-- name: ListTeachersPage :many
+-- Server-paginated replacement for ListTeachers (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md
+-- section 4). The caller-supplied search term is escaped by the service
+-- layer (httpx.EscapeLikeTerm) before it reaches here.
+SELECT *, COUNT(*) OVER () AS total
+FROM teacher_profiles
+WHERE (sqlc.narg(search)::text IS NULL OR full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR employee_number ILIKE '%' || sqlc.narg(search)::text || '%')
+  AND (sqlc.narg(status)::text IS NULL OR employment_status = sqlc.narg(status)::text)
+ORDER BY full_name ASC, id ASC
+LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
+
 -- name: UpdateTeacherProfile :one
 -- employee_number is immutable once assigned (Phase 6.1) — not updatable here.
 -- nic_number *is* updatable, unlike employee_number — a typo should be

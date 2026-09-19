@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TextInput } from "@carbon/react";
-import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { useTeacher, useTeachers } from "@/features/teachers/queries/useTeachers";
 import { useCreateSociety, useUpdateSociety } from "@/features/portfolio/queries/useSocieties";
 import FormModal from "@/shared/ui/FormModal";
 import EntityCombobox from "@/shared/ui/EntityCombobox";
@@ -15,7 +15,16 @@ interface Props {
 // Create-or-edit form for a society; a null society means create.
 export default function SocietyFormModal({ society, academicYearId, onClose }: Props) {
   const isEditing = !!society;
-  const { data: teachers } = useTeachers();
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const { data: teacherPage } = useTeachers({ limit: 25, search: teacherSearch });
+  // The society's current teacher-in-charge may not be among the search
+  // results (e.g. no search typed yet) — fetched separately and merged in
+  // so editing doesn't show an empty-looking field for an already-set value.
+  const { data: currentTeacher } = useTeacher(society?.teacher_in_charge_id ?? "");
+  const teachers = useMemo(() => {
+    const list = teacherPage?.items ?? [];
+    return currentTeacher && !list.some((t) => t.id === currentTeacher.id) ? [currentTeacher, ...list] : list;
+  }, [teacherPage, currentTeacher]);
   const createSociety = useCreateSociety();
   const updateSociety = useUpdateSociety();
 
@@ -64,9 +73,10 @@ export default function SocietyFormModal({ society, academicYearId, onClose }: P
         <EntityCombobox
           id="society-tic"
           labelText="Teacher-in-Charge"
-          items={teachers ?? []}
+          items={teachers}
           selectedId={teacherChoice}
           onSelect={setTeacherChoice}
+          onSearch={setTeacherSearch}
           getId={(t) => t.id}
           itemToString={(t) => `${t.full_name} — ${t.employee_number}`}
           placeholder="Search teachers by name or employee number…"

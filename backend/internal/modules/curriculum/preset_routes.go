@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/openschool-org/openschool/internal/apierror"
 )
 
 // RegisterPresetRoutes owns the HTTP boundary for the curriculum preset.
@@ -13,7 +14,7 @@ func RegisterPresetRoutes(admin *gin.RouterGroup, pool *pgxpool.Pool) {
 	admin.GET("/curriculum/preset/preview", func(c *gin.Context) {
 		summary, err := service.Preview(c.Request.Context())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, summary)
@@ -21,7 +22,7 @@ func RegisterPresetRoutes(admin *gin.RouterGroup, pool *pgxpool.Pool) {
 	admin.POST("/curriculum/preset", func(c *gin.Context) {
 		summary, err := service.Run(c.Request.Context())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			apierror.RespondInternal(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, summary)
