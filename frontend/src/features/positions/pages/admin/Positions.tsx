@@ -92,9 +92,11 @@ export default function Positions() {
         description={<>Remove <strong>{vpToRemove?.teacher_name}</strong> as Vice Principal? They will stop receiving notifications for their assigned scope.</>}
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removePosition.isPending}
+        subject="Vice Principal"
+        successVerb="removed"
+        mutation={removePosition}
         onClose={() => setVpToRemove(null)}
-        onConfirm={() => vpToRemove && removePosition.mutate(vpToRemove.id, { onSettled: () => setVpToRemove(null) })}
+        onConfirm={() => vpToRemove && removePosition.mutate(vpToRemove.id)}
       />
     </div>
   );

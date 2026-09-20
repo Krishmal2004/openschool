@@ -50,9 +50,10 @@ export default function DraftRow({ draft }: { draft: Notification }) {
         open={confirmingDelete}
         title="Delete draft"
         description="This will permanently delete this notification draft. This action cannot be undone."
-        isPending={remove.isPending}
+        subject="Draft"
+        mutation={remove}
         onClose={() => setConfirmingDelete(false)}
-        onConfirm={() => remove.mutate(draft.id, { onSuccess: () => setConfirmingDelete(false) })}
+        onConfirm={() => remove.mutate(draft.id)}
       />
     </div>
   );

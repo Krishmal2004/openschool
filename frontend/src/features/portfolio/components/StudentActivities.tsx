@@ -128,10 +128,11 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
         open={pendingDeleteId !== null}
         title="Delete activity"
         description="This will permanently remove this activity record. This action cannot be undone."
-        isPending={deleteActivity.isPending}
+        subject="Activity"
+        mutation={deleteActivity}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteActivity.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteActivity.mutate(pendingDeleteId);
         }}
       />
     </div>

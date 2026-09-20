@@ -56,7 +56,7 @@ export default function AttendanceMark() {
   const save = () => {
     markAttendance.mutate(
       { records: marking.toRecords(), reason: isOverride ? reason.trim() || undefined : undefined },
-      { onSuccess: () => { showToast({ kind: "success", title: "Attendance saved" }); navigate(backPath); } },
+      { onSuccess: () => { marking.clearDraft(); showToast({ kind: "success", title: "Attendance saved" }); navigate(backPath); } },
     );
   };
 

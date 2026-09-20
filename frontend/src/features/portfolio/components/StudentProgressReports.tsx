@@ -88,10 +88,11 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         open={pendingDeleteId !== null}
         title="Delete progress report"
         description="This will permanently remove this progress report. This action cannot be undone."
-        isPending={deleteReport.isPending}
+        subject="Progress report"
+        mutation={deleteReport}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteReport.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteReport.mutate(pendingDeleteId);
         }}
       />
     </div>

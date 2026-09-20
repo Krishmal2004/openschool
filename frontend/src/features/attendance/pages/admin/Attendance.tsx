@@ -226,9 +226,10 @@ export default function Attendance() {
             marked for it is deleted too.
           </>
         }
-        isPending={deleteSession.isPending}
+        subject="Session"
+        mutation={deleteSession}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteSession.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteSession.mutate(toDelete.id)}
       />
     </div>
   );

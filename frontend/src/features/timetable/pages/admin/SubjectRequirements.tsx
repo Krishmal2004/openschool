@@ -189,10 +189,14 @@ export default function SubjectRequirements({ inline = false }: { inline?: boole
             grade until a requirement is set again.
           </>
         }
-        isPending={remove.isPending}
+        confirmLabel="Clear"
+        pendingLabel="Clearing…"
+        subject="Requirement"
+        successVerb="cleared"
+        mutation={remove}
         onClose={() => setToRemove(null)}
         onConfirm={() => {
-          if (toRemove) remove.mutate(toRemove.id, { onSettled: () => setToRemove(null) });
+          if (toRemove) remove.mutate(toRemove.id);
         }}
       />
     </div>

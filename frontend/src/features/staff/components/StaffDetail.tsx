@@ -120,16 +120,11 @@ export default function StaffDetail({ staff, onDeleted }: { staff: StaffRow; onD
             Delete <strong>{staff.full_name}</strong>? This cannot be undone.
           </>
         }
-        isPending={deleteStaff.isPending}
+        subject="Staff member"
+        mutation={deleteStaff}
         onClose={() => setConfirmDelete(false)}
-        onConfirm={() =>
-          deleteStaff.mutate(staff.id, {
-            onSuccess: () => {
-              setConfirmDelete(false);
-              onDeleted();
-            },
-          })
-        }
+        onConfirm={() => deleteStaff.mutate(staff.id)}
+        onSuccess={onDeleted}
       />
     </div>
   );

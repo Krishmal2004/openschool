@@ -110,10 +110,12 @@ export default function StudentGuardians({ studentId }: { studentId: string }) {
             record isn't deleted - this only unlinks them from this student.
           </>
         }
-        isPending={unlinkGuardian.isPending}
+        subject="Guardian"
+        successVerb="removed"
+        mutation={unlinkGuardian}
         onClose={() => setToUnlink(null)}
         onConfirm={() => {
-          if (toUnlink) unlinkGuardian.mutate(toUnlink.id, { onSettled: () => setToUnlink(null) });
+          if (toUnlink) unlinkGuardian.mutate(toUnlink.id);
         }}
       />
     </div>

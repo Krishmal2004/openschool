@@ -87,11 +87,12 @@ export default function OrphanedAccounts() {
         open={!!pendingDeleteId}
         title="Delete orphaned account"
         description="This permanently deletes the ThunderID account. This can't be undone. Only do this if you're sure no signup for this account is still in progress."
-        isPending={deleteOrphan.isPending}
+        subject="Account"
+        mutation={deleteOrphan}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
           if (!pendingDeleteId) return;
-          deleteOrphan.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          deleteOrphan.mutate(pendingDeleteId);
         }}
       />
     </div>

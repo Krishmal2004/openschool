@@ -95,9 +95,10 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
         open={!!toDelete}
         title="Delete term"
         description={<>Delete <strong>{toDelete?.name}</strong>? Every examination mark recorded against this term is deleted with it. To correct a name or date, use Edit instead. This cannot be undone.</>}
-        isPending={deleteTerm.isPending}
+        subject="Term"
+        mutation={deleteTerm}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteTerm.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteTerm.mutate(toDelete.id)}
       />
     </>
   );

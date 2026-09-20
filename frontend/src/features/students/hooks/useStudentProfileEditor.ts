@@ -63,6 +63,7 @@ export function useStudentProfileEditor(id: string, student: StudentWithClass | 
         { onSuccess: () => { setEditing(false); onDone(); } },
       ),
     deleteStudent,
-    remove: (onDone: () => void) => deleteStudent.mutate(id, { onSuccess: () => navigate("/students"), onSettled: onDone }),
+    remove: () => deleteStudent.mutate(id),
+    goToStudents: () => navigate("/students"),
   };
 }

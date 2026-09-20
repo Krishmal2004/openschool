@@ -104,10 +104,7 @@ export default function TimetableEditor() {
 
   const clearCell = () => {
     if (!cell) return;
-    deleteEntry.mutate(
-      { day: cell.day, period: cell.period },
-      { onSuccess: () => { setConfirmingClear(false); setCell(null); }, onError: () => setConfirmingClear(false) },
-    );
+    deleteEntry.mutate({ day: cell.day, period: cell.period });
   };
 
   if (isLoading || !timetable) {
@@ -195,9 +192,12 @@ export default function TimetableEditor() {
         description="Clear this period's assignment? You can reassign it afterwards."
         confirmLabel="Clear"
         pendingLabel="Clearing…"
-        isPending={deleteEntry.isPending}
+        subject="Cell"
+        successVerb="cleared"
+        mutation={deleteEntry}
         onClose={() => setConfirmingClear(false)}
         onConfirm={clearCell}
+        onSuccess={() => setCell(null)}
       />
 
       <TimetableValidationModal open={validationOpen} validating={validating} validation={validation} onClose={() => setValidationOpen(false)} />

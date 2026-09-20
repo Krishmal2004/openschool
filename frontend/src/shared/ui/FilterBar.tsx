@@ -1,13 +1,19 @@
 import type { ReactNode } from "react";
 import { TableToolbarSearch } from "@carbon/react";
 
-interface Props {
-  search: { value: string; onChange: (value: string) => void; placeholder?: string };
-  children?: ReactNode;
+export interface FilterControl {
+  label: string;
+  node: ReactNode;
 }
 
-// Search box plus any filter controls; each child is wrapped as one control.
-export default function FilterBar({ search, children }: Props) {
+interface Props {
+  search: { value: string; onChange: (value: string) => void; placeholder?: string };
+  controls?: FilterControl[];
+}
+
+// Search box plus any filter controls; each control declares its own accessible
+// label so a filter bar can't ship a control screen readers can't name.
+export default function FilterBar({ search, controls }: Props) {
   return (
     <div className="os-filter-bar">
       <div className="os-filter-bar__search">
@@ -18,9 +24,11 @@ export default function FilterBar({ search, children }: Props) {
           onChange={(e) => search.onChange(typeof e === "string" ? e : e.target.value)}
         />
       </div>
-      {Array.isArray(children)
-        ? children.map((child, i) => child && <div key={i} className="os-filter-bar__control">{child}</div>)
-        : children && <div className="os-filter-bar__control">{children}</div>}
+      {controls?.map((c) => (
+        <div key={c.label} className="os-filter-bar__control" role="group" aria-label={c.label}>
+          {c.node}
+        </div>
+      ))}
     </div>
   );
 }

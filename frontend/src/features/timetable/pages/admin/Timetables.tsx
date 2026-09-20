@@ -183,11 +183,12 @@ export default function Timetables({ inline = false }: { inline?: boolean }) {
             This cannot be undone.
           </>
         }
-        isPending={deleteTimetable.isPending}
+        subject="Timetable"
+        mutation={deleteTimetable}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           if (!deleteTarget) return;
-          deleteTimetable.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+          deleteTimetable.mutate(deleteTarget.id);
         }}
       />
     </div>

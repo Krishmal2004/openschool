@@ -93,10 +93,11 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         open={pendingDeleteId !== null}
         title="Delete disciplinary record"
         description="This will permanently remove this record. This action cannot be undone."
-        isPending={deleteRecord.isPending}
+        subject="Record"
+        mutation={deleteRecord}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteRecord.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteRecord.mutate(pendingDeleteId);
         }}
       />
     </div>

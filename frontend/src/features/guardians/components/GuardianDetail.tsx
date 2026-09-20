@@ -150,18 +150,15 @@ export default function GuardianDetail({ guardian, onDeleted }: { guardian: Guar
             </>
           )
         }
-        isPending={deleteGuardian.isPending}
+        subject="Guardian"
+        mutation={deleteGuardian}
         disabled={deleteBlocked}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (deleteBlocked) return;
-          deleteGuardian.mutate(guardian.id, {
-            onSuccess: () => {
-              setConfirmDelete(false);
-              onDeleted();
-            },
-          });
+          deleteGuardian.mutate(guardian.id);
         }}
+        onSuccess={onDeleted}
       />
     </div>
   );

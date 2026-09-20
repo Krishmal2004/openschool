@@ -147,9 +147,10 @@ export default function HousesPanel() {
         open={!!toDelete}
         title="Delete house"
         description={<>Delete <strong>{toDelete?.name}</strong>? This is blocked while a student or teacher is assigned to it.</>}
-        isPending={deleteHouse.isPending}
+        subject="House"
+        mutation={deleteHouse}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteHouse.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteHouse.mutate(toDelete.id)}
       />
     </div>
   );

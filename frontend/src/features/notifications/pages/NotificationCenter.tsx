@@ -97,7 +97,7 @@ export default function NotificationCenter() {
     <div className="os-page">
       <div className="os-page__header">
         <div className="os-page__header-left">
-          <h1 className="os-page__title">Notification Center</h1>
+          <h1 className="os-page__title">Notification Centre</h1>
           <p className="os-page__subtitle">Announcements and updates sent to you.</p>
         </div>
       </div>

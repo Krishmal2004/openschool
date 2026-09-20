@@ -111,9 +111,10 @@ export default function Classrooms({ inline = false }: { inline?: boolean }) {
         open={!!toDelete}
         title="Delete classroom"
         description={<>Delete <strong>{toDelete?.name}</strong>? This cannot be undone.</>}
-        isPending={deleteClassroom.isPending}
+        subject="Classroom"
+        mutation={deleteClassroom}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteClassroom.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteClassroom.mutate(toDelete.id)}
       />
     </div>
   );

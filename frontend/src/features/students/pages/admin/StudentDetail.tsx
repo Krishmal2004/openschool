@@ -69,7 +69,7 @@ export default function StudentDetail() {
           <TabList aria-label="Student sections">
             <Tab>Profile</Tab>
             <Tab>Guardians</Tab>
-            <Tab>Subject Enrollment</Tab>
+            <Tab>Subject Enrolment</Tab>
             <Tab>Progress Reports</Tab>
             <Tab>Activities</Tab>
             <Tab>Leadership &amp; Awards</Tab>
@@ -105,9 +105,11 @@ export default function StudentDetail() {
         open={confirmDelete}
         title="Delete student"
         description={<>Delete <strong>{student.full_name}</strong>? This removes their account and cannot be undone.</>}
-        isPending={editor.deleteStudent.isPending}
+        subject="Student"
+        mutation={editor.deleteStudent}
         onClose={() => setConfirmDelete(false)}
-        onConfirm={() => editor.remove(() => setConfirmDelete(false))}
+        onConfirm={editor.remove}
+        onSuccess={editor.goToStudents}
       />
       <ConfirmEditModal
         open={confirmSave}

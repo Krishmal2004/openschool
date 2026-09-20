@@ -76,12 +76,20 @@ export default function Teachers() {
       <AgentFindingsBanner titles={["Inactive teachers still assigned to classes", "Teacher accounts stuck in first-login setup"]} />
 
       <div className="os-section">
-        <FilterBar search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or employee number…" }}>
-          <Select id="filter-teacher-status" labelText="Status" hideLabel size="md" value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
-            <SelectItem value="" text="All Statuses" />
-            {EMPLOYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value} text={s.label} />)}
-          </Select>
-        </FilterBar>
+        <FilterBar
+          search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or employee number…" }}
+          controls={[
+            {
+              label: "Status",
+              node: (
+                <Select id="filter-teacher-status" labelText="Status" hideLabel size="md" value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
+                  <SelectItem value="" text="All Statuses" />
+                  {EMPLOYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value} text={s.label} />)}
+                </Select>
+              ),
+            },
+          ]}
+        />
         <ActiveFilterTags filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))} onClear={(k) => { clear(k as keyof typeof filters); setPage(1); }} onClearAll={() => { clear(); setPage(1); }} />
         <MutationErrorNotification isError={deleteTeacher.isError} error={deleteTeacher.error} title="Could not delete teacher" fallback="The teacher may be assigned to a class or have attendance records." onClose={() => deleteTeacher.reset()} className="os-section__notice" />
         <ListState
@@ -107,9 +115,10 @@ export default function Teachers() {
         open={!!toDelete}
         title="Delete teacher"
         description={<>Delete <strong>{toDelete?.full_name}</strong>? This removes their account and cannot be undone.</>}
-        isPending={deleteTeacher.isPending}
+        subject="Teacher"
+        mutation={deleteTeacher}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteTeacher.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteTeacher.mutate(toDelete.id)}
       />
     </div>
   );

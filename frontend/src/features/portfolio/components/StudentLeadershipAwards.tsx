@@ -83,10 +83,11 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
         open={pendingDeleteRoleId !== null}
         title="Delete leadership role"
         description="This will permanently remove this leadership role. This action cannot be undone."
-        isPending={deleteRole.isPending}
+        subject="Leadership role"
+        mutation={deleteRole}
         onClose={() => setPendingDeleteRoleId(null)}
         onConfirm={() => {
-          if (pendingDeleteRoleId) deleteRole.mutate(pendingDeleteRoleId, { onSuccess: () => setPendingDeleteRoleId(null) });
+          if (pendingDeleteRoleId) deleteRole.mutate(pendingDeleteRoleId);
         }}
       />
 
@@ -127,10 +128,11 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
         open={pendingDeleteAwardId !== null}
         title="Delete award"
         description="This will permanently remove this award. This action cannot be undone."
-        isPending={deleteAward.isPending}
+        subject="Award"
+        mutation={deleteAward}
         onClose={() => setPendingDeleteAwardId(null)}
         onConfirm={() => {
-          if (pendingDeleteAwardId) deleteAward.mutate(pendingDeleteAwardId, { onSuccess: () => setPendingDeleteAwardId(null) });
+          if (pendingDeleteAwardId) deleteAward.mutate(pendingDeleteAwardId);
         }}
       />
     </>

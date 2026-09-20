@@ -93,9 +93,11 @@ export default function SectionHeadsPanel() {
             {toRemove?.stream_name ? ` - ${toRemove.stream_name}` : ""}? The post is left vacant, and they lose the notification reach the role grants.
           </>
         }
-        isPending={remove.isPending}
+        subject="Section head"
+        successVerb="removed"
+        mutation={remove}
         onClose={() => setToRemove(null)}
-        onConfirm={() => toRemove && currentYear && remove.mutate({ id: toRemove.id, academicYearId: currentYear.id }, { onSettled: () => setToRemove(null) })}
+        onConfirm={() => toRemove && currentYear && remove.mutate({ id: toRemove.id, academicYearId: currentYear.id })}
       />
     </div>
   );

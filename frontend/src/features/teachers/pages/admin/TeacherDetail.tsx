@@ -70,10 +70,7 @@ export default function TeacherDetail() {
   }
 
   const handleDelete = () => {
-    deleteTeacher.mutate(id, {
-      onSuccess: () => navigate("/teachers"),
-      onSettled: () => setConfirmOpen(false),
-    });
+    deleteTeacher.mutate(id);
   };
 
   const handleCancel = () => {
@@ -217,9 +214,11 @@ export default function TeacherDetail() {
             account and cannot be undone.
           </>
         }
-        isPending={deleteTeacher.isPending}
+        subject="Teacher"
+        mutation={deleteTeacher}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
+        onSuccess={() => navigate("/teachers")}
       />
 
       <ConfirmEditModal

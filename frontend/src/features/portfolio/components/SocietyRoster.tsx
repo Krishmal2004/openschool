@@ -64,10 +64,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
 
   const confirmRemove = () => {
     if (!memberToRemove) return;
-    removeMember.mutate(
-      { memberId: memberToRemove.id, studentId: memberToRemove.student_id },
-      { onSettled: () => setMemberToRemove(null) },
-    );
+    removeMember.mutate({ memberId: memberToRemove.id, studentId: memberToRemove.student_id });
   };
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
@@ -182,7 +179,9 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
         }
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removeMember.isPending}
+        subject="Member"
+        successVerb="removed"
+        mutation={removeMember}
         onClose={() => setMemberToRemove(null)}
         onConfirm={confirmRemove}
       />

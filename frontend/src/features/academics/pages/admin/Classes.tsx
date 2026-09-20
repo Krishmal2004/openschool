@@ -151,18 +151,20 @@ export default function Classes() {
         open={!!gradeToDelete}
         title="Delete grade"
         description={<>Delete <strong>{gradeToDelete?.name}</strong>? This is blocked while a class or curriculum level uses it.</>}
-        isPending={deleteGrade.isPending}
+        subject="Grade"
+        mutation={deleteGrade}
         onClose={() => setGradeToDelete(null)}
-        onConfirm={() => gradeToDelete && deleteGrade.mutate(gradeToDelete.id, { onSettled: () => setGradeToDelete(null) })}
+        onConfirm={() => gradeToDelete && deleteGrade.mutate(gradeToDelete.id)}
       />
 
       <ConfirmDeleteModal
         open={!!classToDelete}
         title="Delete class"
         description={<>Delete <strong>{classToDelete?.name}</strong>? This is blocked while students are still enrolled in it.</>}
-        isPending={deleteClass.isPending}
+        subject="Class"
+        mutation={deleteClass}
         onClose={() => setClassToDelete(null)}
-        onConfirm={() => classToDelete && deleteClass.mutate(classToDelete.id, { onSettled: () => setClassToDelete(null) })}
+        onConfirm={() => classToDelete && deleteClass.mutate(classToDelete.id)}
       />
     </div>
   );
