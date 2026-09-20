@@ -32,9 +32,11 @@ export function useStudentProfileEditor(id: string, student: StudentWithClass | 
   }
 
   const trimOrUndefined = (v: string) => v.trim() || undefined;
+  const hasUnsaved = editing && !!student && JSON.stringify(form) !== JSON.stringify(studentToForm(student));
 
   return {
     editing,
+    hasUnsaved,
     startEdit: () => setEditing(true),
     cancel: () => {
       if (student) setForm(studentToForm(student));

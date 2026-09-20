@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { Button, Tag, InlineNotification, TextInput } from "@carbon/react";
 import { ArrowLeft, Save, Search, UserMultiple, Warning } from "@carbon/icons-react";
 import { getErrorMessage } from "@/shared/api/errors";
@@ -11,11 +11,13 @@ import { useGrades } from "@/features/academics/queries/useGrades";
 import { useTeacher } from "@/features/teachers/queries/useTeachers";
 import { useRole } from "@/shared/auth/useRole";
 import { useAttendanceMarking } from "@/features/attendance/hooks/useAttendanceMarking";
+import { useUnsavedChangesGuard } from "@/shared/hooks/useUnsavedChangesGuard";
 import AttendanceSummaryCards from "@/features/attendance/components/AttendanceSummaryCards";
 import StudentAttendanceRow from "@/features/attendance/components/StudentAttendanceRow";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import TableSkeleton from "@/shared/ui/TableSkeleton";
+import UnsavedChangesModal from "@/shared/ui/UnsavedChangesModal";
 import { useToast } from "@/shared/ui/toast/useToast";
 
 const HEADERS = ["#", "Student", "Index No.", "Attendance", "Note"];
@@ -36,6 +38,7 @@ export default function AttendanceMark() {
   const { data: takenByTeacher } = useTeacher(session?.taken_by ?? "");
   const markAttendance = useMarkAttendance(id);
   const marking = useAttendanceMarking(id, records, students);
+  const unsavedGuard = useUnsavedChangesGuard(marking.hasUnsaved);
 
   const [search, setSearch] = useState("");
   const [reason, setReason] = useState("");
@@ -56,7 +59,7 @@ export default function AttendanceMark() {
   const save = () => {
     markAttendance.mutate(
       { records: marking.toRecords(), reason: isOverride ? reason.trim() || undefined : undefined },
-      { onSuccess: () => { marking.clearDraft(); showToast({ kind: "success", title: "Attendance saved" }); navigate(backPath); } },
+      { onSuccess: () => { marking.clearDraft(); marking.markSaved(); showToast({ kind: "success", title: "Attendance saved" }); navigate(backPath); } },
     );
   };
 
@@ -82,7 +85,7 @@ export default function AttendanceMark() {
             <span className="os-text-sm os-c-secondary">{session.date}</span>
           </div>
         </div>
-        <Button renderIcon={ArrowLeft} kind="ghost" size="sm" as={Link} to={backPath}>Back</Button>
+        <Button renderIcon={ArrowLeft} kind="ghost" size="sm" onClick={() => unsavedGuard.guard(() => navigate(backPath))}>Back</Button>
       </div>
 
       <div className="os-py-6 os-px-8">
@@ -165,7 +168,7 @@ export default function AttendanceMark() {
               )}
               {markAttendance.isError && <span className="os-text-sm os-c-danger">{getErrorMessage(markAttendance.error, "Failed to save attendance")}</span>}
               <div className="os-flex-1" />
-              <Button kind="secondary" size="md" as={Link} to={backPath}>Cancel</Button>
+              <Button kind="secondary" size="md" onClick={() => unsavedGuard.guard(() => navigate(backPath))}>Cancel</Button>
               <Button renderIcon={Save} kind="primary" size="md" onClick={save} disabled={markAttendance.isPending}>
                 {markAttendance.isPending ? "Saving…" : "Save Attendance"}
               </Button>
@@ -173,6 +176,8 @@ export default function AttendanceMark() {
           </div>
         )}
       </div>
+
+      <UnsavedChangesModal open={unsavedGuard.modalOpen} onStay={unsavedGuard.cancelLeave} onLeave={unsavedGuard.confirmLeave} />
     </div>
   );
 }

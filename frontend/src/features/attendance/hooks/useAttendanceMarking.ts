@@ -41,20 +41,22 @@ export function useAttendanceMarking(sessionId: string, records: AttendanceRecor
   const { showToast } = useToast();
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState<Draft>({ statuses: {}, notes: {} });
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [restoredDraftFor, setRestoredDraftFor] = useState<string | null>(null);
 
   if (records && loadedFor !== sessionId) {
+    const seeded = recordsToState(records);
     const draft = readDraft(sessionId);
     if (draft) {
       setStatuses(draft.statuses);
       setNotes(draft.notes);
       setRestoredDraftFor(sessionId);
     } else {
-      const seeded = recordsToState(records);
       setStatuses(seeded.statuses);
       setNotes(seeded.notes);
     }
+    setSaved(seeded);
     setLoadedFor(sessionId);
   }
 
@@ -69,6 +71,11 @@ export function useAttendanceMarking(sessionId: string, records: AttendanceRecor
     if (Object.keys(statuses).length === 0 && Object.keys(notes).length === 0) return;
     writeDraft(sessionId, { statuses, notes });
   }, [sessionId, loadedFor, statuses, notes]);
+
+  const hasUnsaved = useMemo(
+    () => JSON.stringify(statuses) !== JSON.stringify(saved.statuses) || JSON.stringify(notes) !== JSON.stringify(saved.notes),
+    [statuses, notes, saved],
+  );
 
   const summary = useMemo(() => {
     const values = Object.values(statuses);
@@ -86,6 +93,8 @@ export function useAttendanceMarking(sessionId: string, records: AttendanceRecor
     statuses,
     notes,
     summary,
+    hasUnsaved,
+    markSaved: () => setSaved({ statuses, notes }),
     // Clicking the active status again clears it.
     mark: (studentId: string, status: NonNullable<Status>) =>
       setStatuses((prev) => ({ ...prev, [studentId]: prev[studentId] === status ? null : status })),
