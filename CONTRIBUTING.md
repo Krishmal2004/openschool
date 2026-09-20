@@ -57,8 +57,8 @@ go build ./...
 
 Frontend code is in `frontend/`.
 
-- Reuse shared components from `src/components/common/` where they fit.
-- Keep API types in `src/services/` aligned with backend JSON responses.
+- Reuse shared UI components from `src/shared/ui/` (`DataGrid`, `FilterBar`, `FormModal`, etc.) where they fit.
+- Keep API types and HTTP wrappers in `src/shared/api/` or `src/features/<feature>/api/` aligned with backend JSON responses.
 - Add clear loading, empty, and error states for new data screens.
 
 Before opening a pull request:

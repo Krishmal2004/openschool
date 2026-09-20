@@ -5,7 +5,7 @@ FRONTEND_DIR=frontend
 THUNDERID_DIR=thunderid
 THUNDERID_COMPOSE=docker compose -f quickstart-compose.yml -f compose.override.yml
 
-.PHONY: help setup \
+.PHONY: help setup seed unseed \
         dev dev-backend dev-frontend \
         build build-backend build-frontend \
         lint lint-backend lint-frontend test-integration-backend \
@@ -16,6 +16,8 @@ THUNDERID_COMPOSE=docker compose -f quickstart-compose.yml -f compose.override.y
 help:
 	@echo "OpenSchool - available targets:"
 	@echo "  setup           - One-time setup: Postgres, ThunderID, deps, .env files"
+	@echo "  seed            - Seed demo class (teachers, students, parents, attendance, marks)"
+	@echo "  unseed          - Safely remove seeded demo class data"
 	@echo "  dev             - Run backend + frontend together"
 	@echo "  dev-backend     - Run only the Go API (:8080)"
 	@echo "  dev-frontend    - Run only the Vite dev server (:5173)"
@@ -33,12 +35,20 @@ help:
 	@echo "  clean           - Remove build artifacts"
 
 setup:
-	@chmod +x setup.sh
-	@./setup.sh
+	@chmod +x scripts/setup.sh
+	@./scripts/setup.sh
+
+seed:
+	@chmod +x scripts/seed_demo_class.sh
+	@./scripts/seed_demo_class.sh
+
+unseed:
+	@chmod +x scripts/unseed_demo_class.sh
+	@./scripts/unseed_demo_class.sh
 
 dev:
-	@chmod +x start.sh
-	@./start.sh
+	@chmod +x scripts/start.sh
+	@./scripts/start.sh
 
 dev-backend:
 	cd $(BACKEND_DIR) && go run cmd/api/main.go

@@ -22,10 +22,18 @@ that part is already done and picks up from "the app runs, but is empty."
   ```
   (make sure `$(go env GOPATH)/bin` is on your `PATH`)
 
-### Clone and start everything
+### Automated Quick Start
 
-You need four things running: Postgres, ThunderID, the backend, and the
-frontend.
+Alternatively, run the automated setup and seeding target:
+
+```bash
+make setup   # Starts Postgres & ThunderID, configures environment & downloads dependencies
+make seed    # (Optional) Seeds a demo class with teachers, students, parents, attendance & term marks
+make unseed  # (Optional) Safely removes the demo seeded data without affecting other records
+make dev     # Starts backend (:8080) and frontend (:5173) together
+```
+
+### Manual Setup Step-by-Step
 
 ```bash
 git clone https://github.com/openschool-org/openschool.git
