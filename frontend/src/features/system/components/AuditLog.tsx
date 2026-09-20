@@ -4,6 +4,7 @@ import { useAuditLogs } from "@/features/system/queries/useAuditLogs";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import EmptyState from "@/shared/ui/EmptyState";
 import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
+import { formatDateTime } from "@/shared/lib/date";
 
 function formatEntity(entityType: string) {
   return entityType.replace(/_/g, " ");
@@ -76,7 +77,7 @@ export default function AuditLog() {
                   </span>
                   <div className="os-flex-1" />
                   <span className="os-text-xs os-c-tertiary">
-                    {new Date(entry.created_at).toLocaleString()}
+                    {formatDateTime(entry.created_at)}
                   </span>
                 </div>
                 <p className="os-mt-1h os-mx-0 os-mb-0 os-text-sm os-c-secondary">

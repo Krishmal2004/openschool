@@ -27,7 +27,7 @@ export default function StreamGroups({ stream }: { stream: Stream }) {
         )}
       </div>
       <div className="os-flex os-gap-2 os-items-end">
-        <TextInput id={`new-group-${stream.id}`} labelText="" placeholder="e.g. Physical Science" size="sm" value={name} onChange={(e) => setName(e.target.value)} className="os-max-w-14" />
+        <TextInput id={`new-group-${stream.id}`} labelText="New group name" hideLabel placeholder="e.g. Physical Science" size="sm" value={name} onChange={(e) => setName(e.target.value)} className="os-max-w-14" />
         <Button kind="ghost" size="sm" renderIcon={Add} disabled={!name.trim() || createGroup.isPending} onClick={add}>Add group</Button>
       </div>
     </div>

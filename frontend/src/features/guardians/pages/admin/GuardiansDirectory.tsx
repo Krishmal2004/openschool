@@ -9,17 +9,18 @@ import Avatar from "@/shared/ui/Avatar";
 import ListRowSkeleton from "@/shared/ui/ListRowSkeleton";
 import { relationshipLabel } from "@/features/guardians/constants";
 import GuardianDetail from "@/features/guardians/components/GuardianDetail";
+import { usePersistedPageSize } from "@/shared/hooks/usePersistedPageSize";
 
-// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4):
-// search/orphansOnly/page/pageSize all live in the query key, so the server
-// does the filtering and sorting instead of downloading every guardian.
+// Server-paginated: search/orphansOnly/page/pageSize all live in the query
+// key, so the server does the filtering and sorting instead of downloading
+// every guardian.
 export default function GuardiansDirectory() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 300);
   const [orphansOnly, setOrphansOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = usePersistedPageSize("guardians");
   const isSearching = search.trim().length > 0;
 
   const { data, isLoading, isError, refetch } = useGuardians({
@@ -132,7 +133,7 @@ export default function GuardiansDirectory() {
               totalItems={totalItems}
               page={page}
               pageSize={pageSize}
-              pageSizes={[10, 20, 50]}
+              pageSizes={[10, 25, 50, 100]}
               onChange={onChange}
               size="sm"
             />

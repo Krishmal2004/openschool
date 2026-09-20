@@ -41,7 +41,7 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         <MutationErrorNotification
           isError={createReport.isError}
           error={createReport.error}
-          fallback="Failed to add report" className="os-mb-4"
+          title="Could not add report" fallback="Please try again." className="os-mb-4"
         />
 
         <div className="os-grid os-grid-form-12-1-auto os-gap-3 os-items-grid-end os-mb-6">
@@ -88,10 +88,11 @@ export default function StudentProgressReports({ studentId }: { studentId: strin
         open={pendingDeleteId !== null}
         title="Delete progress report"
         description="This will permanently remove this progress report. This action cannot be undone."
-        isPending={deleteReport.isPending}
+        subject="Progress report"
+        mutation={deleteReport}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteReport.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteReport.mutate(pendingDeleteId);
         }}
       />
     </div>

@@ -23,7 +23,7 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
 
   const confirmRemove = () => {
     if (!subjectToRemove) return;
-    removeMutation.mutate(subjectToRemove.id, { onSettled: () => setSubjectToRemove(null) });
+    removeMutation.mutate(subjectToRemove.id);
   };
 
   const assignedIds = new Set(assignedSubjects?.map((s) => s.id) ?? []);
@@ -65,6 +65,7 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
           getId={(s) => s.id}
           itemToString={(s) => `${s.name} (${s.code})`}
           labelText=""
+          ariaLabel={`Assign subject to ${teacher.full_name}`}
           placeholder="Assign subject…"
         />
         {assignMutation.isError && (
@@ -88,7 +89,9 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
         }
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removeMutation.isPending}
+        subject="Subject"
+        successVerb="removed"
+        mutation={removeMutation}
         onClose={() => setSubjectToRemove(null)}
         onConfirm={confirmRemove}
       />

@@ -17,7 +17,7 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
   };
 
   return (
-    <ComposedModal open size="sm" onClose={onClose}>
+    <ComposedModal open size="sm" onClose={onClose} aria-label="Change password">
       <ModalHeader title="Change password" />
       <ModalBody>
         {done ? (

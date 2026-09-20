@@ -42,7 +42,7 @@ export default function FormModal({
   children,
 }: Props) {
   return (
-    <ComposedModal open={open} size={size} onClose={onClose}>
+    <ComposedModal open={open} size={size} onClose={onClose} aria-label={title}>
       <ModalHeader title={title} />
       <ModalBody>
         {isError && (

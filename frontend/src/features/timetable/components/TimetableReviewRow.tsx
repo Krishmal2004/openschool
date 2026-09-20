@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Button, Tag, TextArea, ComposedModal, ModalHeader, ModalBody, ModalFooter } from "@carbon/react";
+import { formatDateTime } from "@/shared/lib/date";
 import { useApproveTimetable, useRejectTimetable } from "@/features/timetable/queries/useTimetables";
 import type { TimetableWithClass } from "@/features/timetable/api/timetable";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
@@ -29,7 +30,7 @@ export default function TimetableReviewRow({ timetable }: { timetable: Timetable
           </Tag>
         </p>
         <p className="os-m-0 os-text-xs os-c-tertiary">
-          Submitted {timetable.submitted_at ? new Date(timetable.submitted_at).toLocaleString() : ""}
+          Submitted {formatDateTime(timetable.submitted_at)}
         </p>
         <MutationErrorNotification
           isError={approve.isError || reject.isError}
@@ -47,7 +48,7 @@ export default function TimetableReviewRow({ timetable }: { timetable: Timetable
         {approve.isPending ? "Approving…" : "Approve"}
       </Button>
 
-      <ComposedModal open={rejecting} size="sm" onClose={() => setRejecting(false)}>
+      <ComposedModal open={rejecting} size="sm" onClose={() => setRejecting(false)} aria-label={`Reject ${timetable.grade_name} - ${timetable.class_name}`}>
         <ModalHeader title={`Reject ${timetable.grade_name} - ${timetable.class_name}`} />
         <ModalBody>
           <TextArea

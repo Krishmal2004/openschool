@@ -1,6 +1,7 @@
 import { SkeletonText, Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { useDashboardAnalytics, useLeadershipAnalytics } from "@/features/reports/queries/useDashboardAnalytics";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
+import { formatShortDayMonth } from "@/shared/lib/date";
 import {
   Section,
   StatTile,
@@ -86,7 +87,7 @@ function StudentsPanel({ data }: { data: AnalyticsData }) {
   }));
 
   const trendPoints = data.student.attendance_trend.map((t: AttendanceTrendPoint) => ({
-    label: new Date(t.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    label: formatShortDayMonth(t.date),
     pct: t.total_count > 0 ? Math.round((t.present_count / t.total_count) * 100) : 0,
   }));
 

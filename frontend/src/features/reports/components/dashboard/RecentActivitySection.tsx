@@ -3,6 +3,7 @@ import { UserFollow } from "@carbon/icons-react";
 import { Tag, SkeletonText } from "@carbon/react";
 import EmptyState from "@/shared/ui/EmptyState";
 import SectionHeader from "@/shared/ui/SectionHeader";
+import { formatShortDayMonth } from "@/shared/lib/date";
 
 export type RecentActivityItem = {
   key: string;
@@ -70,7 +71,7 @@ export default function RecentActivitySection({
                   {item.kind === "teacher" ? "Teacher" : "Student"}
                 </Tag>
                 <span className="os-text-2xs os-c-tertiary">
-                  {new Date(item.time).toLocaleDateString("en-LK", { month: "short", day: "numeric" })}
+                  {formatShortDayMonth(item.time)}
                 </span>
               </div>
             </Link>

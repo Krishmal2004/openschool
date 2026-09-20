@@ -117,7 +117,7 @@ export default function CurriculumPanel() {
 
   const handleDelete = () => {
     if (!toDelete) return;
-    deleteLevel.mutate(toDelete.id, { onSettled: () => setToDelete(null) });
+    deleteLevel.mutate(toDelete.id);
   };
 
   return (
@@ -226,7 +226,8 @@ export default function CurriculumPanel() {
             groups? This cannot be undone.
           </>
         }
-        isPending={deleteLevel.isPending}
+        subject="Level"
+        mutation={deleteLevel}
         onClose={() => setToDelete(null)}
         onConfirm={handleDelete}
       />

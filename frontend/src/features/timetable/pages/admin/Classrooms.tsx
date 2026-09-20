@@ -14,7 +14,7 @@ import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 const TYPE_LABEL: Record<ClassroomType, string> = { regular: "Regular", lab: "Lab", eca: "ECA" };
 const TYPE_TAG: Record<ClassroomType, "gray" | "purple" | "teal"> = { regular: "gray", lab: "purple", eca: "teal" };
 
-export default function Classrooms() {
+export default function Classrooms({ inline = false }: { inline?: boolean }) {
   const { data: classrooms, isLoading, isError, refetch } = useClassrooms();
   const createClassroom = useCreateClassroom();
   const updateClassroom = useUpdateClassroom();
@@ -73,14 +73,22 @@ export default function Classrooms() {
   ];
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Classrooms &amp; Facilities</h1>
-          <p className="os-page__subtitle">Every physical room the school has: regular homerooms, subject-tagged Labs, and ECA facilities like the Library or Auditorium. Booked into timetable periods to prevent clashes.</p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Classrooms &amp; Facilities</h1>
+            <p className="os-page__subtitle">Every physical room the school has: regular homerooms, subject-tagged Labs, and ECA facilities like the Library or Auditorium. Booked into timetable periods to prevent clashes.</p>
+          </div>
+          <Button renderIcon={Add} kind="primary" size="md" onClick={openCreate}>Add Classroom</Button>
         </div>
-        <Button renderIcon={Add} kind="primary" size="md" onClick={openCreate}>Add Classroom</Button>
-      </div>
+      )}
+      {inline && (
+        <div className="os-flex os-justify-between os-items-center os-mb-4 os-wrap os-gap-4">
+          <p className="os-m-0 os-text-md os-c-secondary">Regular homerooms, subject-tagged Labs, and ECA facilities.</p>
+          <Button renderIcon={Add} kind="primary" size="sm" onClick={openCreate}>Add Classroom</Button>
+        </div>
+      )}
 
       <div className="os-section">
         <MutationErrorNotification isError={deleteClassroom.isError} error={deleteClassroom.error} title="Could not delete classroom" fallback="It may still be used by a timetable." onClose={() => deleteClassroom.reset()} className="os-section__notice os-mt-4" />
@@ -103,9 +111,10 @@ export default function Classrooms() {
         open={!!toDelete}
         title="Delete classroom"
         description={<>Delete <strong>{toDelete?.name}</strong>? This cannot be undone.</>}
-        isPending={deleteClassroom.isPending}
+        subject="Classroom"
+        mutation={deleteClassroom}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteClassroom.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteClassroom.mutate(toDelete.id)}
       />
     </div>
   );

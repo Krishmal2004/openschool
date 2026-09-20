@@ -45,15 +45,7 @@ export default function Societies() {
 
   const handleDelete = () => {
     if (!deleting) return;
-    deleteSociety.mutate(
-      { id: deleting.id, academicYearId: deleting.academic_year_id },
-      {
-        onSuccess: () => {
-          if (selectedId === deleting.id) setSelectedId(null);
-          setDeleting(null);
-        },
-      },
-    );
+    deleteSociety.mutate({ id: deleting.id, academicYearId: deleting.academic_year_id });
   };
 
   return (
@@ -197,9 +189,11 @@ export default function Societies() {
         open={!!deleting}
         title="Delete society"
         description={`Delete "${deleting?.name}"? This removes its entire roster and cannot be undone.`}
-        isPending={deleteSociety.isPending}
+        subject="Society"
+        mutation={deleteSociety}
         onClose={() => setDeleting(null)}
         onConfirm={handleDelete}
+        onSuccess={() => { if (deleting && selectedId === deleting.id) setSelectedId(null); }}
       />
     </div>
   );

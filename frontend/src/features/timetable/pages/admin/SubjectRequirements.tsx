@@ -15,7 +15,7 @@ import type { Grade } from "@/features/academics/api/grade";
 import type { SubjectPeriodRequirement } from "@/features/timetable/api/subjectPeriodRequirement";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 
-export default function SubjectRequirements() {
+export default function SubjectRequirements({ inline = false }: { inline?: boolean }) {
   const { data: currentYear } = useCurrentAcademicYear();
   const { data: grades } = useGrades();
   const { data: subjects } = useSubjects();
@@ -55,19 +55,21 @@ export default function SubjectRequirements() {
   };
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Subject Period Requirements</h1>
-          <p className="os-page__subtitle">
-            Weekly periods required per subject, per grade. The timetable validator checks each class's timetable
-            against these before it can be submitted for review. Set "Double blocks / week" for subjects that run
-            some periods as one back-to-back pair (common for AL Grade 12/13 subjects) — e.g. 2 blocks out of 6
-            periods/week pairs up 4 of them and leaves the other 2 as regular singles. The auto-generator places
-            exactly that many double blocks, not all of the subject's periods.
-          </p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Subject Period Requirements</h1>
+            <p className="os-page__subtitle">
+              Weekly periods required per subject, per grade. The timetable validator checks each class's timetable
+              against these before it can be submitted for review. Set "Double blocks / week" for subjects that run
+              some periods as one back-to-back pair (common for AL Grade 12/13 subjects) — e.g. 2 blocks out of 6
+              periods/week pairs up 4 of them and leaves the other 2 as regular singles. The auto-generator places
+              exactly that many double blocks, not all of the subject's periods.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="os-section os-p-6">
         <div className="os-max-w-20 os-mb-6">
@@ -187,10 +189,14 @@ export default function SubjectRequirements() {
             grade until a requirement is set again.
           </>
         }
-        isPending={remove.isPending}
+        confirmLabel="Clear"
+        pendingLabel="Clearing…"
+        subject="Requirement"
+        successVerb="cleared"
+        mutation={remove}
         onClose={() => setToRemove(null)}
         onConfirm={() => {
-          if (toRemove) remove.mutate(toRemove.id, { onSettled: () => setToRemove(null) });
+          if (toRemove) remove.mutate(toRemove.id);
         }}
       />
     </div>

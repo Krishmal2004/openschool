@@ -43,7 +43,7 @@ export default function HousesStep({ houses, setHouses }: Props) {
           />
           <div>
             <label htmlFor={`house-color-${i}`} className="os-text-xs os-block os-mb-1">
-              Color
+              Colour
             </label>
             <input
               id={`house-color-${i}`}

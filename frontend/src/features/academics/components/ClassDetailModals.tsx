@@ -140,17 +140,20 @@ export function useClassDetailModals(id: string, cls: ClassRow | undefined, deta
         open={!!toUnenroll}
         title="Remove student from class"
         description={<>Remove <strong>{toUnenroll?.full_name}</strong> from this class? Their student profile is not deleted.</>}
-        isPending={unenrollStudent.isPending}
+        subject="Student"
+        successVerb="removed"
+        mutation={unenrollStudent}
         onClose={() => setToUnenroll(null)}
-        onConfirm={() => toUnenroll && unenrollStudent.mutate(toUnenroll.id, { onSuccess: () => setToUnenroll(null) })}
+        onConfirm={() => toUnenroll && unenrollStudent.mutate(toUnenroll.id)}
       />
       <ConfirmDeleteModal
         open={!!toDeleteSession}
         title="Delete attendance session"
         description={<>Delete the session for <strong>{toDeleteSession?.date}</strong>? Every attendance record already marked for it is deleted too.</>}
-        isPending={deleteSession.isPending}
+        subject="Attendance session"
+        mutation={deleteSession}
         onClose={() => setToDeleteSession(null)}
-        onConfirm={() => toDeleteSession && deleteSession.mutate(toDeleteSession.id, { onSuccess: () => setToDeleteSession(null) })}
+        onConfirm={() => toDeleteSession && deleteSession.mutate(toDeleteSession.id)}
       />
     </>
   );

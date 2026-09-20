@@ -14,10 +14,8 @@ For anything beyond a quick fix, read further before making changes:
 - [`docs/FEATURES.md`](docs/FEATURES.md) - current feature list by module
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - component layout, full data model, external interfaces
 - [`docs/adr/`](docs/adr/) - *why* behind non-obvious decisions (e.g. why positions aren't ThunderID roles, why the current-academic-year invariant exists) - check here before "fixing" something that looks wrong but is deliberate
-- [`audit.md`](audit.md) - known bugs/code-quality findings with severity; check it isn't already tracking whatever you just found before re-reporting it
-- [`docs/FRONTEND_REFACTOR_PLAYBOOK.md`](docs/FRONTEND_REFACTOR_PLAYBOOK.md) - frontend structure, layer contract and per-page standard (phases 0 to 3 done)
-- [`docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md`](docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md) - threat model, security findings, pagination contract and optimisation checklist for both workspaces (draft, awaiting approval)
-- [`docs/UX_REVIEW_PLAYBOOK.md`](docs/UX_REVIEW_PLAYBOOK.md) - UX findings, prioritised backlog and copy rules (draft, awaiting approval)
+- [`docs/finfix/SonarQube_Findings.md`](docs/finfix/SonarQube_Findings.md) - known bugs and code-quality findings with severity
+- [`docs/finfix/UX_REVIEW_PLAYBOOK.md`](docs/finfix/UX_REVIEW_PLAYBOOK.md) - UX findings, prioritised backlog and copy rules (draft, awaiting approval)
 
 ## Backend
 
@@ -126,7 +124,6 @@ Authentication is handled by **ThunderID** (`@thunderid/react`). The provider is
 - List pages compose `FilterBar` + `ActiveFilterTags` + `useListFilters` + `ListState` + `DataGrid` (see `features/students/pages/admin/Students.tsx` as the reference) - deviating from that template is a signal something's off, not a style choice. Grids whose rows hold form controls (marks entry, attendance marking, period editor) stay as plain `<table className="os-table">`
 - No inline `style={{}}` except for runtime values, and no hex colours outside `_tokens.scss`. Layout and text use the `os-*` utility classes in `shared/styles/_utilities.scss`; state-driven looks use toggle classes such as `is-active`
 - Files stay under 250 lines (ESLint error). A page that grows past it moves logic into `features/<name>/hooks/` and markup into `components/`
-- `docs/FRONTEND_REFACTOR_PLAYBOOK.md` records the refactor phases, the layer contract and the per-page standard; Phase 4 (performance verification against a 7,000-row backend) is next
 
 UI uses **IBM Carbon Design System** (`@carbon/react`, `@carbon/icons-react`). Data fetching uses **TanStack Query** (`@tanstack/react-query`). Styles are SCSS (`index.scss`).
 

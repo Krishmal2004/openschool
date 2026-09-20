@@ -109,19 +109,21 @@ $sizes: (2: 2rem, 2h: 2.5rem, 3: 3rem, 4: 4rem, 5: 5rem, 6: 6rem, 8: 8rem, 10: 1
 .os-muted { color: var(--os-text-tertiary); }
 
 // Colours (text, fill, background) from tokens only
-$colors: (primary: var(--os-text-primary), secondary: var(--os-text-secondary), tertiary: var(--os-text-tertiary),
-          disabled: var(--os-text-disabled), accent: var(--os-accent), accent-dark: var(--os-accent-dark),
-          danger: var(--os-danger), success: var(--os-success), warning: var(--os-warning),
-          warning-text: var(--os-warning-text), layer: var(--os-layer), purple: var(--os-chart-purple),
-          blue: var(--os-chart-blue), pink: var(--os-chart-pink));
+// Map keys are quoted so Sass doesn't parse the color-name keys (purple, blue,
+// pink, transparent) as color values when they're interpolated below.
+$colors: ("primary": var(--os-text-primary), "secondary": var(--os-text-secondary), "tertiary": var(--os-text-tertiary),
+          "disabled": var(--os-text-disabled), "accent": var(--os-accent), "accent-dark": var(--os-accent-dark),
+          "danger": var(--os-danger), "success": var(--os-success), "warning": var(--os-warning),
+          "warning-text": var(--os-warning-text), "layer": var(--os-layer), "purple": var(--os-chart-purple),
+          "blue": var(--os-chart-blue), "pink": var(--os-chart-pink));
 @each $k, $v in $colors {
   .os-c-#{$k} { color: $v; }
   .os-fill-#{$k} { fill: $v; }
 }
 .os-fill-none { fill: none; }
-$bgs: (layer: var(--os-layer), layer-hover: var(--os-layer-hover), accent: var(--os-accent), accent-light: var(--os-accent-light),
-       border-subtle: var(--os-border-subtle), border-strong: var(--os-border-strong), danger: var(--os-danger),
-       success: var(--os-success), warning: var(--os-warning), transparent: transparent);
+$bgs: ("layer": var(--os-layer), "layer-hover": var(--os-layer-hover), "accent": var(--os-accent), "accent-light": var(--os-accent-light),
+       "border-subtle": var(--os-border-subtle), "border-strong": var(--os-border-strong), "danger": var(--os-danger),
+       "success": var(--os-success), "warning": var(--os-warning), "transparent": transparent);
 @each $k, $v in $bgs { .os-bg-#{$k} { background: $v; } }
 @each $s in present, absent, late, excused {
   .os-bg-status-#{$s} { background: var(--os-status-#{$s}-bg); }
@@ -253,3 +255,11 @@ $small: ("0h": 0.625rem, "3q": 0.75rem, "1r": 1rem, "1t": 1.75rem, "2q": 2.25rem
 .os-subject-card { padding: 0.75rem; border: 1px solid var(--os-border-subtle); border-radius: 4px; background: var(--os-layer); display: flex; flex-direction: column; gap: 0.5rem; transition: border-color 70ms ease, background-color 70ms ease; }
 .os-subject-card.is-hover { border-color: var(--os-accent); background: var(--os-accent-light); }
 .os-status-tag { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 600; border: 1px solid; border-radius: 2px; }
+
+.os-pill:focus-visible,
+.os-select-row:focus-visible,
+.os-select-card:focus-visible,
+.os-focus-ring:focus-visible {
+  outline: 2px solid var(--os-accent);
+  outline-offset: 2px;
+}

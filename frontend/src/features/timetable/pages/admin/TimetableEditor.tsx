@@ -4,6 +4,7 @@ import { Button, Tag, SkeletonText } from "@carbon/react";
 import { useClass, useClassSubjectTeachers } from "@/features/academics/queries/useClasses";
 import { useGrades } from "@/features/academics/queries/useGrades";
 import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { formatDateTime } from "@/shared/lib/date";
 import type { Teacher } from "@/features/teachers/api/teacher";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
 import { useClassrooms } from "@/features/timetable/queries/useClassrooms";
@@ -103,10 +104,7 @@ export default function TimetableEditor() {
 
   const clearCell = () => {
     if (!cell) return;
-    deleteEntry.mutate(
-      { day: cell.day, period: cell.period },
-      { onSuccess: () => { setConfirmingClear(false); setCell(null); }, onError: () => setConfirmingClear(false) },
-    );
+    deleteEntry.mutate({ day: cell.day, period: cell.period });
   };
 
   if (isLoading || !timetable) {
@@ -165,7 +163,7 @@ export default function TimetableEditor() {
           <h2 className="os-section__title os-mb-3">Status History</h2>
           {history.map((h) => (
             <div key={h.id} className="os-text-sm os-c-secondary os-mb-1h">
-              <strong>{statusLabel(h.to_status)}</strong> by {h.changed_by_name} on {new Date(h.changed_at).toLocaleString()}
+              <strong>{statusLabel(h.to_status)}</strong> by {h.changed_by_name} on {formatDateTime(h.changed_at)}
               {h.comment && <> — {h.comment}</>}
             </div>
           ))}
@@ -194,9 +192,12 @@ export default function TimetableEditor() {
         description="Clear this period's assignment? You can reassign it afterwards."
         confirmLabel="Clear"
         pendingLabel="Clearing…"
-        isPending={deleteEntry.isPending}
+        subject="Cell"
+        successVerb="cleared"
+        mutation={deleteEntry}
         onClose={() => setConfirmingClear(false)}
         onConfirm={clearCell}
+        onSuccess={() => setCell(null)}
       />
 
       <TimetableValidationModal open={validationOpen} validating={validating} validation={validation} onClose={() => setValidationOpen(false)} />

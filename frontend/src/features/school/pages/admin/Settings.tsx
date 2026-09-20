@@ -3,6 +3,7 @@ import GeneralSettingsTab from "@/features/school/components/GeneralSettingsTab"
 import HousesPanel from "@/features/school/components/HousesPanel";
 import AuditLog from "@/features/system/components/AuditLog";
 import OrphanedAccounts from "@/features/system/components/OrphanedAccounts";
+import Automation from "@/features/system/components/Automation";
 
 export default function SettingsPage() {
   return (
@@ -20,12 +21,14 @@ export default function SettingsPage() {
           <Tab>Houses</Tab>
           <Tab>Audit Log</Tab>
           <Tab>Orphaned Accounts</Tab>
+          <Tab>Automation</Tab>
         </TabList>
         <TabPanels>
           <TabPanel className="os-p-0"><GeneralSettingsTab /></TabPanel>
           <TabPanel className="os-p-0"><div className="os-mt-4"><HousesPanel /></div></TabPanel>
           <TabPanel className="os-p-0"><div className="os-mt-4"><AuditLog /></div></TabPanel>
           <TabPanel className="os-p-0"><div className="os-mt-4"><OrphanedAccounts /></div></TabPanel>
+          <TabPanel className="os-p-0"><div className="os-mt-4"><Automation inline /></div></TabPanel>
         </TabPanels>
       </Tabs>
     </div>

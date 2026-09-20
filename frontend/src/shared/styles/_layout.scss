@@ -7,6 +7,27 @@
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.os-skeleton-header {
+  height: 3rem;
+  background-color: $os-accent-deeper;
+}
+
+.os-toast-stack {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 20rem;
+}
+
+.os-toast-stack__item {
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .cds--header__name {
   color: #ffffff !important;
   font-weight: 500;

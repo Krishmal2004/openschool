@@ -12,6 +12,7 @@ import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import { useListFilters } from "@/shared/hooks/useListFilters";
+import { usePersistedPageSize } from "@/shared/hooks/usePersistedPageSize";
 import { useStudents, useDeleteStudent } from "@/features/students/queries/useStudents";
 import { useGrades } from "@/features/academics/queries/useGrades";
 import { useHouses } from "@/features/school/queries/useHouses";
@@ -41,7 +42,7 @@ export default function Students() {
   const deleteStudent = useDeleteStudent();
   const [toDelete, setToDelete] = useState<Student | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = usePersistedPageSize("students");
 
   const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({
     query: "",
@@ -127,35 +128,60 @@ export default function Students() {
       <AgentFindingsBanner titles={FINDINGS} />
 
       <div className="os-section">
-        <FilterBar search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or index number…" }}>
-          <EntityCombobox
-            id="filter-grade"
-            items={grades ?? []}
-            selectedId={filters.grade}
-            onSelect={(v) => { setFilter("grade", v); setFilter("cls", ""); }}
-            getId={(g) => g.name}
-            itemToString={(g) => g.name}
-            placeholder="All grades"
-          />
-          <EntityCombobox
-            id="filter-class"
-            items={classOptions}
-            selectedId={filters.cls}
-            onSelect={(v) => setFilter("cls", v)}
-            getId={(c) => c.name}
-            itemToString={(c) => c.name}
-            placeholder="All classes"
-          />
-          <Select id="filter-gender" labelText="" size="md" value={filters.gender} onChange={(e) => setFilter("gender", e.target.value)}>
-            <SelectItem value="" text="Any gender" />
-            <SelectItem value="male" text="Male" />
-            <SelectItem value="female" text="Female" />
-          </Select>
-          <Select id="filter-house" labelText="" size="md" value={filters.house} onChange={(e) => setFilter("house", e.target.value)}>
-            <SelectItem value="" text="All houses" />
-            {houses?.map((h) => <SelectItem key={h.id} value={h.name} text={h.name} />)}
-          </Select>
-        </FilterBar>
+        <FilterBar
+          search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or index number…" }}
+          controls={[
+            {
+              label: "Grade",
+              node: (
+                <EntityCombobox
+                  id="filter-grade"
+                  items={grades ?? []}
+                  selectedId={filters.grade}
+                  onSelect={(v) => { setFilter("grade", v); setFilter("cls", ""); }}
+                  getId={(g) => g.name}
+                  itemToString={(g) => g.name}
+                  ariaLabel="Grade"
+                  placeholder="All grades"
+                />
+              ),
+            },
+            {
+              label: "Class",
+              node: (
+                <EntityCombobox
+                  id="filter-class"
+                  items={classOptions}
+                  selectedId={filters.cls}
+                  onSelect={(v) => setFilter("cls", v)}
+                  getId={(c) => c.name}
+                  itemToString={(c) => c.name}
+                  ariaLabel="Class"
+                  placeholder="All classes"
+                />
+              ),
+            },
+            {
+              label: "Gender",
+              node: (
+                <Select id="filter-gender" labelText="Gender" hideLabel size="md" value={filters.gender} onChange={(e) => setFilter("gender", e.target.value)}>
+                  <SelectItem value="" text="Any gender" />
+                  <SelectItem value="male" text="Male" />
+                  <SelectItem value="female" text="Female" />
+                </Select>
+              ),
+            },
+            {
+              label: "House",
+              node: (
+                <Select id="filter-house" labelText="House" hideLabel size="md" value={filters.house} onChange={(e) => setFilter("house", e.target.value)}>
+                  <SelectItem value="" text="All houses" />
+                  {houses?.map((h) => <SelectItem key={h.id} value={h.name} text={h.name} />)}
+                </Select>
+              ),
+            },
+          ]}
+        />
 
         <ActiveFilterTags
           filters={activeKeys.map((k) => ({ key: k, label: FILTER_LABELS[k], value: filters[k] }))}
@@ -167,7 +193,7 @@ export default function Students() {
           isError={deleteStudent.isError}
           error={deleteStudent.error}
           title="Could not delete student"
-          fallback="Failed to delete student."
+          fallback="Please try again."
           onClose={() => deleteStudent.reset()}
           className="os-section__notice"
         />
@@ -195,9 +221,10 @@ export default function Students() {
         open={!!toDelete}
         title="Delete student"
         description={<>Delete <strong>{toDelete?.full_name}</strong>? This removes their account and cannot be undone.</>}
-        isPending={deleteStudent.isPending}
+        subject="Student"
+        mutation={deleteStudent}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteStudent.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteStudent.mutate(toDelete.id)}
       />
     </div>
   );

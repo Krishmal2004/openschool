@@ -8,7 +8,7 @@ import {
   useMarkStaffAttendance,
 } from "@/features/attendance/queries/useStaffAttendance";
 import type { StaffAttendanceRow, StaffAttendanceStatus } from "@/features/attendance/api/staffAttendance";
-import { todayISODate, toYmd } from "@/shared/lib/date";
+import { todayISODate, toYmd, formatLongDate } from "@/shared/lib/date";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 
@@ -188,7 +188,7 @@ export default function StaffAttendance() {
           toggled={showMonthly}
           onToggle={(checked) => setShowMonthly(checked)}
         />
-        {!showMonthly && <Tag type="gray">{new Date(date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</Tag>}
+        {!showMonthly && <Tag type="gray">{formatLongDate(date)}</Tag>}
       </div>
 
       {showMonthly ? (

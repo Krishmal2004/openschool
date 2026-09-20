@@ -4,6 +4,7 @@ import { useCurrentAcademicYear } from "@/features/school/queries/useAcademicYea
 import { useTimetablesForLeadership } from "@/features/timetable/queries/useTimetables";
 import { TIMETABLE_STATUS_TAG } from "@/shared/lib/constants/tags";
 import DataGrid from "@/shared/ui/DataGrid";
+import { formatDateTime } from "@/shared/lib/date";
 import EmptyState from "@/shared/ui/EmptyState";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 
@@ -42,7 +43,7 @@ export default function TeacherTimetables() {
               { key: "class", header: "Class", render: (t) => t.class_name },
               { key: "version", header: "Version", render: (t) => `v${t.version}` },
               { key: "status", header: "Status", render: (t) => <Tag type={statusTag(t.status)?.type ?? "gray"} size="sm">{statusTag(t.status)?.label ?? t.status}</Tag> },
-              { key: "updated", header: "Updated", render: (t) => (t.updated_at ? new Date(t.updated_at).toLocaleString() : "-") },
+              { key: "updated", header: "Updated", render: (t) => formatDateTime(t.updated_at) },
             ]}
           />
         )}

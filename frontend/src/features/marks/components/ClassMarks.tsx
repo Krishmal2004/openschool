@@ -76,7 +76,8 @@ export default function ClassMarks({
             <div className="os-flex os-gap-3 os-wrap">
               <Select
                 id="marks-term"
-                labelText=""
+                labelText="Term"
+                hideLabel
                 size="sm"
                 value={effectiveTermId}
                 onChange={(e) => {

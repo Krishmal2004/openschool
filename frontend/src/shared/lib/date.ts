@@ -19,7 +19,48 @@ export function isLockedAfter24Hours(createdAt: string | null | undefined): bool
   return !!createdAt && Date.now() - new Date(createdAt).getTime() > 24 * 60 * 60 * 1000;
 }
 
-// Local short date for display; empty input shows a dash.
-export function formatDate(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleDateString() : "-";
+type DateInput = string | Date | null | undefined;
+
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function toDate(input: DateInput): Date | null {
+  if (!input) return null;
+  if (input instanceof Date) return Number.isNaN(input.getTime()) ? null : input;
+  const dateOnly = DATE_ONLY.exec(input);
+  if (dateOnly) {
+    const [, y, m, d] = dateOnly;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function formatDate(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleDateString("en-LK") : "-";
+}
+
+export function formatDateTime(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleString("en-LK") : "-";
+}
+
+export function formatMonth(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleDateString("en-LK", { month: "short", year: "numeric" }) : "-";
+}
+
+export function formatLongDate(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleDateString("en-LK", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-";
+}
+
+export function formatShortDayMonth(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleDateString("en-LK", { month: "short", day: "numeric" }) : "-";
+}
+
+export function formatDayMonthYear(input: DateInput): string {
+  const d = toDate(input);
+  return d ? d.toLocaleDateString("en-LK", { month: "short", day: "numeric", year: "numeric" }) : "-";
 }

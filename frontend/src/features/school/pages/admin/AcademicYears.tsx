@@ -62,7 +62,7 @@ export default function AcademicYears() {
 
   const handleDelete = () => {
     if (!toDelete) return;
-    deleteYear.mutate(toDelete.id, { onSettled: () => setToDelete(null) });
+    deleteYear.mutate(toDelete.id);
   };
 
   return (
@@ -112,7 +112,8 @@ export default function AcademicYears() {
             Delete <strong>{toDelete?.label}</strong>? This cannot be undone.
           </>
         }
-        isPending={deleteYear.isPending}
+        subject="Academic year"
+        mutation={deleteYear}
         onClose={() => setToDelete(null)}
         onConfirm={handleDelete}
       />

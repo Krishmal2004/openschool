@@ -37,7 +37,7 @@ interface Props {
 export default function TimetableCellModal({ cell, form, onFormChange, subjects, teachers, onTeacherSearch, classrooms, canClear, save, clear, onSave, onClear, onClose }: Props) {
   const title = cell ? `${WEEKDAYS.find((d) => d.value === cell.day)?.label} — Period ${cell.period}` : "";
   return (
-    <ComposedModal open={!!cell} size="sm" onClose={onClose}>
+    <ComposedModal open={!!cell} size="sm" onClose={onClose} aria-label={title}>
       <ModalHeader title={title} />
       <ModalBody>
         <MutationErrorNotification isError={save.isError} error={save.error} title="Could not save" />

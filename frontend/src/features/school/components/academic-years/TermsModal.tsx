@@ -9,9 +9,8 @@ import { isTermFormValid, type TermFormValues, type TermTouched } from "@/featur
 import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import RemoveIconButton from "@/shared/ui/RemoveIconButton";
-import { toYmd } from "@/shared/lib/date";
+import { toYmd, formatDayMonthYear } from "@/shared/lib/date";
 
-const formatTermDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-LK", { month: "short", day: "numeric", year: "numeric" }) : "-");
 const isoToYmd = (iso: string | null) => (iso ? toYmd(new Date(iso)) : "");
 const EMPTY: TermFormValues = { name: "", start_date: "", end_date: "" };
 
@@ -56,12 +55,12 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
 
   return (
     <>
-      <ComposedModal open size="sm" onClose={onClose}>
+      <ComposedModal open size="sm" onClose={onClose} aria-label={`Terms - ${year.label}`}>
         <ModalHeader title={`Terms - ${year.label}`} />
         <ModalBody>
-          <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} fallback="Failed to create term" />
-          <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} fallback="Failed to update term" />
-          <MutationErrorNotification isError={deleteTerm.isError} error={deleteTerm.error} fallback="Failed to delete term" />
+          <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} title="Could not create term" fallback="Please try again." />
+          <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} title="Could not update term" fallback="Please try again." />
+          <MutationErrorNotification isError={deleteTerm.isError} error={deleteTerm.error} title="Could not delete term" fallback="Please try again." />
 
           {isLoading && <SkeletonText paragraph lineCount={3} />}
           {!isLoading && terms?.length === 0 && <p className="os-text-md os-c-tertiary os-mb-5">No terms yet. A school year typically has three.</p>}
@@ -71,7 +70,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
                 <div key={t.id} className="os-list-row os-list-row--compact os-gap-2h">
                   <div className="os-flex-1 os-min-w-0">
                     <p className="os-m-0 os-fw-500 os-text-md os-c-primary">{t.name}</p>
-                    <p className="os-m-0 os-text-xs os-c-secondary">{formatTermDate(t.start_date)} – {formatTermDate(t.end_date)}</p>
+                    <p className="os-m-0 os-text-xs os-c-secondary">{formatDayMonthYear(t.start_date)} – {formatDayMonthYear(t.end_date)}</p>
                   </div>
                   {t.is_current ? (
                     <Tag type="teal" size="sm"><Checkmark size={12} className="os-mr-1" />Current</Tag>
@@ -96,9 +95,10 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
         open={!!toDelete}
         title="Delete term"
         description={<>Delete <strong>{toDelete?.name}</strong>? Every examination mark recorded against this term is deleted with it. To correct a name or date, use Edit instead. This cannot be undone.</>}
-        isPending={deleteTerm.isPending}
+        subject="Term"
+        mutation={deleteTerm}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteTerm.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteTerm.mutate(toDelete.id)}
       />
     </>
   );

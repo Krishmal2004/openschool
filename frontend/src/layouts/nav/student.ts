@@ -9,7 +9,7 @@ export const STUDENT_NAV: NavGroup[] = [
       { path: "/s/attendance", label: "Attendance", Icon: EventSchedule },
       { path: "/s/marks", label: "Marks", Icon: Report },
       { path: "/s/timetable", label: "Timetable", Icon: Table },
-      { path: "/s/enrollment", label: "Subject Enrollment", Icon: Document },
+      { path: "/s/enrollment", label: "Subject Enrolment", Icon: Document },
     ],
   },
   {

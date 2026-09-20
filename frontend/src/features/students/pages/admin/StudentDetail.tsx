@@ -18,6 +18,8 @@ import ErrorMessage from "@/shared/ui/ErrorMessage";
 import ProfileBanner from "@/shared/ui/ProfileBanner";
 import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import ConfirmEditModal from "@/shared/ui/ConfirmEditModal";
+import UnsavedChangesModal from "@/shared/ui/UnsavedChangesModal";
+import { useUnsavedChangesGuard } from "@/shared/hooks/useUnsavedChangesGuard";
 
 export default function StudentDetail() {
   const { id = "" } = useParams();
@@ -27,6 +29,7 @@ export default function StudentDetail() {
   const updateHouse = useUpdateStudentHouse();
   const updateStatus = useUpdateStudentEnrollmentStatus();
   const editor = useStudentProfileEditor(id, student, (location.state as { edit?: boolean } | null)?.edit ?? false);
+  const unsavedGuard = useUnsavedChangesGuard(editor.hasUnsaved);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
 
@@ -49,7 +52,7 @@ export default function StudentDetail() {
         actions={
           editor.editing ? (
             <>
-              <Button kind="secondary" size="sm" onClick={editor.cancel} disabled={pending}>Cancel</Button>
+              <Button kind="secondary" size="sm" onClick={() => unsavedGuard.guard(editor.cancel)} disabled={pending}>Cancel</Button>
               <Button renderIcon={Save} kind="primary" size="sm" onClick={() => setConfirmSave(true)} disabled={!editor.isValid || pending}>
                 {pending ? "Saving…" : "Save Changes"}
               </Button>
@@ -69,7 +72,7 @@ export default function StudentDetail() {
           <TabList aria-label="Student sections">
             <Tab>Profile</Tab>
             <Tab>Guardians</Tab>
-            <Tab>Subject Enrollment</Tab>
+            <Tab>Subject Enrolment</Tab>
             <Tab>Progress Reports</Tab>
             <Tab>Activities</Tab>
             <Tab>Leadership &amp; Awards</Tab>
@@ -105,9 +108,11 @@ export default function StudentDetail() {
         open={confirmDelete}
         title="Delete student"
         description={<>Delete <strong>{student.full_name}</strong>? This removes their account and cannot be undone.</>}
-        isPending={editor.deleteStudent.isPending}
+        subject="Student"
+        mutation={editor.deleteStudent}
         onClose={() => setConfirmDelete(false)}
-        onConfirm={() => editor.remove(() => setConfirmDelete(false))}
+        onConfirm={editor.remove}
+        onSuccess={editor.goToStudents}
       />
       <ConfirmEditModal
         open={confirmSave}
@@ -117,6 +122,7 @@ export default function StudentDetail() {
         onClose={() => setConfirmSave(false)}
         onConfirm={() => editor.save(() => setConfirmSave(false))}
       />
+      <UnsavedChangesModal open={unsavedGuard.modalOpen} onStay={unsavedGuard.cancelLeave} onLeave={unsavedGuard.confirmLeave} />
     </div>
   );
 }

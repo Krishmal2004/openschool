@@ -2,6 +2,7 @@ import { NOTIFICATION_PRIORITY_TAG as PRIORITY_TAG } from "@/shared/lib/constant
 import { useMemo, useState } from "react";
 import { Tag, Dropdown, Button } from "@carbon/react";
 import { Archive, ArrowUpRight, Search } from "@carbon/icons-react";
+import { formatDateTime } from "@/shared/lib/date";
 import {
   useMyNotifications,
   useMyArchivedNotifications,
@@ -44,7 +45,7 @@ function NotificationRow({ n }: { n: MyNotification }) {
         </div>
         <p className="os-mt-0 os-mx-0 os-mb-1h os-text-sm os-c-secondary os-lh-normal">{n.message}</p>
         <p className="os-m-0 os-text-xs os-c-tertiary">
-          {n.sender_name} &middot; {new Date(n.sent_at).toLocaleString()}
+          {n.sender_name} &middot; {formatDateTime(n.sent_at)}
         </p>
       </div>
       <div className="os-flex os-col os-gap-1h os-items-end os-shrink-0">
@@ -96,7 +97,7 @@ export default function NotificationCenter() {
     <div className="os-page">
       <div className="os-page__header">
         <div className="os-page__header-left">
-          <h1 className="os-page__title">Notification Center</h1>
+          <h1 className="os-page__title">Notification Centre</h1>
           <p className="os-page__subtitle">Announcements and updates sent to you.</p>
         </div>
       </div>

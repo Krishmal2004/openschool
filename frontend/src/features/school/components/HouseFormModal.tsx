@@ -45,10 +45,10 @@ export default function HouseFormModal({ mode, form, onChange, nameTouched, onNa
         className="os-mb-4"
       />
       <TextInput id="house-code" labelText="Short code (optional)" placeholder="e.g. VJ" value={form.code} onChange={(e) => onChange({ ...form, code: e.target.value })} className="os-mb-4" />
-      <label htmlFor="house-color" className="os-text-xs os-block os-mb-2">Color</label>
+      <label htmlFor="house-color" className="os-text-xs os-block os-mb-2">Colour</label>
       <div className="os-flex os-items-center os-gap-3">
         <input id="house-color" type="color" value={form.color} onChange={(e) => onChange({ ...form, color: e.target.value })} className="os-w-3 os-h-2h os-p-0 os-border-tertiary os-pointer" />
-        <TextInput id="house-color-hex" labelText="" hideLabel value={form.color} onChange={(e) => onChange({ ...form, color: e.target.value })} className="os-max-w-8" />
+        <TextInput id="house-color-hex" labelText="Colour hex value" hideLabel placeholder="#RRGGBB" value={form.color} onChange={(e) => onChange({ ...form, color: e.target.value })} className="os-max-w-8" />
       </div>
     </FormModal>
   );

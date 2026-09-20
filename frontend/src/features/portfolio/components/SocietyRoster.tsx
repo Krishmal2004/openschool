@@ -64,10 +64,7 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
 
   const confirmRemove = () => {
     if (!memberToRemove) return;
-    removeMember.mutate(
-      { memberId: memberToRemove.id, studentId: memberToRemove.student_id },
-      { onSettled: () => setMemberToRemove(null) },
-    );
+    removeMember.mutate({ memberId: memberToRemove.id, studentId: memberToRemove.student_id });
   };
 
   const byRole = (role: SocietyRole) => (members ?? []).filter((m) => m.role === role);
@@ -130,13 +127,13 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
         )
       )}
 
-      <ComposedModal open={assignOpen} size="sm" onClose={() => setAssignOpen(false)}>
+      <ComposedModal open={assignOpen} size="sm" onClose={() => setAssignOpen(false)} aria-label="Add society member">
         <ModalHeader title="Add society member" />
         <ModalBody>
           <MutationErrorNotification
             isError={assignMember.isError}
             error={assignMember.error}
-            fallback="Failed to add member"
+            title="Could not add member" fallback="Please try again."
           />
           <div className="os-grid os-gap-4">
             <EntityCombobox
@@ -182,7 +179,9 @@ export default function SocietyRoster({ societyId, readOnly }: Props) {
         }
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removeMember.isPending}
+        subject="Member"
+        successVerb="removed"
+        mutation={removeMember}
         onClose={() => setMemberToRemove(null)}
         onConfirm={confirmRemove}
       />

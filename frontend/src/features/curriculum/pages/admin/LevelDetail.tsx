@@ -121,20 +121,15 @@ export default function LevelDetail() {
 
   const handleRemoveSubject = () => {
     if (!toRemoveSubject) return;
-    removeSubject.mutate(
-      {
-        groupId: toRemoveSubject.group.id,
-        subjectId: toRemoveSubject.subject.subject_id,
-      },
-      { onSettled: () => setToRemoveSubject(null) },
-    );
+    removeSubject.mutate({
+      groupId: toRemoveSubject.group.id,
+      subjectId: toRemoveSubject.subject.subject_id,
+    });
   };
 
   const handleDeleteGroup = () => {
     if (!toDeleteGroup) return;
-    deleteGroup.mutate(toDeleteGroup.id, {
-      onSettled: () => setToDeleteGroup(null),
-    });
+    deleteGroup.mutate(toDeleteGroup.id);
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -218,7 +213,9 @@ export default function LevelDetail() {
             the catalogue.
           </>
         }
-        isPending={removeSubject.isPending}
+        subject="Subject"
+        successVerb="removed"
+        mutation={removeSubject}
         onClose={() => setToRemoveSubject(null)}
         onConfirm={handleRemoveSubject}
       />
@@ -232,7 +229,8 @@ export default function LevelDetail() {
             the catalogue.
           </>
         }
-        isPending={deleteGroup.isPending}
+        subject="Selection group"
+        mutation={deleteGroup}
         onClose={() => setToDeleteGroup(null)}
         onConfirm={handleDeleteGroup}
       />

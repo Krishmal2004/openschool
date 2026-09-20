@@ -1,5 +1,8 @@
 @use "tokens" as *;
 
+// App header (3rem) plus this bar's own height.
+$os-marks-context-bar-h: 5.5rem;
+
 // Data Table
 .os-table {
   width: 100%;
@@ -41,6 +44,27 @@
   .os-table__link  { color: var(--os-accent-dark); font-weight: 500; text-decoration: none; &:hover { text-decoration: underline; } }
   .os-table__muted { color: var(--os-text-secondary); }
   .os-table__mono  { font-family: 'IBM Plex Mono', monospace; font-size: 0.8125rem; color: var(--os-text-secondary); }
+
+  &--sticky-head thead th {
+    position: sticky;
+    top: $os-marks-context-bar-h;
+    z-index: 50;
+  }
+}
+
+.os-marks-context-bar {
+  position: sticky;
+  top: 3rem;
+  z-index: 51;
+  height: $os-marks-context-bar-h - 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background-color: var(--os-layer);
+  border-bottom: 1px solid var(--os-border-subtle);
+  font-size: 0.8125rem;
+  color: var(--os-text-secondary);
 }
 
 // Search / Toolbar

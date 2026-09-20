@@ -11,7 +11,7 @@ interface Props {
 // losing unsaved work with no warning.
 export default function IdleWarningModal({ open, onStaySignedIn, onSignOut }: Props) {
   return (
-    <ComposedModal open={open} size="sm" onClose={onStaySignedIn} preventCloseOnClickOutside>
+    <ComposedModal open={open} size="sm" onClose={onStaySignedIn} preventCloseOnClickOutside aria-label="Still there?">
       <ModalHeader title="Still there?" />
       <ModalBody>
         <p className="os-text-md">

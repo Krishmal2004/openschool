@@ -59,7 +59,7 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           <MutationErrorNotification
             isError={createRole.isError}
             error={createRole.error}
-            fallback="Failed to add role" className="os-mb-4"
+            title="Could not add role" fallback="Please try again." className="os-mb-4"
           />
           <div className="os-grid os-grid-form-2-auto os-gap-3 os-items-grid-end os-mb-6">
             <TextInput id="leadership-title" labelText="Title" placeholder="e.g. Debate Club President" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -83,10 +83,11 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
         open={pendingDeleteRoleId !== null}
         title="Delete leadership role"
         description="This will permanently remove this leadership role. This action cannot be undone."
-        isPending={deleteRole.isPending}
+        subject="Leadership role"
+        mutation={deleteRole}
         onClose={() => setPendingDeleteRoleId(null)}
         onConfirm={() => {
-          if (pendingDeleteRoleId) deleteRole.mutate(pendingDeleteRoleId, { onSuccess: () => setPendingDeleteRoleId(null) });
+          if (pendingDeleteRoleId) deleteRole.mutate(pendingDeleteRoleId);
         }}
       />
 
@@ -98,7 +99,7 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
           <MutationErrorNotification
             isError={createAward.isError}
             error={createAward.error}
-            fallback="Failed to add award" className="os-mb-4"
+            title="Could not add award" fallback="Please try again." className="os-mb-4"
           />
           <div className="os-grid os-grid-form-1-12-auto os-gap-3 os-items-grid-end os-mb-6">
             <TextInput id="award-title" labelText="Title" value={awardTitle} onChange={(e) => setAwardTitle(e.target.value)} />
@@ -127,10 +128,11 @@ export default function StudentLeadershipAwards({ studentId }: { studentId: stri
         open={pendingDeleteAwardId !== null}
         title="Delete award"
         description="This will permanently remove this award. This action cannot be undone."
-        isPending={deleteAward.isPending}
+        subject="Award"
+        mutation={deleteAward}
         onClose={() => setPendingDeleteAwardId(null)}
         onConfirm={() => {
-          if (pendingDeleteAwardId) deleteAward.mutate(pendingDeleteAwardId, { onSuccess: () => setPendingDeleteAwardId(null) });
+          if (pendingDeleteAwardId) deleteAward.mutate(pendingDeleteAwardId);
         }}
       />
     </>

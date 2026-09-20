@@ -81,7 +81,7 @@ export default function GradeSections({ inline = false }: { inline?: boolean }) 
 
   const handleDelete = () => {
     if (!toDelete) return;
-    deleteSection.mutate(toDelete.id, { onSettled: () => setToDelete(null) });
+    deleteSection.mutate(toDelete.id);
   };
 
   const pending = editing ? updateSection : createSection;
@@ -198,7 +198,8 @@ export default function GradeSections({ inline = false }: { inline?: boolean }) 
         open={!!toDelete}
         title="Delete grade section"
         description={<>Delete <strong>{toDelete?.name}</strong>? This cannot be undone, and is blocked while grades are still assigned.</>}
-        isPending={deleteSection.isPending}
+        subject="Grade section"
+        mutation={deleteSection}
         onClose={() => setToDelete(null)}
         onConfirm={handleDelete}
       />

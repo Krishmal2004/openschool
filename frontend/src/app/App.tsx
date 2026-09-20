@@ -4,6 +4,7 @@ import { useRole } from "@/shared/auth/useRole";
 import { useProvisionUser } from "@/shared/auth/useProvisionUser";
 import ProtectedRoute from "@/shared/auth/ProtectedRoute";
 import ApiAuthBridge from "@/shared/auth/ApiAuthBridge";
+import SkeletonShell from "@/shared/ui/SkeletonShell";
 import { lazy as page } from "react";
 import { publicRoutes } from "@/app/routes/public.routes";
 import { adminRoutes } from "@/app/routes/admin.routes";
@@ -13,8 +14,6 @@ import { parentRoutes } from "@/app/routes/parent.routes";
 
 const PasswordInterstitial = page(() => import("@/features/auth/pages/PasswordInterstitial"));
 const AccessRestricted = page(() => import("@/app/pages/AccessRestricted"));
-
-const Loading = () => <div className="os-loading-placeholder" />;
 
 // One route tree per role; the role comes from the JWT, not the URL.
 function roleRoutes(role: string | null) {
@@ -37,12 +36,12 @@ export default function App() {
   const { role, loading } = useRole();
 
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<SkeletonShell />}>
       <ApiAuthBridge />
       <Routes>
         {publicRoutes()}
         {loading || meLoading ? (
-          <Route path="*" element={<Loading />} />
+          <Route path="*" element={<SkeletonShell />} />
         ) : me?.must_change_password ? (
           <Route path="*" element={<ProtectedRoute><PasswordInterstitial /></ProtectedRoute>} />
         ) : (

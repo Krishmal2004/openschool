@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { Button, Tag, InlineNotification, TextInput } from "@carbon/react";
-import { ArrowLeft, Save, CheckmarkFilled, Search, UserMultiple, Warning } from "@carbon/icons-react";
+import { ArrowLeft, Save, Search, UserMultiple, Warning } from "@carbon/icons-react";
 import { getErrorMessage } from "@/shared/api/errors";
 import { isLockedAfter24Hours } from "@/shared/lib/date";
 import { useSession, useSessionRecords, useMarkAttendance } from "@/features/attendance/queries/useAttendance";
@@ -11,11 +11,14 @@ import { useGrades } from "@/features/academics/queries/useGrades";
 import { useTeacher } from "@/features/teachers/queries/useTeachers";
 import { useRole } from "@/shared/auth/useRole";
 import { useAttendanceMarking } from "@/features/attendance/hooks/useAttendanceMarking";
+import { useUnsavedChangesGuard } from "@/shared/hooks/useUnsavedChangesGuard";
 import AttendanceSummaryCards from "@/features/attendance/components/AttendanceSummaryCards";
 import StudentAttendanceRow from "@/features/attendance/components/StudentAttendanceRow";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import TableSkeleton from "@/shared/ui/TableSkeleton";
+import UnsavedChangesModal from "@/shared/ui/UnsavedChangesModal";
+import { useToast } from "@/shared/ui/toast/useToast";
 
 const HEADERS = ["#", "Student", "Index No.", "Attendance", "Note"];
 
@@ -23,6 +26,7 @@ export default function AttendanceMark() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { role } = useRole();
+  const { showToast } = useToast();
 
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id);
   const { data: records, isLoading: recordsLoading } = useSessionRecords(id);
@@ -30,14 +34,13 @@ export default function AttendanceMark() {
   const { data: students, isLoading: studentsLoading } = useStudentsByClass(session?.class_id ?? "");
   const { data: grades } = useGrades();
   // Who took this session — a single-record lookup by id, not a picker, so
-  // a capped /teachers page can't be used as a directory
-  // (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
+  // a capped /teachers page can't be used as a directory.
   const { data: takenByTeacher } = useTeacher(session?.taken_by ?? "");
   const markAttendance = useMarkAttendance(id);
   const marking = useAttendanceMarking(id, records, students);
+  const unsavedGuard = useUnsavedChangesGuard(marking.hasUnsaved);
 
   const [search, setSearch] = useState("");
-  const [saved, setSaved] = useState(false);
   const [reason, setReason] = useState("");
 
   const isAdmin = role === "admin";
@@ -56,7 +59,7 @@ export default function AttendanceMark() {
   const save = () => {
     markAttendance.mutate(
       { records: marking.toRecords(), reason: isOverride ? reason.trim() || undefined : undefined },
-      { onSuccess: () => { setSaved(true); setTimeout(() => navigate(backPath), 1200); } },
+      { onSuccess: () => { marking.clearDraft(); marking.markSaved(); showToast({ kind: "success", title: "Attendance saved" }); navigate(backPath); } },
     );
   };
 
@@ -82,7 +85,7 @@ export default function AttendanceMark() {
             <span className="os-text-sm os-c-secondary">{session.date}</span>
           </div>
         </div>
-        <Button renderIcon={ArrowLeft} kind="ghost" size="sm" as={Link} to={backPath}>Back</Button>
+        <Button renderIcon={ArrowLeft} kind="ghost" size="sm" onClick={() => unsavedGuard.guard(() => navigate(backPath))}>Back</Button>
       </div>
 
       <div className="os-py-6 os-px-8">
@@ -105,8 +108,8 @@ export default function AttendanceMark() {
             {!readOnly && (
               <>
                 <span className="os-text-xs os-c-secondary os-nowrap">Mark all:</span>
-                <button className="os-quick-mark os-quick-mark--present" onClick={() => { marking.markAll("present"); setSaved(false); }}>✓ Present</button>
-                <button className="os-quick-mark os-quick-mark--absent" onClick={() => { marking.markAll("absent"); setSaved(false); }}>✕ Absent</button>
+                <button className="os-quick-mark os-quick-mark--present" onClick={() => marking.markAll("present")}>✓ Present</button>
+                <button className="os-quick-mark os-quick-mark--absent" onClick={() => marking.markAll("absent")}>✕ Absent</button>
                 <button className="os-quick-mark os-quick-mark--clear" onClick={marking.clearAll}>Clear</button>
               </>
             )}
@@ -116,7 +119,7 @@ export default function AttendanceMark() {
             <TableSkeleton headers={HEADERS} />
           ) : (
             <>
-              <table className="os-table">
+              <table className="os-table os-table--attendance">
                 <thead>
                   <tr>
                     <th className="os-w-2h">#</th>
@@ -135,7 +138,7 @@ export default function AttendanceMark() {
                       status={marking.statuses[student.id] ?? null}
                       note={marking.notes[student.id] ?? ""}
                       readOnly={readOnly}
-                      onMark={(s) => { marking.mark(student.id, s); setSaved(false); }}
+                      onMark={(s) => marking.mark(student.id, s)}
                       onNoteChange={(value) => marking.setNote(student.id, value)}
                     />
                   ))}
@@ -152,7 +155,7 @@ export default function AttendanceMark() {
         </div>
 
         {!readOnly && (
-          <div className="os-flex os-col os-gap-3 os-py-4">
+          <div className="os-flex os-col os-gap-3 os-py-4 os-attendance-sticky-actions">
             {isOverride && (
               <TextInput id="attendance-override-reason" labelText="Reason for editing this locked session" placeholder="e.g. Corrected after guardian phone call" value={reason} onChange={(e) => setReason(e.target.value)} className="os-max-w-28" />
             )}
@@ -165,19 +168,16 @@ export default function AttendanceMark() {
               )}
               {markAttendance.isError && <span className="os-text-sm os-c-danger">{getErrorMessage(markAttendance.error, "Failed to save attendance")}</span>}
               <div className="os-flex-1" />
-              {saved && (
-                <span className="os-text-sm os-c-success os-flex os-items-center os-gap-1h">
-                  <CheckmarkFilled size={16} className="os-fill-success" /> Saved - redirecting…
-                </span>
-              )}
-              <Button kind="secondary" size="md" as={Link} to={backPath}>Cancel</Button>
-              <Button renderIcon={Save} kind="primary" size="md" onClick={save} disabled={saved || markAttendance.isPending}>
+              <Button kind="secondary" size="md" onClick={() => unsavedGuard.guard(() => navigate(backPath))}>Cancel</Button>
+              <Button renderIcon={Save} kind="primary" size="md" onClick={save} disabled={markAttendance.isPending}>
                 {markAttendance.isPending ? "Saving…" : "Save Attendance"}
               </Button>
             </div>
           </div>
         )}
       </div>
+
+      <UnsavedChangesModal open={unsavedGuard.modalOpen} onStay={unsavedGuard.cancelLeave} onLeave={unsavedGuard.confirmLeave} />
     </div>
   );
 }

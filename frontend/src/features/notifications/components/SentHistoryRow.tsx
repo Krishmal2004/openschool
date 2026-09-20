@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tag, SkeletonText } from "@carbon/react";
 import { useNotificationStats } from "@/features/notifications/queries/useNotifications";
 import type { Notification } from "@/features/notifications/api/notification";
+import { formatDateTime } from "@/shared/lib/date";
 
 export default function SentHistoryRow({ notification }: { notification: Notification }) {
   const [expanded, setExpanded] = useState(false);
@@ -27,7 +28,7 @@ export default function SentHistoryRow({ notification }: { notification: Notific
         </Tag>
         <span className="os-fw-500 os-text-sm">{notification.title}</span>
         <span className="os-ml-auto os-text-xs os-c-tertiary">
-          {notification.sent_at ? new Date(notification.sent_at).toLocaleString() : ""}
+          {formatDateTime(notification.sent_at)}
         </span>
       </div>
       <p className="os-m-0 os-text-xs os-c-secondary os-lh-normal os-clamp-2 os-overflow-hidden"

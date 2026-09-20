@@ -91,7 +91,7 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
         <MutationErrorNotification
           isError={createActivity.isError}
           error={createActivity.error}
-          fallback="Failed to add activity" className="os-mb-4"
+          title="Could not add activity" fallback="Please try again." className="os-mb-4"
         />
 
         <div className="os-grid os-grid-form-10-1-10-auto os-gap-3 os-items-grid-end os-mb-6">
@@ -128,10 +128,11 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
         open={pendingDeleteId !== null}
         title="Delete activity"
         description="This will permanently remove this activity record. This action cannot be undone."
-        isPending={deleteActivity.isPending}
+        subject="Activity"
+        mutation={deleteActivity}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteActivity.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteActivity.mutate(pendingDeleteId);
         }}
       />
     </div>

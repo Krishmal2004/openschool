@@ -33,7 +33,7 @@ export default function Positions() {
     <div className="os-page">
       <div className="os-page__header">
         <div className="os-page__header-left">
-          <h1 className="os-page__title">Leadership Positions</h1>
+          <h1 className="os-page__title">Principal and VPs</h1>
           <p className="os-page__subtitle">Principal and Vice Principals: permanent appointments that control notification reach, held until resignation or promotion.</p>
         </div>
         <Button renderIcon={Add} kind="primary" size="md" onClick={() => setVpOpen(true)}>Add Vice Principal</Button>
@@ -92,9 +92,11 @@ export default function Positions() {
         description={<>Remove <strong>{vpToRemove?.teacher_name}</strong> as Vice Principal? They will stop receiving notifications for their assigned scope.</>}
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removePosition.isPending}
+        subject="Vice Principal"
+        successVerb="removed"
+        mutation={removePosition}
         onClose={() => setVpToRemove(null)}
-        onConfirm={() => vpToRemove && removePosition.mutate(vpToRemove.id, { onSettled: () => setVpToRemove(null) })}
+        onConfirm={() => vpToRemove && removePosition.mutate(vpToRemove.id)}
       />
     </div>
   );

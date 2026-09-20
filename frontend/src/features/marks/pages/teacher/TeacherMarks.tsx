@@ -13,6 +13,8 @@ import MarksEntryTable from "@/features/marks/components/MarksEntryTable";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import EmptyState from "@/shared/ui/EmptyState";
+import UnsavedChangesModal from "@/shared/ui/UnsavedChangesModal";
+import { useUnsavedChangesGuard } from "@/shared/hooks/useUnsavedChangesGuard";
 
 export default function TeacherMarks() {
   const { data: teacher, isLoading: teacherLoading } = useMyTeacherProfile();
@@ -35,6 +37,7 @@ export default function TeacherMarks() {
   const { data: rows, isLoading: marksLoading } = useClassMarks(classId, effectiveTermId, subjectId);
   const saveMarks = useSaveClassMarks(classId);
   const draft = useMarksDraft(rows, `${effectiveTermId}:${subjectId}:${classId}`);
+  const unsavedGuard = useUnsavedChangesGuard(draft.hasUnsaved);
 
   const currentRows = useMemo(() => (workload ?? []).filter((r) => r.academic_year_is_current), [workload]);
   const uniqueClasses = useMemo(() => [...new Map(currentRows.map((r) => [r.class_id, { id: r.class_id, name: r.class_name, grade_name: r.grade_name }])).values()], [currentRows]);
@@ -82,7 +85,7 @@ export default function TeacherMarks() {
     <div className="os-page">
       <div className="os-page__header">
         <div className="os-page__header-left">
-          <Button kind="ghost" size="sm" renderIcon={ArrowLeft} onClick={() => { setMode("overview"); setClassId(""); setSubjectId(""); }} className="os-mb-2 os-pl-0">
+          <Button kind="ghost" size="sm" renderIcon={ArrowLeft} onClick={() => unsavedGuard.guard(() => { setMode("overview"); setClassId(""); setSubjectId(""); })} className="os-mb-2 os-pl-0">
             Back to overview
           </Button>
           <h1 className="os-page__title">Record Marks</h1>
@@ -123,12 +126,14 @@ export default function TeacherMarks() {
               <MutationErrorNotification isError={saveMarks.isError} error={saveMarks.error} title="Could not save marks" fallback="Please try again." onClose={() => saveMarks.reset()} />
               {saveMarks.isSuccess && <InlineNotification kind="success" title="Marks saved successfully" lowContrast className="os-max-w-full" />}
             </div>
-            <MarksEntryTable students={students} maxMarks={maxMarks} draft={draft} />
+            <MarksEntryTable students={students} subjectName={subjects?.find((s) => s.id === subjectId)?.name ?? ""} maxMarks={maxMarks} draft={draft} />
           </div>
         ) : (
           <EmptyState title="No students enrolled" description="There are no students enrolled in the selected class." />
         )}
       </div>
+
+      <UnsavedChangesModal open={unsavedGuard.modalOpen} onStay={unsavedGuard.cancelLeave} onLeave={unsavedGuard.confirmLeave} />
     </div>
   );
 }

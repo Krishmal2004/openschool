@@ -99,9 +99,10 @@ export default function SubjectsPanel() {
         open={!!toDelete}
         title="Delete subject"
         description={<>Delete <strong>{toDelete?.name}</strong> ({toDelete?.code})? This cannot be undone, and is blocked if the subject is used by a class or curriculum group.</>}
-        isPending={deleteSubject.isPending}
+        subject="Subject"
+        mutation={deleteSubject}
         onClose={() => setToDelete(null)}
-        onConfirm={() => toDelete && deleteSubject.mutate(toDelete.id, { onSettled: () => setToDelete(null) })}
+        onConfirm={() => toDelete && deleteSubject.mutate(toDelete.id)}
       />
     </div>
   );

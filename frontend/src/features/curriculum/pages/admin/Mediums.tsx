@@ -66,7 +66,7 @@ export default function Mediums() {
 
   const handleDelete = () => {
     if (!toDelete) return;
-    deleteMedium.mutate(toDelete.id, { onSettled: () => setToDelete(null) });
+    deleteMedium.mutate(toDelete.id);
   };
 
   return (
@@ -105,7 +105,7 @@ export default function Mediums() {
           isError={deleteMedium.isError}
           error={deleteMedium.error}
           title="Could not delete medium"
-          fallback="The medium may be in use by a group subject or enrollment."
+          fallback="The medium may be in use by a group subject or enrolment."
           onClose={() => deleteMedium.reset()} className="os-mt-0 os-mx-6 os-mb-4"
         />
 
@@ -145,13 +145,13 @@ export default function Mediums() {
         )}
       </div>
 
-      <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)}>
+      <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)} aria-label={modal === "create" ? "New medium" : "Edit medium"}>
         <ModalHeader title={modal === "create" ? "New medium" : "Edit medium"} />
         <ModalBody>
           <MutationErrorNotification
             isError={createMedium.isError || updateMedium.isError}
             error={createMedium.error ?? updateMedium.error}
-            fallback="Failed to save medium" className="os-mb-4"
+            title="Could not save medium" fallback="Please try again." className="os-mb-4"
           />
           <TextInput
             id="medium-name"
@@ -190,7 +190,8 @@ export default function Mediums() {
             Delete <strong>{toDelete?.name}</strong>? This cannot be undone.
           </>
         }
-        isPending={deleteMedium.isPending}
+        subject="Medium"
+        mutation={deleteMedium}
         onClose={() => setToDelete(null)}
         onConfirm={handleDelete}
       />

@@ -4,6 +4,7 @@ import { Add } from "@carbon/icons-react";
 import { Button, Tag, SkeletonText, OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { TIMETABLE_STATUS_TAG } from "@/shared/lib/constants/tags";
 import DataGrid, { type GridColumn } from "@/shared/ui/DataGrid";
+import { formatDateTime } from "@/shared/lib/date";
 import FormModal from "@/shared/ui/FormModal";
 import { useCurrentAcademicYear } from "@/features/school/queries/useAcademicYears";
 import { useCurrentClasses } from "@/features/academics/queries/useClasses";
@@ -23,7 +24,7 @@ import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 
 const statusTag = (st: string) => TIMETABLE_STATUS_TAG[st as keyof typeof TIMETABLE_STATUS_TAG];
 
-export default function Timetables() {
+export default function Timetables({ inline = false }: { inline?: boolean }) {
   const navigate = useNavigate();
   const { data: currentYear } = useCurrentAcademicYear();
   const { data: classes } = useCurrentClasses();
@@ -72,7 +73,7 @@ export default function Timetables() {
     { key: "class", header: "Class", render: (t) => t.class_name },
     { key: "version", header: "Version", render: (t) => `v${t.version}` },
     { key: "status", header: "Status", render: (t) => <Tag type={statusTag(t.status)?.type ?? "gray"} size="sm">{statusTag(t.status)?.label ?? t.status}</Tag> },
-    { key: "updated", header: "Updated", render: (t) => (t.updated_at ? new Date(t.updated_at).toLocaleString() : "-") },
+    { key: "updated", header: "Updated", render: (t) => formatDateTime(t.updated_at) },
     {
       key: "menu",
       header: "",
@@ -90,16 +91,18 @@ export default function Timetables() {
   ];
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Timetables</h1>
-          <p className="os-page__subtitle">
-            Every class timetable for {currentYear?.label ?? "the current academic year"}. Only the published
-            version is visible to teachers, students and guardians.
-          </p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Timetables</h1>
+            <p className="os-page__subtitle">
+              Every class timetable for {currentYear?.label ?? "the current academic year"}. Only the published
+              version is visible to teachers, students and guardians.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="os-section os-p-6">
         <div className="os-flex os-gap-3 os-items-end os-mb-6">
@@ -180,11 +183,12 @@ export default function Timetables() {
             This cannot be undone.
           </>
         }
-        isPending={deleteTimetable.isPending}
+        subject="Timetable"
+        mutation={deleteTimetable}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           if (!deleteTarget) return;
-          deleteTimetable.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+          deleteTimetable.mutate(deleteTarget.id);
         }}
       />
     </div>

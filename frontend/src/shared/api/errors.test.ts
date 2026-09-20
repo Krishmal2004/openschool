@@ -21,6 +21,12 @@ describe("getErrorMessage", () => {
     expect(getErrorMessage(new Error("x"), "fallback")).toBe("fallback");
     expect(getErrorMessage(axiosError(500), "fallback")).toBe("fallback");
   });
+
+  it("falls back instead of showing text that looks like a leaked internal error", () => {
+    expect(getErrorMessage(axiosError(400, { error: "Key: 'CreateSessionRequest.ClassID' Error:Field validation for 'ClassID' failed on the 'required' tag" }), "fallback")).toBe("fallback");
+    expect(getErrorMessage(axiosError(500, { error: "pq: duplicate key value violates unique constraint" }), "fallback")).toBe("fallback");
+    expect(getErrorMessage(axiosError(500, { error: "SQLSTATE 23505: unique_violation" }), "fallback")).toBe("fallback");
+  });
 });
 
 describe("isNotFoundError", () => {

@@ -31,7 +31,7 @@ export default function SectionFormModal({
   error: unknown;
 }) {
   return (
-    <ComposedModal open={open} size="md" onClose={onClose}>
+    <ComposedModal open={open} size="md" onClose={onClose} aria-label={isEdit ? "Edit grade section" : "New grade section"}>
       <ModalHeader title={isEdit ? "Edit grade section" : "New grade section"} />
       <ModalBody>
         <MutationErrorNotification

@@ -80,7 +80,7 @@ export default function AddGuardianModal({
   };
 
   return (
-    <ComposedModal open size="sm" onClose={onClose}>
+    <ComposedModal open size="sm" onClose={onClose} aria-label={step === "search" ? "Add guardian" : "Create new guardian"}>
       <ModalHeader title={step === "search" ? "Add guardian" : "Create new guardian"} />
       <ModalBody>
         {created && (
@@ -134,7 +134,7 @@ export default function AddGuardianModal({
             <MutationErrorNotification
               isError={linkGuardian.isError}
               error={linkGuardian.error}
-              fallback="Failed to link guardian" className="os-mb-4"
+              title="Could not link guardian" fallback="Please try again." className="os-mb-4"
             />
           </>
         )}
@@ -144,7 +144,7 @@ export default function AddGuardianModal({
             <MutationErrorNotification
               isError={addGuardian.isError}
               error={addGuardian.error}
-              fallback="Failed to add guardian" className="os-mb-4"
+              title="Could not add guardian" fallback="Please try again." className="os-mb-4"
             />
             <div className="os-grid os-gap-4">
               <TextInput

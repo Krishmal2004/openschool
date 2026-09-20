@@ -95,9 +95,11 @@ export default function Prefects() {
         description={<>Remove <strong>{toRemove?.student_name}</strong> from this board?</>}
         confirmLabel="Remove"
         pendingLabel="Removing…"
-        isPending={removePrefect.isPending}
+        subject="Prefect"
+        successVerb="removed"
+        mutation={removePrefect}
         onClose={() => setToRemove(null)}
-        onConfirm={() => toRemove && currentYear && removePrefect.mutate({ id: toRemove.id, academicYearId: currentYear.id }, { onSettled: () => setToRemove(null) })}
+        onConfirm={() => toRemove && currentYear && removePrefect.mutate({ id: toRemove.id, academicYearId: currentYear.id })}
       />
     </div>
   );

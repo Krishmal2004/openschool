@@ -51,7 +51,7 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         <MutationErrorNotification
           isError={createRecord.isError}
           error={createRecord.error}
-          fallback="Failed to add record" className="os-mb-4"
+          title="Could not add record" fallback="Please try again." className="os-mb-4"
         />
 
         <div className="os-grid os-grid-form-10-10-1-1-auto os-gap-3 os-items-grid-end os-mb-6">
@@ -93,10 +93,11 @@ export default function StudentDisciplinary({ studentId }: { studentId: string }
         open={pendingDeleteId !== null}
         title="Delete disciplinary record"
         description="This will permanently remove this record. This action cannot be undone."
-        isPending={deleteRecord.isPending}
+        subject="Record"
+        mutation={deleteRecord}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId) deleteRecord.mutate(pendingDeleteId, { onSuccess: () => setPendingDeleteId(null) });
+          if (pendingDeleteId) deleteRecord.mutate(pendingDeleteId);
         }}
       />
     </div>
