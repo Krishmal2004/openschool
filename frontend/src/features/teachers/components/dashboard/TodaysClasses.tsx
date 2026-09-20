@@ -3,6 +3,7 @@ import { Tag } from "@carbon/react";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import type { MyClass } from "@/features/teachers/queries/useTeachers";
 import type { DailySession } from "@/features/attendance/api/attendance";
+import { formatLongDate } from "@/shared/lib/date";
 
 export default function TodaysClasses({
   loading,
@@ -20,7 +21,7 @@ export default function TodaysClasses({
       <div className="os-section__header">
         <h2 className="os-section__title">Today's Classes</h2>
         <span className="os-text-2xs os-c-tertiary">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          {formatLongDate(new Date())}
         </span>
       </div>
       <div>

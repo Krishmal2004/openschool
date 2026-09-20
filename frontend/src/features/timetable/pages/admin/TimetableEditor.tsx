@@ -4,6 +4,7 @@ import { Button, Tag, SkeletonText } from "@carbon/react";
 import { useClass, useClassSubjectTeachers } from "@/features/academics/queries/useClasses";
 import { useGrades } from "@/features/academics/queries/useGrades";
 import { useTeachers } from "@/features/teachers/queries/useTeachers";
+import { formatDateTime } from "@/shared/lib/date";
 import type { Teacher } from "@/features/teachers/api/teacher";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
 import { useClassrooms } from "@/features/timetable/queries/useClassrooms";
@@ -165,7 +166,7 @@ export default function TimetableEditor() {
           <h2 className="os-section__title os-mb-3">Status History</h2>
           {history.map((h) => (
             <div key={h.id} className="os-text-sm os-c-secondary os-mb-1h">
-              <strong>{statusLabel(h.to_status)}</strong> by {h.changed_by_name} on {new Date(h.changed_at).toLocaleString()}
+              <strong>{statusLabel(h.to_status)}</strong> by {h.changed_by_name} on {formatDateTime(h.changed_at)}
               {h.comment && <> — {h.comment}</>}
             </div>
           ))}

@@ -57,7 +57,7 @@ function ClassResultCard({ result }: { result: ClassGenerationResult }) {
   );
 }
 
-export default function GenerateTimetable() {
+export default function GenerateTimetable({ inline = false }: { inline?: boolean }) {
   const { data: currentYear } = useCurrentAcademicYear();
   const yearId = currentYear?.id ?? "";
   const { data: gradeSections } = useGradeSections(yearId);
@@ -72,17 +72,19 @@ export default function GenerateTimetable() {
   const result = generate.data;
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Generate Timetable</h1>
-          <p className="os-page__subtitle">
-            Best-effort auto-fills draft timetables for every class in a grade section at once — students keep one
-            fixed homeroom, teachers rotate in, and lab-required periods go to a matching lab classroom. Anything it
-            can't place is left as a gap for you to finish by hand.
-          </p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Generate Timetable</h1>
+            <p className="os-page__subtitle">
+              Best-effort auto-fills draft timetables for every class in a grade section at once — students keep one
+              fixed homeroom, teachers rotate in, and lab-required periods go to a matching lab classroom. Anything it
+              can't place is left as a gap for you to finish by hand.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="os-section os-p-6">
         {!currentYear ? (

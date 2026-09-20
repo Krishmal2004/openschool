@@ -14,6 +14,7 @@ import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
 import { useListFilters } from "@/shared/hooks/useListFilters";
+import { usePersistedPageSize } from "@/shared/hooks/usePersistedPageSize";
 
 const STATUS_TAG: Record<string, "green" | "red" | "magenta"> = { active: "green", resigned: "red", transferred: "magenta" };
 const FILTER_LABELS: Record<string, string> = { query: "Search", status: "Status" };
@@ -23,7 +24,7 @@ export default function Teachers() {
   const deleteTeacher = useDeleteTeacher();
   const [toDelete, setToDelete] = useState<Teacher | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = usePersistedPageSize("teachers");
   const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({ query: "", status: "" });
 
   const setFilter = <K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) => {
@@ -76,7 +77,7 @@ export default function Teachers() {
 
       <div className="os-section">
         <FilterBar search={{ value: filters.query, onChange: (v) => setFilter("query", v), placeholder: "Search by name or employee number…" }}>
-          <Select id="filter-teacher-status" labelText="" size="md" value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
+          <Select id="filter-teacher-status" labelText="Status" hideLabel size="md" value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
             <SelectItem value="" text="All Statuses" />
             {EMPLOYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value} text={s.label} />)}
           </Select>

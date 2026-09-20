@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { EventSchedule, CheckmarkFilled, WarningFilled } from "@carbon/icons-react";
+import { EventSchedule, CheckmarkFilled, WarningFilled, AddAlt } from "@carbon/icons-react";
 import { Button, Tag, DatePicker, DatePickerInput } from "@carbon/react";
-import { useDailySessions, useDeleteSession } from "@/features/attendance/queries/useAttendance";
+import { useDailySessions, useDeleteSession, useCreateSession } from "@/features/attendance/queries/useAttendance";
+import { useCurrentClasses } from "@/features/academics/queries/useClasses";
 import { useRole } from "@/shared/auth/useRole";
 import type { DailySession } from "@/features/attendance/api/attendance";
-import { toYmd, todayISODate, isLockedAfter24Hours } from "@/shared/lib/date";
+import { toYmd, todayISODate, isLockedAfter24Hours, formatLongDate } from "@/shared/lib/date";
 import TableSkeleton from "@/shared/ui/TableSkeleton";
 import DataGrid, { type GridColumn } from "@/shared/ui/DataGrid";
 import StatCardSkeleton from "@/shared/ui/StatCardSkeleton";
@@ -15,26 +16,43 @@ import EmptyState from "@/shared/ui/EmptyState";
 import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
+import { useToast } from "@/shared/ui/toast/useToast";
 
 const HEADERS = ["Class", "Grade", "Teacher", "Records", "Status", "Actions"];
-
-function displayDate(ymd: string) {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-LK", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 export default function Attendance() {
   const [date, setDate] = useState(todayISODate());
   const { data: sessions, isLoading, isError, refetch } = useDailySessions(date);
+  const { data: classes } = useCurrentClasses();
   const deleteSession = useDeleteSession();
+  const createSession = useCreateSession();
   const { role } = useRole();
   const isAdmin = role === "admin";
   const [toDelete, setToDelete] = useState<DailySession | null>(null);
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const { showToast } = useToast();
+
+  const existingClassIds = new Set((sessions ?? []).map((s) => s.class_id));
+  const missingClasses = (classes ?? []).filter((c) => !existingClassIds.has(c.id));
+
+  const createAllSessions = async () => {
+    setBulkCreating(true);
+    const results = await Promise.allSettled(
+      missingClasses.map((c) => createSession.mutateAsync({ class_id: c.id, date })),
+    );
+    setBulkCreating(false);
+    const created = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.length - created;
+    if (failed === 0) {
+      showToast({ kind: "success", title: `Created ${created} session${created === 1 ? "" : "s"}` });
+    } else {
+      showToast({
+        kind: failed === results.length ? "error" : "warning",
+        title: `Created ${created} of ${results.length} sessions`,
+        subtitle: `${failed} failed - a class may already have a session, or has no enrolled students.`,
+      });
+    }
+  };
 
 
   const columns: GridColumn<DailySession>[] = [
@@ -85,7 +103,7 @@ export default function Attendance() {
       <div className="os-page__header">
         <div className="os-page__header-left">
           <h1 className="os-page__title">Attendance</h1>
-          <p className="os-page__subtitle">{displayDate(date)}</p>
+          <p className="os-page__subtitle">{formatLongDate(date)}</p>
         </div>
         <div className="os-min-w-12">
           <DatePicker
@@ -96,7 +114,7 @@ export default function Attendance() {
               if (dates[0]) setDate(toYmd(dates[0]));
             }}
           >
-            <DatePickerInput id="attendance-date" labelText="" placeholder="YYYY-MM-DD" size="lg" />
+            <DatePickerInput id="attendance-date" labelText="Attendance date" hideLabel placeholder="YYYY-MM-DD" size="lg" />
           </DatePicker>
         </div>
       </div>
@@ -158,7 +176,16 @@ export default function Attendance() {
           </div>
 
           <div className="os-section">
-            <SectionHeader title="Sessions" />
+            <SectionHeader
+              title="Sessions"
+              meta={
+                missingClasses.length > 0 && (
+                  <Button renderIcon={AddAlt} kind="primary" size="sm" onClick={createAllSessions} disabled={bulkCreating}>
+                    {bulkCreating ? "Creating…" : `Create sessions for all classes (${missingClasses.length})`}
+                  </Button>
+                )
+              }
+            />
 
             <MutationErrorNotification
               isError={deleteSession.isError}
@@ -171,7 +198,11 @@ export default function Attendance() {
             {!sessions || sessions.length === 0 ? (
               <EmptyState
                 title="No sessions for this date"
-                description="Sessions are created from a class's Attendance tab - go to a class to start one."
+                description={
+                  missingClasses.length > 0
+                    ? "Create sessions for every class at once above, or go to a class's Attendance tab to start one."
+                    : "Sessions are created from a class's Attendance tab - go to a class to start one."
+                }
                 action={
                   <Button kind="primary" as={Link} to="/classes">
                     Go to Classes

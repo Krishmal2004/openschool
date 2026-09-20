@@ -60,7 +60,7 @@ export default function ChildDetail() {
             <Tab>Attendance</Tab>
             <Tab>Marks</Tab>
             <Tab>Timetable</Tab>
-            <Tab>Enrollments</Tab>
+            <Tab>Enrolments</Tab>
             <Tab>Progress Reports</Tab>
             <Tab>Portfolio Details</Tab>
             <Tab>Guardians</Tab>

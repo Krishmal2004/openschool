@@ -84,7 +84,8 @@ export default function PeriodsEditor({ section, onClose }: { section: GradeSect
                   <td>
                     <TextInput
                       id={`start-${i}`}
-                      labelText=""
+                      labelText={`${p.slot_type === "interval" ? "Interval" : "Period"} ${i + 1} start time`}
+                      hideLabel
                       type="time"
                       size="sm"
                       value={formatTimeForInput(p.start_time)}
@@ -95,7 +96,8 @@ export default function PeriodsEditor({ section, onClose }: { section: GradeSect
                   <td>
                     <TextInput
                       id={`end-${i}`}
-                      labelText=""
+                      labelText={`${p.slot_type === "interval" ? "Interval" : "Period"} ${i + 1} end time`}
+                      hideLabel
                       type="time"
                       size="sm"
                       value={formatTimeForInput(p.end_time)}

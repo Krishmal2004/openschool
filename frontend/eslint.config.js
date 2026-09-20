@@ -90,6 +90,18 @@ export default defineConfig([
       [RULE]: restrict([{ group: ["../*"], message: "Use the @/ alias instead of relative parent paths." }]),
       // Pages and components over this limit are split into the feature's components/ or hooks/.
       "max-lines": ["error", { max: 250, skipBlankLines: true, skipComments: true }],
+      "no-restricted-properties": [
+        "error",
+        { property: "toLocaleDateString", message: "Use formatDate/formatMonth/formatLongDate/... from @/shared/lib/date instead." },
+        { property: "toLocaleString", message: "Use formatDateTime from @/shared/lib/date instead." },
+        { property: "toLocaleTimeString", message: "Add a helper to @/shared/lib/date instead of calling this directly." },
+      ],
+    },
+  },
+  {
+    files: ["src/shared/lib/date.ts"],
+    rules: {
+      "no-restricted-properties": "off",
     },
   },
   ...layerRules,

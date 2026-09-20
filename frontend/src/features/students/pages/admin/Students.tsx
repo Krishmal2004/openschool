@@ -12,6 +12,7 @@ import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import AgentFindingsBanner from "@/features/notifications/components/AgentFindingsBanner";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import { useListFilters } from "@/shared/hooks/useListFilters";
+import { usePersistedPageSize } from "@/shared/hooks/usePersistedPageSize";
 import { useStudents, useDeleteStudent } from "@/features/students/queries/useStudents";
 import { useGrades } from "@/features/academics/queries/useGrades";
 import { useHouses } from "@/features/school/queries/useHouses";
@@ -41,7 +42,7 @@ export default function Students() {
   const deleteStudent = useDeleteStudent();
   const [toDelete, setToDelete] = useState<Student | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = usePersistedPageSize("students");
 
   const { filters, set, clear, activeKeys, debouncedSearch } = useListFilters({
     query: "",
@@ -146,12 +147,12 @@ export default function Students() {
             itemToString={(c) => c.name}
             placeholder="All classes"
           />
-          <Select id="filter-gender" labelText="" size="md" value={filters.gender} onChange={(e) => setFilter("gender", e.target.value)}>
+          <Select id="filter-gender" labelText="Gender" hideLabel size="md" value={filters.gender} onChange={(e) => setFilter("gender", e.target.value)}>
             <SelectItem value="" text="Any gender" />
             <SelectItem value="male" text="Male" />
             <SelectItem value="female" text="Female" />
           </Select>
-          <Select id="filter-house" labelText="" size="md" value={filters.house} onChange={(e) => setFilter("house", e.target.value)}>
+          <Select id="filter-house" labelText="House" hideLabel size="md" value={filters.house} onChange={(e) => setFilter("house", e.target.value)}>
             <SelectItem value="" text="All houses" />
             {houses?.map((h) => <SelectItem key={h.id} value={h.name} text={h.name} />)}
           </Select>

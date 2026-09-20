@@ -11,8 +11,8 @@ import ListRowSkeleton from "@/shared/ui/ListRowSkeleton";
 import { designationLabel } from "@/features/staff/constants";
 import StaffFormModal from "@/features/staff/components/StaffFormModal";
 import StaffDetail from "@/features/staff/components/StaffDetail";
+import { usePersistedPageSize } from "@/shared/hooks/usePersistedPageSize";
 
-// Server-paginated (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 4).
 export default function NonAcademicStaff() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 300);
@@ -20,7 +20,7 @@ export default function NonAcademicStaff() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = usePersistedPageSize("non-academic-staff");
 
   const { data, isLoading, isError, refetch } = useNonAcademicStaffList({
     limit: pageSize,
@@ -144,7 +144,7 @@ export default function NonAcademicStaff() {
               totalItems={totalItems}
               page={page}
               pageSize={pageSize}
-              pageSizes={[10, 20, 50]}
+              pageSizes={[10, 25, 50, 100]}
               onChange={onChange}
               size="sm"
             />

@@ -4,6 +4,7 @@ import { Locked, UserMultiple, Edit, TrashCan } from "@carbon/icons-react";
 import { Tag, SkeletonText, Button } from "@carbon/react";
 import { useGuardianStudents, useGuardianNotifications, useDeleteGuardian } from "@/features/guardians/queries/useGuardians";
 import type { Guardian } from "@/features/guardians/api/guardian";
+import { formatDateTime } from "@/shared/lib/date";
 import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import { relationshipLabel } from "@/features/guardians/constants";
 import EditGuardianModal from "@/features/guardians/components/EditGuardianModal";
@@ -117,7 +118,7 @@ export default function GuardianDetail({ guardian, onDeleted }: { guardian: Guar
                   </Tag>
                   <div className="os-flex-1" />
                   <span className="os-text-xs os-c-tertiary">
-                    {new Date(n.sent_at).toLocaleString()}
+                    {formatDateTime(n.sent_at)}
                   </span>
                 </div>
                 <p className="os-mt-1 os-mx-0 os-mb-0 os-text-sm os-c-secondary">{n.message}</p>

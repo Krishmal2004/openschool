@@ -9,9 +9,8 @@ import { isTermFormValid, type TermFormValues, type TermTouched } from "@/featur
 import ConfirmDeleteModal from "@/shared/ui/ConfirmDeleteModal";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import RemoveIconButton from "@/shared/ui/RemoveIconButton";
-import { toYmd } from "@/shared/lib/date";
+import { toYmd, formatDayMonthYear } from "@/shared/lib/date";
 
-const formatTermDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-LK", { month: "short", day: "numeric", year: "numeric" }) : "-");
 const isoToYmd = (iso: string | null) => (iso ? toYmd(new Date(iso)) : "");
 const EMPTY: TermFormValues = { name: "", start_date: "", end_date: "" };
 
@@ -71,7 +70,7 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
                 <div key={t.id} className="os-list-row os-list-row--compact os-gap-2h">
                   <div className="os-flex-1 os-min-w-0">
                     <p className="os-m-0 os-fw-500 os-text-md os-c-primary">{t.name}</p>
-                    <p className="os-m-0 os-text-xs os-c-secondary">{formatTermDate(t.start_date)} – {formatTermDate(t.end_date)}</p>
+                    <p className="os-m-0 os-text-xs os-c-secondary">{formatDayMonthYear(t.start_date)} – {formatDayMonthYear(t.end_date)}</p>
                   </div>
                   {t.is_current ? (
                     <Tag type="teal" size="sm"><Checkmark size={12} className="os-mr-1" />Current</Tag>

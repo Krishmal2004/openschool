@@ -35,14 +35,9 @@ const StaffAttendance = page(() => import("@/features/attendance/pages/admin/Sta
 const AcademicYears = page(() => import("@/features/school/pages/admin/AcademicYears"));
 const SettingsPage = page(() => import("@/features/school/pages/admin/Settings"));
 const SchoolSetup = page(() => import("@/features/school/pages/admin/SchoolSetup"));
-const Automation = page(() => import("@/features/system/pages/admin/Automation"));
-const Classrooms = page(() => import("@/features/timetable/pages/admin/Classrooms"));
 const GradeSections = page(() => import("@/features/timetable/pages/admin/GradeSections"));
-const TimetableSettings = page(() => import("@/features/timetable/pages/admin/TimetableSettings"));
-const SubjectRequirements = page(() => import("@/features/timetable/pages/admin/SubjectRequirements"));
-const Timetables = page(() => import("@/features/timetable/pages/admin/Timetables"));
+const TimetableHub = page(() => import("@/features/timetable/pages/admin/TimetableHub"));
 const TimetableEditor = page(() => import("@/features/timetable/pages/admin/TimetableEditor"));
-const GenerateTimetable = page(() => import("@/features/timetable/pages/admin/GenerateTimetable"));
 const NotificationComposer = page(() => import("@/features/notifications/pages/NotificationComposer"));
 const NotificationCenter = page(() => import("@/features/notifications/pages/NotificationCenter"));
 
@@ -73,7 +68,7 @@ export function adminRoutes() {
       <Route path="/subjects" element={<SubjectsCurriculum />} />
       <Route path="/subjects/new" element={<AddSubject />} />
       <Route path="/grades" element={<Navigate to="/classes" replace />} />
-      <Route path="/curriculum" element={<SubjectsCurriculum />} />
+      <Route path="/curriculum" element={<Navigate to="/subjects" replace />} />
       <Route path="/curriculum/:id" element={<LevelDetail />} />
       <Route path="/mediums" element={<Mediums />} />
       <Route path="/attendance" element={<Attendance />} />
@@ -83,14 +78,14 @@ export function adminRoutes() {
       <Route path="/notifications" element={<NotificationComposer />} />
       <Route path="/notification-center" element={<NotificationCenter />} />
       <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/automation" element={<Automation />} />
-      <Route path="/timetables" element={<Timetables />} />
-      <Route path="/timetables/generate" element={<GenerateTimetable />} />
+      <Route path="/automation" element={<Navigate to="/settings" replace />} />
+      <Route path="/timetables" element={<TimetableHub tab="timetables" />} />
+      <Route path="/timetables/generate" element={<TimetableHub tab="generate" />} />
       <Route path="/timetables/:id" element={<TimetableEditor />} />
       <Route path="/grade-sections" element={<GradeSections />} />
-      <Route path="/classrooms" element={<Classrooms />} />
-      <Route path="/subject-requirements" element={<SubjectRequirements />} />
-      <Route path="/timetable-settings" element={<TimetableSettings />} />
+      <Route path="/classrooms" element={<TimetableHub tab="classrooms" />} />
+      <Route path="/subject-requirements" element={<TimetableHub tab="requirements" />} />
+      <Route path="/timetable-settings" element={<TimetableHub tab="settings" />} />
       <Route path="*" element={<NotFound />} />
     </Route>,
   ];

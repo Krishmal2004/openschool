@@ -53,7 +53,8 @@ export default function AttendanceTab({
             >
               <DatePickerInput
                 id="session-date-filter"
-                labelText=""
+                labelText="Filter by date"
+                hideLabel
                 placeholder="Filter by date"
                 size="sm"
               />

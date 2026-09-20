@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
 import { HeaderGlobalAction, Tag } from "@carbon/react";
 import { Notification as NotificationIcon } from "@carbon/icons-react";
+import { formatDateTime } from "@/shared/lib/date";
 import {
   useMyNotifications,
   useUnreadNotificationCount,
@@ -68,7 +69,7 @@ export default function NotificationsBell() {
                     {n.message}
                   </p>
                   <p className="os-mt-1 os-mx-0 os-mb-0 os-text-xs os-c-tertiary">
-                    {n.sender_name} &middot; {new Date(n.sent_at).toLocaleString()}
+                    {n.sender_name} &middot; {formatDateTime(n.sent_at)}
                   </p>
                 </div>
               ))

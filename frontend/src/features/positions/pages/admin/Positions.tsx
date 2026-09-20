@@ -33,7 +33,7 @@ export default function Positions() {
     <div className="os-page">
       <div className="os-page__header">
         <div className="os-page__header-left">
-          <h1 className="os-page__title">Leadership Positions</h1>
+          <h1 className="os-page__title">Principal and VPs</h1>
           <p className="os-page__subtitle">Principal and Vice Principals: permanent appointments that control notification reach, held until resignation or promotion.</p>
         </div>
         <Button renderIcon={Add} kind="primary" size="md" onClick={() => setVpOpen(true)}>Add Vice Principal</Button>

@@ -147,18 +147,20 @@ function SettingsForm({
 }
 
 
-export default function TimetableSettings() {
+export default function TimetableSettings({ inline = false }: { inline?: boolean }) {
   const { data: currentYear } = useCurrentAcademicYear();
   const { data: settings, isLoading } = useTimetableSettings(currentYear?.id ?? "");
 
   if (!currentYear) {
     return (
-      <div className="os-page">
-        <div className="os-page__header">
-          <div className="os-page__header-left">
-            <h1 className="os-page__title">Timetable Settings</h1>
+      <div className={inline ? "" : "os-page"}>
+        {!inline && (
+          <div className="os-page__header">
+            <div className="os-page__header-left">
+              <h1 className="os-page__title">Timetable Settings</h1>
+            </div>
           </div>
-        </div>
+        )}
         <div className="os-section">
           <EmptyState
             title="No current academic year"
@@ -170,15 +172,17 @@ export default function TimetableSettings() {
   }
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Timetable Settings</h1>
-          <p className="os-page__subtitle">
-            Configure default timetable structures and custom grade interval times for {currentYear.label}.
-          </p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Timetable Settings</h1>
+            <p className="os-page__subtitle">
+              Configure default timetable structures and custom grade interval times for {currentYear.label}.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <Tabs>
         <TabList aria-label="Timetable Settings Tabs">

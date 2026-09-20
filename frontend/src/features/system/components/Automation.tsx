@@ -4,6 +4,7 @@ import { useJobs, useSetJobEnabled, useRunJobNow } from "@/features/system/queri
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
 import type { JobRunStatus } from "@/features/system/api/jobs";
+import { formatDateTime } from "@/shared/lib/date";
 
 function humanizeJobName(name: string) {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -36,24 +37,26 @@ function statusTag(status: JobRunStatus) {
   }
 }
 
-export default function Automation() {
+export default function Automation({ inline = false }: { inline?: boolean }) {
   const { data: jobs, isLoading, isError, refetch } = useJobs();
   const setEnabled = useSetJobEnabled();
   const runNow = useRunJobNow();
 
   return (
-    <div className="os-page">
-      <div className="os-page__header">
-        <div className="os-page__header-left">
-          <h1 className="os-page__title">Automation</h1>
-          <p className="os-page__subtitle">
-            Five scheduled background agents that support the system's
-            operation - none of the app's other features depend on them, so
-            any of these can be turned off safely, except System Health
-            (backup).
-          </p>
+    <div className={inline ? "" : "os-page"}>
+      {!inline && (
+        <div className="os-page__header">
+          <div className="os-page__header-left">
+            <h1 className="os-page__title">Automation</h1>
+            <p className="os-page__subtitle">
+              Five scheduled background agents that support the system's
+              operation - none of the app's other features depend on them, so
+              any of these can be turned off safely, except System Health
+              (backup).
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {isError && (
         <div className="os-mb-6">
@@ -98,7 +101,7 @@ export default function Automation() {
                       <Tag type="magenta" size="sm">{job.last_run.findings} finding{job.last_run.findings === 1 ? "" : "s"}</Tag>
                     )}
                     <span className="os-text-xs os-c-tertiary">
-                      Last ran {new Date(job.last_run.started_at).toLocaleString()}
+                      Last ran {formatDateTime(job.last_run.started_at)}
                     </span>
                   </div>
                 ) : (

@@ -186,7 +186,7 @@ export default function StudentProfileTab({
 
       <div className="os-section">
         <div className="os-section__header">
-          <h2 className="os-section__title">Enrollment Status</h2>
+          <h2 className="os-section__title">Enrolment Status</h2>
         </div>
         <div className="os-section__body">
           <Select

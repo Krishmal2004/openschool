@@ -20,6 +20,19 @@ const GROUPS: { key: GroupKey; label: string; route: (id: string) => string }[] 
   { key: "non_academic_staff", label: "Non-Academic Staff", route: () => "/non-academic-staff" },
 ];
 
+const ACTIONS: { id: string; name: string; route: string }[] = [
+  { id: "action-add-student", name: "Add student", route: "/students/new" },
+  { id: "action-add-teacher", name: "Add teacher", route: "/teachers/new" },
+  { id: "action-mark-attendance", name: "Mark attendance", route: "/attendance" },
+  { id: "action-new-timetable", name: "New timetable draft", route: "/timetables" },
+  { id: "action-generate-timetable", name: "Generate timetable", route: "/timetables/generate" },
+  { id: "action-send-notification", name: "Send notification", route: "/notifications" },
+  { id: "action-promotion", name: "Promote students", route: "/promotion" },
+  { id: "action-reports", name: "Reports", route: "/reports" },
+  { id: "action-analytics", name: "Analytics", route: "/analytics" },
+  { id: "action-settings", name: "Settings", route: "/settings" },
+];
+
 interface Props {
   autoFocus?: boolean;
   onClose?: () => void;
@@ -35,12 +48,20 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
   const debounced = useDebounced(query, 300);
   const { data, isFetching, isError } = useGlobalSearch(debounced);
 
+  const matchedActions = useMemo(() => {
+    const q = debounced.trim().toLowerCase();
+    if (!q) return [];
+    return ACTIONS.filter((a) => a.name.toLowerCase().includes(q));
+  }, [debounced]);
+
   const flat: FlatResult[] = useMemo(
-    () =>
-      GROUPS.flatMap((g) =>
+    () => [
+      ...matchedActions.map((a) => ({ id: a.id, name: a.name, subtitle: "", group: "Actions", route: a.route })),
+      ...GROUPS.flatMap((g) =>
         (data?.[g.key] ?? []).map((item) => ({ ...item, group: g.label, route: g.route(item.id) }))
       ),
-    [data]
+    ],
+    [data, matchedActions]
   );
 
   const highlightedIndex = highlightedId ? flat.findIndex((f) => f.id === highlightedId) : -1;
@@ -102,7 +123,7 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
         <input
           ref={inputRef}
           className="os-search__input"
-          placeholder="Search students, teachers, staff…"
+          placeholder="Search or run an action…"
           value={query}
           autoFocus={autoFocus}
           onChange={(e) => {
@@ -132,6 +153,25 @@ export default function GlobalSearch({ autoFocus, onClose }: Props) {
           {!isFetching && !isError && flat.length === 0 && (
             <div className="os-py-3 os-px-4 os-text-sm os-c-tertiary">
               No matches for &quot;{debounced}&quot;
+            </div>
+          )}
+          {matchedActions.length > 0 && (
+            <div>
+              <div className="os-pt-2 os-px-4 os-pb-1 os-text-2xs os-fw-600 os-tracking os-uppercase os-c-tertiary">
+                Actions
+              </div>
+              {matchedActions.map((action) => {
+                const isHighlighted = action.id === flat[activeIndex]?.id;
+                return (
+                  <button
+                    key={action.id}
+                    onMouseEnter={() => setHighlightedId(action.id)}
+                    onClick={() => goTo({ id: action.id, name: action.name, subtitle: "", group: "Actions", route: action.route })} className={`os-block os-w-full os-text-left os-py-2 os-px-4 os-border-none ${isHighlighted ? "os-bg-accent-light" : "os-bg-transparent"} os-pointer`}
+                  >
+                    <div className="os-fw-600 os-text-md os-c-primary">{action.name}</div>
+                  </button>
+                );
+              })}
             </div>
           )}
           {GROUPS.map((g) => {

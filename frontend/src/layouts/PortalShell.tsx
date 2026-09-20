@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Header, HeaderMenuButton, SideNav, SideNavItems, SideNavLink, SideNavDivider } from "@carbon/react";
 import { AppHeaderBrand, AppHeaderActions } from "@/layouts/AppHeaderChrome";
 import RouteErrorBoundary from "@/shared/ui/RouteErrorBoundary";
+import { ContentSkeleton } from "@/shared/ui/SkeletonShell";
+import ToastStack from "@/shared/ui/toast/ToastStack";
 import { prefetchForPath } from "@/layouts/prefetchOnHover";
 import type { NavGroup } from "@/layouts/nav/types";
 
@@ -26,6 +28,7 @@ export default function PortalShell({ navGroups, showSearch = false, collapsible
 
   return (
     <>
+      <ToastStack />
       <Header aria-label="OpenSchool">
         {collapsible && (
           <HeaderMenuButton
@@ -67,7 +70,9 @@ export default function PortalShell({ navGroups, showSearch = false, collapsible
 
         <main className={`os-layout__content${collapsed ? " is-expanded" : ""}`}>
           <RouteErrorBoundary>
-            <Outlet />
+            <Suspense fallback={<ContentSkeleton />}>
+              <Outlet />
+            </Suspense>
           </RouteErrorBoundary>
         </main>
       </div>

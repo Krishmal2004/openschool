@@ -11,6 +11,7 @@ import SystemInfoCards from "@/features/school/components/SystemInfoCards";
 import LoadingSpinner from "@/shared/ui/LoadingSpinner";
 import ErrorMessage from "@/shared/ui/ErrorMessage";
 import MutationErrorNotification from "@/shared/ui/MutationErrorNotification";
+import { useToast } from "@/shared/ui/toast/useToast";
 
 type SettingsForm = SchoolFormValues & { grade_from: number | ""; grade_to: number | "" };
 
@@ -34,8 +35,8 @@ export default function GeneralSettingsTab() {
   const createSchool = useCreateSchool();
   const noSchoolYet = isNotFoundError(error);
 
+  const { showToast } = useToast();
   const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<SettingsForm>(EMPTY_FORM);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
@@ -49,9 +50,8 @@ export default function GeneralSettingsTab() {
   const pending = updateSchool.isPending || createSchool.isPending;
 
   const flashSaved = () => {
-    setSaved(true);
     setEditing(false);
-    setTimeout(() => setSaved(false), 2500);
+    showToast({ kind: "success", title: "Saved" });
   };
 
   const save = () => {
@@ -68,7 +68,6 @@ export default function GeneralSettingsTab() {
   return (
     <>
       <div className="os-flex os-gap-2 os-items-center os-justify-end os-my-4">
-        {saved && <span className="os-text-sm os-c-success">✓ Saved</span>}
         {pending && <span className="os-text-sm os-c-secondary">Saving…</span>}
         {noSchoolYet ? (
           <Button renderIcon={Save} kind="primary" size="md" onClick={save} disabled={pending || rangeInvalid || !form.name.trim()}>Create School</Button>

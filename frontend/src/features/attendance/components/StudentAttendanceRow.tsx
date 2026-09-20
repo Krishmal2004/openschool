@@ -35,8 +35,8 @@ export default function StudentAttendanceRow({
           <span className="os-fw-500 os-text-md">{student.full_name}</span>
         </div>
       </td>
-      <td className="os-table__mono">{student.index_number}</td>
-      <td>
+      <td className="os-table__mono" data-label="Index No.">{student.index_number}</td>
+      <td data-label="Attendance">
         {readOnly ? (
           status ? (
             <StatusTag {...STATUS_STYLES[status]} />
@@ -44,14 +44,14 @@ export default function StudentAttendanceRow({
             <span className="os-c-disabled os-text-xs">Not marked</span>
           )
         ) : (
-          <div className="os-flex os-gap-1h">
+          <div className="os-flex os-gap-1h os-wrap">
             {(["present", "absent", "late", "excused"] as const).map((s) => (
               <StatusButton key={s} value={s} selected={status === s} onClick={() => onMark(s)} />
             ))}
           </div>
         )}
       </td>
-      <td>
+      <td data-label="Note">
         {readOnly ? (
           <span className={`os-text-xs ${note ? "os-c-secondary" : "os-c-disabled"}`}>{note || "-"}</span>
         ) : status === "absent" || status === "late" || status === "excused" ? (

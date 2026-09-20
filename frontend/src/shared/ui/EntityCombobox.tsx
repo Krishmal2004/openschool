@@ -13,15 +13,15 @@ interface EntityComboboxProps<T> {
   itemToString: (item: T) => string;
   getId: (item: T) => string;
   labelText?: string;
+  ariaLabel?: string;
   placeholder?: string;
   invalid?: boolean;
   invalidText?: string;
   disabled?: boolean;
-  // Server-search mode (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section
-  // 4.3): typing debounces into this callback (300ms, 2-character minimum;
-  // shorter input calls back with "") instead of Carbon filtering `items`
-  // client-side. Pass the current search results as `items`, not the full
-  // list — the parent owns the paginated/searched query.
+  // Server-search mode: typing debounces into this callback (300ms,
+  // 2-character minimum; shorter input calls back with "") instead of
+  // Carbon filtering `items` client-side. Pass the current search results
+  // as `items`, not the full list — the parent owns the paginated/searched query.
   onSearch?: (term: string) => void;
 }
 
@@ -36,6 +36,7 @@ export default function EntityCombobox<T>({
   itemToString,
   getId,
   labelText,
+  ariaLabel,
   placeholder,
   invalid,
   invalidText,
@@ -63,6 +64,7 @@ export default function EntityCombobox<T>({
       onInputChange={onSearch ? setInputValue : undefined}
       shouldFilterItem={onSearch ? () => true : undefined}
       titleText={labelText}
+      aria-label={labelText ? undefined : ariaLabel}
       placeholder={placeholder ?? "Search by name or ID…"}
       invalid={invalid}
       invalidText={invalidText}

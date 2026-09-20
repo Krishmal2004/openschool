@@ -12,7 +12,7 @@ export default function SubjectEnrollment({ studentId }: { studentId: string }) 
   return (
     <div className="os-section">
       <div className="os-section__header">
-        <h2 className="os-section__title">Subject Enrollment</h2>
+        <h2 className="os-section__title">Subject Enrolment</h2>
       </div>
       <div className="os-section__body">
         {!p.academicYearId ? (
@@ -60,11 +60,11 @@ export default function SubjectEnrollment({ studentId }: { studentId: string }) 
                 {validationErrors.length > 0 && (
                   <InlineNotification kind="error" title="Some groups need attention" subtitle={validationErrors.map((e) => `${e.label}: ${e.message}`).join(" · ")} lowContrast hideCloseButton className="os-mb-4 os-max-w-full" />
                 )}
-                <MutationErrorNotification isError={p.submit.isError} error={p.submit.error} fallback="Failed to save enrollment" />
-                {p.submit.data?.valid && <InlineNotification kind="success" title="Saved" subtitle="Subject enrollment updated." lowContrast hideCloseButton className="os-mb-4 os-max-w-full" />}
+                <MutationErrorNotification isError={p.submit.isError} error={p.submit.error} fallback="Failed to save enrolment" />
+                {p.submit.data?.valid && <InlineNotification kind="success" title="Saved" subtitle="Subject enrolment updated." lowContrast hideCloseButton className="os-mb-4 os-max-w-full" />}
 
                 <Button renderIcon={Save} kind="primary" size="sm" onClick={p.save} disabled={p.submit.isPending}>
-                  {p.submit.isPending ? "Saving…" : "Save Enrollment"}
+                  {p.submit.isPending ? "Saving…" : "Save Enrolment"}
                 </Button>
               </div>
             )}

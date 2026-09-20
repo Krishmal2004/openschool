@@ -1,7 +1,7 @@
 // Carbon's default @use "@carbon/react" pulls in every component's styles
-// (~874 KB uncompiled), most of which this app never renders
-// (docs/SECURITY_AND_PERFORMANCE_PLAYBOOK.md section 5). @carbon/styles'
-// own index.scss (the package @carbon/react re-exports) forwards this same
+// (~874 KB uncompiled), most of which this app never renders.
+// @carbon/styles' own index.scss (the package @carbon/react re-exports)
+// forwards this same
 // foundational layer, then does `@use 'components'` for the full set —
 // this mirrors everything except that last line, importing only the
 // component partials this codebase actually uses. Re-run the component

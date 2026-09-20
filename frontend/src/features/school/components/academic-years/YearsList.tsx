@@ -6,16 +6,7 @@ import ErrorMessage from "@/shared/ui/ErrorMessage";
 import EmptyState from "@/shared/ui/EmptyState";
 import SectionHeader from "@/shared/ui/SectionHeader";
 import ListRowSkeleton from "@/shared/ui/ListRowSkeleton";
-
-function formatDate(iso: string | null) {
-  if (!iso) return "-";
-  // Built from the parsed Y/M/D as a local date, not `new Date(iso)`, the latter parses a date-only string as UTC midnight, which shifts to the previous day in negative-UTC timezones.
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-LK", {
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatMonth } from "@/shared/lib/date";
 
 interface Props {
   years: ReturnType<typeof useAcademicYears>["data"];
@@ -66,7 +57,7 @@ export default function YearsList({
                   {y.label}
                 </p>
                 <p className="os-m-0 os-text-xs os-c-secondary">
-                  {formatDate(y.start_date)} - {formatDate(y.end_date)}
+                  {formatMonth(y.start_date)} - {formatMonth(y.end_date)}
                 </p>
               </div>
               <div className="os-flex os-items-center os-gap-2">

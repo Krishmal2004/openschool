@@ -7,6 +7,7 @@ import "@/shared/styles/index.scss";
 import App from "@/app/App";
 import { queryClient } from "@/app/queryClient";
 import ErrorBoundary from "@/shared/ui/ErrorBoundary";
+import { ToastProvider } from "@/shared/ui/toast/ToastContext";
 
 const origin = `${window.location.origin}/`;
 
@@ -21,9 +22,11 @@ createRoot(document.getElementById("root")!).render(
         afterSignOutUrl={import.meta.env.VITE_THUNDERID_AFTER_SIGN_OUT_URL || origin}
       >
         <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <ToastProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ToastProvider>
         </QueryClientProvider>
       </ThunderIDProvider>
     </ErrorBoundary>

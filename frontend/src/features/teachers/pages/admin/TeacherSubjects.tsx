@@ -65,6 +65,7 @@ function TeacherSubjectRow({ teacher, allSubjects }: { teacher: Teacher; allSubj
           getId={(s) => s.id}
           itemToString={(s) => `${s.name} (${s.code})`}
           labelText=""
+          ariaLabel={`Assign subject to ${teacher.full_name}`}
           placeholder="Assign subject…"
         />
         {assignMutation.isError && (

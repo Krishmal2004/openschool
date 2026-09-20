@@ -49,8 +49,8 @@ export default function DataGrid<T>({
   rows,
   columns,
   getRowId,
-  pageSize = 10,
-  pageSizes = [10, 20, 50],
+  pageSize = 25,
+  pageSizes = [10, 25, 50, 100],
   server,
   countLabel,
   toolbar,
@@ -87,7 +87,13 @@ export default function DataGrid<T>({
           </TableHead>
           <TableBody>
             {pageRows.map((row) => (
-              <TableRow key={getRowId(row)} onClick={onRowClick ? () => onRowClick(row) : undefined} className={onRowClick ? "os-pointer" : undefined}>
+              <TableRow
+                key={getRowId(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={onRowClick ? (e) => { if (e.key === "Enter") onRowClick(row); } : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                className={onRowClick ? "os-pointer os-focus-ring" : undefined}
+              >
                 {columns.map((c) => (
                   <TableCell key={c.key} className={c.align === "end" ? "os-grid__cell--end" : undefined}>
                     {c.render(row)}

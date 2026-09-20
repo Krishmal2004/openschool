@@ -8,7 +8,7 @@ import { useAcademicYears } from "@/features/school/queries/useAcademicYears";
 import { useDailySessions } from "@/features/attendance/queries/useAttendance";
 import { useStaffAttendanceByDate } from "@/features/attendance/queries/useStaffAttendance";
 import type { DailySession } from "@/features/attendance/api/attendance";
-import { todayISODate } from "@/shared/lib/date";
+import { todayISODate, formatMonth } from "@/shared/lib/date";
 import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons-react";
 import StatCard from "@/features/reports/components/dashboard/StatCard";
 import AttendanceByClassSection from "@/features/reports/components/dashboard/AttendanceByClassSection";
@@ -66,9 +66,9 @@ export default function Dashboard() {
               </span>
               {currentYear.start_date && currentYear.end_date && (
                 <span className="os-text-xs os-c-secondary">
-                  {new Date(currentYear.start_date).toLocaleDateString("en-LK", { month: "short", year: "numeric" })}
+                  {formatMonth(currentYear.start_date)}
                   {" – "}
-                  {new Date(currentYear.end_date).toLocaleDateString("en-LK", { month: "short", year: "numeric" })}
+                  {formatMonth(currentYear.end_date)}
                 </span>
               )}
             </div>
