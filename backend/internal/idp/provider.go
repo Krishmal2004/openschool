@@ -38,11 +38,6 @@ func Issuer() string {
 	return os.Getenv("THUNDERID_ISSUER")
 }
 
-// Audience returns the expected `aud` claim on access tokens, or empty to skip audience validation.
-func Audience() string {
-	return os.Getenv("THUNDERID_AUDIENCE")
-}
-
 // RoleID returns the identity provider's role ID configured for the given base role.
 func RoleID(role string) string {
 	return os.Getenv("THUNDERID_ROLE_" + strings.ToUpper(role))
