@@ -126,7 +126,7 @@ export default function TeacherMarks() {
               <MutationErrorNotification isError={saveMarks.isError} error={saveMarks.error} title="Could not save marks" fallback="Please try again." onClose={() => saveMarks.reset()} />
               {saveMarks.isSuccess && <InlineNotification kind="success" title="Marks saved successfully" lowContrast className="os-max-w-full" />}
             </div>
-            <MarksEntryTable students={students} maxMarks={maxMarks} draft={draft} />
+            <MarksEntryTable students={students} subjectName={subjects?.find((s) => s.id === subjectId)?.name ?? ""} maxMarks={maxMarks} draft={draft} />
           </div>
         ) : (
           <EmptyState title="No students enrolled" description="There are no students enrolled in the selected class." />
