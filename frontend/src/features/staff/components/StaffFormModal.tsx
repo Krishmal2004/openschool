@@ -69,13 +69,13 @@ export default function StaffFormModal({ staff, onClose }: { staff: StaffRow | n
   };
 
   return (
-    <ComposedModal open size="sm" onClose={onClose}>
+    <ComposedModal open size="sm" onClose={onClose} aria-label={isEdit ? "Edit staff member" : "Add staff member"}>
       <ModalHeader title={isEdit ? "Edit staff member" : "Add staff member"} />
       <ModalBody>
         <MutationErrorNotification
           isError={!!error}
           error={error}
-          fallback="Failed to save staff member" className="os-mb-4"
+          title="Could not save staff member" fallback="Please try again." className="os-mb-4"
         />
         <div className="os-grid os-gap-4">
           <TextInput

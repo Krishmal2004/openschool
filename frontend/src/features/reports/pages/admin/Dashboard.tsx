@@ -3,6 +3,7 @@ import { useStudents } from "@/features/students/queries/useStudents";
 import { useTeachers } from "@/features/teachers/queries/useTeachers";
 import { useDashboardAnalytics } from "@/features/reports/queries/useDashboardAnalytics";
 import { useCurrentClasses } from "@/features/academics/queries/useClasses";
+import { useGrades } from "@/features/academics/queries/useGrades";
 import { useSubjects } from "@/features/curriculum/queries/useSubjects";
 import { useAcademicYears } from "@/features/school/queries/useAcademicYears";
 import { useDailySessions } from "@/features/attendance/queries/useAttendance";
@@ -13,6 +14,7 @@ import { Calendar, UserMultiple, Education, Building, Book } from "@carbon/icons
 import StatCard from "@/features/reports/components/dashboard/StatCard";
 import AttendanceByClassSection from "@/features/reports/components/dashboard/AttendanceByClassSection";
 import RecentActivitySection from "@/features/reports/components/dashboard/RecentActivitySection";
+import SetupChecklistCard from "@/features/reports/components/dashboard/SetupChecklistCard";
 import { useMemo } from "react";
 
 export default function Dashboard() {
@@ -31,6 +33,7 @@ export default function Dashboard() {
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics();
   const recentActivity = useMemo(() => analytics?.school.recent_activity ?? [], [analytics]);
   const { data: classes, isLoading: classesLoading } = useCurrentClasses();
+  const { data: grades, isLoading: gradesLoading } = useGrades();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
   const { data: years } = useAcademicYears();
   const { data: todaySessions, isLoading: sessionsLoading } = useDailySessions(todayISODate());
@@ -48,6 +51,16 @@ export default function Dashboard() {
   }, [todaySessions]);
 
   const classAttendanceLoading = classesLoading || sessionsLoading;
+
+  const setupLoading = classesLoading || gradesLoading || subjectsLoading || teachersLoading || studentsLoading;
+  const setupItems = [
+    { label: "Set a current academic year", done: !!currentYear, path: "/academic-years" },
+    { label: "Add a grade", done: (grades?.length ?? 0) > 0, path: "/classes" },
+    { label: "Add a subject", done: (subjects?.length ?? 0) > 0, path: "/subjects" },
+    { label: "Add a teacher", done: teacherCount > 0, path: "/teachers" },
+    { label: "Add a class", done: (classes?.length ?? 0) > 0, path: "/classes" },
+    { label: "Add a student", done: studentCount > 0, path: "/students" },
+  ];
 
   return (
     <div className="os-page">
@@ -81,6 +94,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {!setupLoading && <SetupChecklistCard items={setupItems} />}
 
       <div className="os-stat-grid">
         <StatCard label="Total Students" value={studentCount} loading={studentsLoading} Icon={UserMultiple} path="/students" />

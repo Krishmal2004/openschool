@@ -145,13 +145,13 @@ export default function Mediums() {
         )}
       </div>
 
-      <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)}>
+      <ComposedModal open={!!modal} size="sm" onClose={() => setModal(null)} aria-label={modal === "create" ? "New medium" : "Edit medium"}>
         <ModalHeader title={modal === "create" ? "New medium" : "Edit medium"} />
         <ModalBody>
           <MutationErrorNotification
             isError={createMedium.isError || updateMedium.isError}
             error={createMedium.error ?? updateMedium.error}
-            fallback="Failed to save medium" className="os-mb-4"
+            title="Could not save medium" fallback="Please try again." className="os-mb-4"
           />
           <TextInput
             id="medium-name"

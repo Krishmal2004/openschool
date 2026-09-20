@@ -12,7 +12,7 @@ interface Props {
 
 export default function TimetableValidationModal({ open, validating, validation, onClose }: Props) {
   return (
-    <ComposedModal open={open} size="md" onClose={onClose}>
+    <ComposedModal open={open} size="md" onClose={onClose} aria-label="Validation results">
       <ModalHeader title="Validation results" />
       <ModalBody>
         {validating ? (

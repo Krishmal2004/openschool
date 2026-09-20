@@ -1,0 +1,59 @@
+@media print {
+  :root {
+    --os-text-primary: #000000;
+    --os-text-secondary: #1a1a1a;
+    --os-text-tertiary: #4d4d4d;
+    --os-border-subtle: #cccccc;
+    --os-border-strong: #999999;
+    --os-layer: #ffffff;
+    --os-layer-hover: #ffffff;
+  }
+
+  body { background: #ffffff; }
+
+  .cds--header,
+  .os-layout__sidebar,
+  .os-toast-stack,
+  .os-search,
+  .os-filter-bar,
+  .os-filter-tags,
+  .os-page__header button,
+  .os-section__header button,
+  .os-grid__actions,
+  .os-attendance-sticky-actions,
+  .cds--pagination,
+  .os-marks-context-bar span:last-child,
+  button {
+    display: none !important;
+  }
+
+  .os-layout {
+    padding-top: 0;
+    display: block;
+  }
+
+  .os-layout__content {
+    margin-left: 0;
+    background: #ffffff;
+  }
+
+  .os-page {
+    padding: 0;
+  }
+
+  .os-table--sticky-head thead th,
+  .os-marks-context-bar {
+    position: static;
+  }
+
+  .os-table {
+    tr {
+      page-break-inside: avoid;
+    }
+  }
+
+  .os-section {
+    border: none;
+    box-shadow: none;
+  }
+}

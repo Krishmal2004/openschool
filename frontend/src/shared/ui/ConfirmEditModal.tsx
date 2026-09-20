@@ -26,7 +26,7 @@ export default function ConfirmEditModal({
   onConfirm,
 }: Props) {
   return (
-    <ComposedModal open={open} size="sm" onClose={onClose}>
+    <ComposedModal open={open} size="sm" onClose={onClose} aria-label={title}>
       <ModalHeader title={title} />
       <ModalBody>
         <p className="os-text-md">{description}</p>

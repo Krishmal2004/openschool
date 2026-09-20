@@ -60,7 +60,7 @@ export default function SubjectEnrollment({ studentId }: { studentId: string }) 
                 {validationErrors.length > 0 && (
                   <InlineNotification kind="error" title="Some groups need attention" subtitle={validationErrors.map((e) => `${e.label}: ${e.message}`).join(" · ")} lowContrast hideCloseButton className="os-mb-4 os-max-w-full" />
                 )}
-                <MutationErrorNotification isError={p.submit.isError} error={p.submit.error} fallback="Failed to save enrolment" />
+                <MutationErrorNotification isError={p.submit.isError} error={p.submit.error} title="Could not save enrolment" fallback="Please try again." />
                 {p.submit.data?.valid && <InlineNotification kind="success" title="Saved" subtitle="Subject enrolment updated." lowContrast hideCloseButton className="os-mb-4 os-max-w-full" />}
 
                 <Button renderIcon={Save} kind="primary" size="sm" onClick={p.save} disabled={p.submit.isPending}>

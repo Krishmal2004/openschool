@@ -193,7 +193,7 @@ export default function Students() {
           isError={deleteStudent.isError}
           error={deleteStudent.error}
           title="Could not delete student"
-          fallback="Failed to delete student."
+          fallback="Please try again."
           onClose={() => deleteStudent.reset()}
           className="os-section__notice"
         />

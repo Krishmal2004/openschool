@@ -55,12 +55,12 @@ export default function TermsModal({ year, onClose }: { year: AcademicYear; onCl
 
   return (
     <>
-      <ComposedModal open size="sm" onClose={onClose}>
+      <ComposedModal open size="sm" onClose={onClose} aria-label={`Terms - ${year.label}`}>
         <ModalHeader title={`Terms - ${year.label}`} />
         <ModalBody>
-          <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} fallback="Failed to create term" />
-          <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} fallback="Failed to update term" />
-          <MutationErrorNotification isError={deleteTerm.isError} error={deleteTerm.error} fallback="Failed to delete term" />
+          <MutationErrorNotification isError={createTerm.isError} error={createTerm.error} title="Could not create term" fallback="Please try again." />
+          <MutationErrorNotification isError={updateTerm.isError} error={updateTerm.error} title="Could not update term" fallback="Please try again." />
+          <MutationErrorNotification isError={deleteTerm.isError} error={deleteTerm.error} title="Could not delete term" fallback="Please try again." />
 
           {isLoading && <SkeletonText paragraph lineCount={3} />}
           {!isLoading && terms?.length === 0 && <p className="os-text-md os-c-tertiary os-mb-5">No terms yet. A school year typically has three.</p>}

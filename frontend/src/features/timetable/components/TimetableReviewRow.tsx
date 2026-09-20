@@ -48,7 +48,7 @@ export default function TimetableReviewRow({ timetable }: { timetable: Timetable
         {approve.isPending ? "Approving…" : "Approve"}
       </Button>
 
-      <ComposedModal open={rejecting} size="sm" onClose={() => setRejecting(false)}>
+      <ComposedModal open={rejecting} size="sm" onClose={() => setRejecting(false)} aria-label={`Reject ${timetable.grade_name} - ${timetable.class_name}`}>
         <ModalHeader title={`Reject ${timetable.grade_name} - ${timetable.class_name}`} />
         <ModalBody>
           <TextArea

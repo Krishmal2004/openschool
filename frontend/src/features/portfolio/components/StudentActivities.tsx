@@ -91,7 +91,7 @@ export default function StudentActivities({ studentId }: { studentId: string }) 
         <MutationErrorNotification
           isError={createActivity.isError}
           error={createActivity.error}
-          fallback="Failed to add activity" className="os-mb-4"
+          title="Could not add activity" fallback="Please try again." className="os-mb-4"
         />
 
         <div className="os-grid os-grid-form-10-1-10-auto os-gap-3 os-items-grid-end os-mb-6">
